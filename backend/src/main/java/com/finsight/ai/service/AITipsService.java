@@ -32,11 +32,11 @@ public class AITipsService {
     @Autowired
     private BudgetService budgetService;
     
-    @Value("${gemini.api.url}")
-    private String geminiApiUrl;
+    @Value("${ai.agent.api.url}")
+    private String aiAgentApiUrl;
     
-    @Value("${gemini.api.key}")
-    private String geminiApiKey;
+    @Value("${ai.agent.api.key}")
+    private String aiAgentApiKey;
     
     // No rate limiting - removed all restrictions
     private final Map<String, Long> lastRequestTime = new ConcurrentHashMap<>();
@@ -48,6 +48,48 @@ public class AITipsService {
 
     public AITipsService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
+    }
+    
+    // Helper method to format category names for user display
+    private String formatCategoryName(ExpenseCategory category) {
+        return category.getDisplayName();
+    }
+    
+    // Helper method to format currency symbol for user display
+    private String formatCurrencySymbol(String currency) {
+        return switch (currency) {
+            case "ZAR" -> "R";
+            case "USD" -> "$";
+            case "EUR" -> "€";
+            case "GBP" -> "£";
+            case "CAD" -> "C$";
+            case "AUD" -> "A$";
+            default -> currency; // fallback to original currency code
+        };
+    }
+    
+    // Helper method to format currency amounts with proper symbol
+    private String formatCurrencyAmount(String currency, BigDecimal amount) {
+        String symbol = formatCurrencySymbol(currency);
+        return symbol + amount.toString();
+    }
+    
+    // Helper method to format tips for better readability
+    private String formatTipText(String tip, String currency) {
+        if (tip == null) return tip;
+        
+        String formattedTip = tip;
+        
+        // Replace category names with user-friendly versions using enum values
+        for (ExpenseCategory category : ExpenseCategory.values()) {
+            formattedTip = formattedTip.replaceAll("\\b" + category.name() + "\\b", category.getDisplayName());
+        }
+        
+        // Replace currency codes with symbols
+        String currencySymbol = formatCurrencySymbol(currency);
+        formattedTip = formattedTip.replaceAll("\\b" + currency + "\\b", currencySymbol);
+        
+        return formattedTip;
     }
 
     // Main method to get multiple tips - returns List<String> for controller compatibility
@@ -66,8 +108,11 @@ public class AITipsService {
         } catch (Exception e) {
             logger.error("Error generating multiple tips for user {}: {}", user.getFirebaseUid(), e.getMessage());
             
-            // Return fallback tips if AI fails
-            return generateFallbackTips(user);
+            // Return fallback tips if AI fails - apply formatting
+            List<String> fallbackTips = generateFallbackTips(user);
+            return fallbackTips.stream()
+                    .map(tip -> formatTipText(tip, user.getCurrency()))
+                    .collect(Collectors.toList());
         }
     }
 
@@ -80,7 +125,8 @@ public class AITipsService {
             return tips.isEmpty() ? getGenericTip() : tips.get(0);
         } catch (Exception e) {
             logger.error("Error generating personalized tip for user {}: {}", user.getFirebaseUid(), e.getMessage());
-            return generateFallbackTips(user).get(0);
+            List<String> fallbackTips = generateFallbackTips(user);
+            return formatTipText(fallbackTips.get(0), user.getCurrency());
         }
     }
 
@@ -316,19 +362,19 @@ public class AITipsService {
             StringBuilder contextPrompt = new StringBuilder();
             contextPrompt.append("Create personalized financial tips for ").append(user.getFirstName())
                     .append(", a user in ").append(getCurrencyLocation(user.getCurrency()))
-                    .append(" using ").append(user.getCurrency()).append(" currency.\n\n");
+                    .append(" using ").append(formatCurrencySymbol(user.getCurrency())).append(" currency.\n\n");
             
             // Add user's financial context
             contextPrompt.append("USER FINANCIAL CONTEXT:\n");
             contextPrompt.append("- Location: ").append(getCurrencyLocation(user.getCurrency())).append("\n");
-            contextPrompt.append("- Currency: ").append(user.getCurrency()).append("\n");
+            contextPrompt.append("- Currency: ").append(formatCurrencySymbol(user.getCurrency())).append("\n");
             contextPrompt.append("- Current month expenses: ").append(currentMonthExpenses.size()).append(" transactions\n");
             
             if (!currentMonthExpenses.isEmpty()) {
                 BigDecimal totalSpent = currentMonthExpenses.stream()
                     .map(Expense::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-                contextPrompt.append("- Total spent this month: ").append(user.getCurrency()).append(" ").append(totalSpent).append("\n");
+                contextPrompt.append("- Total spent this month: ").append(formatCurrencyAmount(user.getCurrency(), totalSpent)).append("\n");
                 
                 // Top spending categories
                 if (!categorySpending.isEmpty()) {
@@ -336,8 +382,8 @@ public class AITipsService {
                     categorySpending.entrySet().stream()
                         .sorted(Map.Entry.<ExpenseCategory, BigDecimal>comparingByValue().reversed())
                         .limit(3)
-                        .forEach(entry -> contextPrompt.append(entry.getKey().name()).append(" (")
-                            .append(user.getCurrency()).append(" ").append(entry.getValue()).append("), "));
+                        .forEach(entry -> contextPrompt.append(formatCategoryName(entry.getKey())).append(" (")
+                            .append(formatCurrencyAmount(user.getCurrency(), entry.getValue())).append("), "));
                     contextPrompt.append("\n");
                 }
             }
@@ -349,9 +395,9 @@ public class AITipsService {
                     BigDecimal percentage = budget.getMonthlyLimit().compareTo(BigDecimal.ZERO) > 0 
                         ? spent.divide(budget.getMonthlyLimit(), 4, BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100))
                         : BigDecimal.ZERO;
-                    contextPrompt.append("  * ").append(budget.getCategory().name()).append(": ")
+                    contextPrompt.append("  * ").append(formatCategoryName(budget.getCategory())).append(": ")
                         .append(spent).append("/").append(budget.getMonthlyLimit()).append(" ")
-                        .append(user.getCurrency()).append(" (").append(percentage.intValue()).append("%)\n");
+                        .append(formatCurrencySymbol(user.getCurrency())).append(" (").append(percentage.intValue()).append("%)\n");
                 }
             }
             
@@ -374,13 +420,17 @@ public class AITipsService {
             contextPrompt.append("TIP2: [enhanced tip 2]\n");
             contextPrompt.append("TIP3: [enhanced tip 3]\n");
             
-            String enhancedContent = callGeminiAPI(contextPrompt.toString());
+            String enhancedContent = callAIAgentAPI(contextPrompt.toString());
             
-            return parseEnhancedTips(enhancedContent, baseTips);
+            return parseEnhancedTipsWithFormatting(enhancedContent, baseTips, user.getCurrency());
             
         } catch (Exception e) {
             logger.warn("Failed to enhance tips with AI for user {}: {}", user.getFirebaseUid(), e.getMessage());
-            return baseTips.subList(0, Math.min(baseTips.size(), 3)); // Return first 3 original tips if AI enhancement fails
+            // Return first 3 original tips with formatting if AI enhancement fails
+            List<String> fallbackTips = baseTips.subList(0, Math.min(baseTips.size(), 3));
+            return fallbackTips.stream()
+                    .map(tip -> formatTipText(tip, user.getCurrency()))
+                    .collect(Collectors.toList());
         }
     }
 
@@ -388,17 +438,73 @@ public class AITipsService {
     private List<String> parseEnhancedTips(String enhancedContent, List<String> fallbackTips) {
         List<String> parsedTips = new ArrayList<>();
         
-        if (enhancedContent != null && enhancedContent.contains("TIP1:")) {
-            String[] lines = enhancedContent.split("\n");
-            
-            for (String line : lines) {
-                if (line.trim().startsWith("TIP") && line.contains(":")) {
-                    String tip = line.substring(line.indexOf(":") + 1).trim();
-                    if (!tip.isEmpty()) {
-                        parsedTips.add(tip);
+        if (enhancedContent != null && !enhancedContent.trim().isEmpty()) {
+            // First, try the expected TIP1:, TIP2:, TIP3: format
+            if (enhancedContent.contains("TIP1:") && enhancedContent.contains("TIP2:") && enhancedContent.contains("TIP3:")) {
+                String[] lines = enhancedContent.split("\n");
+                
+                for (String line : lines) {
+                    if (line.trim().startsWith("TIP") && line.contains(":")) {
+                        String tip = line.substring(line.indexOf(":") + 1).trim();
+                        if (!tip.isEmpty()) {
+                            parsedTips.add(tip);
+                        }
+                    }
+                }
+            } else {
+                // Try to parse a more flexible format - split by lines and look for meaningful tips
+                String[] lines = enhancedContent.split("\n");
+                int tipCount = 0;
+                
+                for (String line : lines) {
+                    line = line.trim();
+                    // Skip empty lines and common prefixes
+                    if (line.isEmpty() || line.length() < 20) continue;
+                    
+                    // Look for lines that seem like tips (contain emojis, mentions user, etc.)
+                    if ((line.contains("💰") || line.contains("💡") || line.contains("📱") || 
+                         line.contains("🏦") || line.contains("💳") || line.contains("📈") ||
+                         line.toLowerCase().contains("sandile") || line.toLowerCase().contains("tip")) 
+                         && tipCount < 3) {
+                        
+                        // Clean up the tip text
+                        String cleanTip = line.replaceAll("^\\d+\\.\\s*", "") // Remove number prefixes
+                                             .replaceAll("^Tip\\s*\\d*:?\\s*", "") // Remove "Tip X:" prefixes
+                                             .replaceAll("^-\\s*", "") // Remove dash prefixes
+                                             .trim();
+                        
+                        if (!cleanTip.isEmpty() && cleanTip.length() > 10) {
+                            parsedTips.add(cleanTip);
+                            tipCount++;
+                        }
+                    }
+                }
+                
+                // If we didn't find 3 tips, try a simpler approach - just split into sentences
+                if (parsedTips.size() < 3) {
+                    parsedTips.clear();
+                    String[] sentences = enhancedContent.split("[.!?]");
+                    int count = 0;
+                    
+                    for (String sentence : sentences) {
+                        sentence = sentence.trim();
+                        if (sentence.length() > 20 && count < 3) {
+                            // Add emoji if not present
+                            if (!sentence.matches(".*[\\p{So}\\p{Cn}].*")) {
+                                sentence = "💡 " + sentence;
+                            }
+                            parsedTips.add(sentence + (sentence.endsWith(".") ? "" : "."));
+                            count++;
+                        }
                     }
                 }
             }
+        }
+        
+        // Log what we parsed for debugging
+        logger.debug("Parsed {} tips from AI response", parsedTips.size());
+        for (int i = 0; i < parsedTips.size(); i++) {
+            logger.debug("Parsed tip {}: {}", i+1, parsedTips.get(i));
         }
         
         // If parsing failed or didn't get enough tips, fill with fallbacks
@@ -411,69 +517,96 @@ public class AITipsService {
             }
         }
         
-        return parsedTips.subList(0, 3); // Return exactly 3 tips
+        return parsedTips.subList(0, 3); // Always return exactly 3 tips
     }
 
-    // Call Gemini API with no rate limiting
-    private String callGeminiAPI(String prompt) {
-        try {
-            // Build request body for Gemini API
-            Map<String, Object> requestBody = new HashMap<>();
-            
-            Map<String, Object> content = new HashMap<>();
-            Map<String, Object> part = new HashMap<>();
-            part.put("text", prompt);
-            content.put("parts", Arrays.asList(part));
-            
-            requestBody.put("contents", Arrays.asList(content));
-            
-            Map<String, Object> generationConfig = new HashMap<>();
-            generationConfig.put("temperature", 0.7);
-            generationConfig.put("maxOutputTokens", 500);
-            generationConfig.put("topP", 0.9);
-            requestBody.put("generationConfig", generationConfig);
+    // Parse the AI response and format tips for user display
+    private List<String> parseEnhancedTipsWithFormatting(String enhancedContent, List<String> fallbackTips, String currency) {
+        List<String> parsedTips = parseEnhancedTips(enhancedContent, fallbackTips);
+        
+        // Apply formatting to each tip
+        return parsedTips.stream()
+                .map(tip -> formatTipText(tip, currency))
+                .collect(Collectors.toList());
+    }
 
-            logger.info("Making Gemini API call with no rate limit");
+    // Call Gradient AI Agent API
+    private String callAIAgentAPI(String prompt) {
+        try {
+            logger.info("Making Gradient AI Agent API call");
+            
+            // Create the request body for the agent following OpenAI ChatCompletion format
+            Map<String, Object> requestBody = new HashMap<>();
+            List<Map<String, String>> messages = new ArrayList<>();
+            
+            Map<String, String> userMessage = new HashMap<>();
+            userMessage.put("role", "user");
+            userMessage.put("content", prompt);
+            messages.add(userMessage);
+            
+            requestBody.put("messages", messages);
+            requestBody.put("max_tokens", 1000);
+            requestBody.put("temperature", 0.7);
             
             Mono<Map> response = webClient.post()
-                .uri(geminiApiUrl + "?key=" + geminiApiKey)
+                .uri(aiAgentApiUrl + "/api/v1/chat/completions")
+                .header("Authorization", "Bearer " + aiAgentApiKey)
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> {
                     return clientResponse.bodyToMono(String.class)
-                        .doOnNext(errorBody -> logger.error("Gemini API 4xx error: {} - {}", 
+                        .doOnNext(errorBody -> logger.error("AI Agent API 4xx error: {} - {}", 
                             clientResponse.statusCode(), errorBody))
-                        .then(Mono.error(new RuntimeException("API Rate Limit Error: " + clientResponse.statusCode())));
+                        .then(Mono.error(new RuntimeException("AI Agent API Client Error: " + clientResponse.statusCode())));
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, serverResponse -> {
-                    return Mono.error(new RuntimeException("Gemini API Server Error: " + serverResponse.statusCode()));
+                    return Mono.error(new RuntimeException("AI Agent API Server Error: " + serverResponse.statusCode()));
                 })
                 .bodyToMono(Map.class);
 
             Map<String, Object> result = response.block();
             
-            if (result != null && result.containsKey("candidates")) {
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) result.get("candidates");
-                if (!candidates.isEmpty()) {
-                    Map<String, Object> candidate = candidates.get(0);
-                    if (candidate.containsKey("content")) {
-                        Map<String, Object> content1 = (Map<String, Object>) candidate.get("content");
-                        if (content1.containsKey("parts")) {
-                            List<Map<String, Object>> parts = (List<Map<String, Object>>) content1.get("parts");
-                            if (!parts.isEmpty() && parts.get(0).containsKey("text")) {
-                                logger.info("Gemini API call successful - AI enhancement applied");
-                                return (String) parts.get(0).get("text");
+            if (result != null && result.containsKey("choices")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) result.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> firstChoice = choices.get(0);
+                    if (firstChoice.containsKey("message")) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+                        if (message.containsKey("content")) {
+                            String content = (String) message.get("content");
+                            if (content != null && !content.trim().isEmpty()) {
+                                logger.info("Gradient AI Agent API call successful - Response received: {}", content.substring(0, Math.min(200, content.length())));
+                                
+                                // Log the full response for debugging
+                                logger.debug("Full AI response: {}", content);
+                                
+                                // Check if it's the expected format (contains TIP1:, TIP2:, TIP3:)
+                                if (content.contains("TIP1:") && content.contains("TIP2:") && content.contains("TIP3:")) {
+                                    return content.trim();
+                                } else {
+                                    logger.warn("AI Agent API returned unexpected response format - no TIP format found");
+                                    logger.info("Full response for debugging: {}", content.length() > 500 ? content.substring(0, 500) + "..." : content);
+                                    
+                                    // Try to use the content anyway if it contains useful tips
+                                    if (content.length() > 50) {
+                                        logger.info("Using AI response as-is since it contains content");
+                                        return content.trim();
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
             
-            logger.warn("Gemini API returned unexpected response format");
+            logger.warn("AI Agent API returned unexpected response structure");
+            logger.debug("Full response structure: {}", result);
             
         } catch (Exception e) {
-            logger.error("Gemini API error: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            logger.error("AI Agent API error: {} - {}", e.getClass().getSimpleName(), e.getMessage());
             if (e.getCause() != null) {
                 logger.error("Caused by: {}", e.getCause().getMessage());
             }

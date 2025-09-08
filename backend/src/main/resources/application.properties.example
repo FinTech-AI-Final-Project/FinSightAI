@@ -21,9 +21,9 @@ firebase.service-account-key=classpath:firebase-service-account.json
 # CORS Configuration
 app.cors.allowed-origins=http://localhost:3000,http://localhost:8100,capacitor://localhost,https://localhost,http://YOUR_IP:3000,http://YOUR_IP:8100
 
-# AI Configuration - Google Gemini API
-gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
-gemini.api.key=YOUR_GEMINI_API_KEY_HERE
+# AI Configuration - Gradient AI Agent
+ai.agent.api.url=https://lxhcfhua6qcqp3wx7qf4jx4f.agents.do-ai.run
+ai.agent.api.key=YOUR_GRADIENT_AI_AGENT_API_KEY_HERE
 
 # Logging
 logging.level.com.finsight=DEBUG

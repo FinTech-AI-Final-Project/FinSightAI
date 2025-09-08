@@ -123,6 +123,43 @@ npm run cap:open:ios
 3. Configure app metadata, screenshots, descriptions
 4. Submit for review
 
+## 🤖 AI Agent Deployment (Gradient AI Platform)
+
+### Setting Up Your AI Agent
+
+1. **Sign up at Gradient AI Platform**
+   - Go to [Gradient AI Platform](https://gradient.run/)
+   - Create an account and workspace
+
+2. **Create AI Agent**
+   - Click "Create Agent"
+   - Choose model (e.g., Llama 3.3 Instruct 70B, OpenAI GPT-oss-120b)
+   - Configure agent instructions for financial recommendations
+   - Deploy the agent
+
+3. **Get API Credentials**
+   - Copy your agent endpoint URL
+   - Create an endpoint access key
+   - Note down the credentials for backend integration
+
+### Backend Integration
+
+Update your backend configuration:
+
+```properties
+# AI Configuration - Gradient AI Agent
+ai.agent.api.url=https://your-agent-id.agents.do-ai.run
+ai.agent.api.key=your_gradient_api_key
+```
+
+### Cost Monitoring
+
+- Monitor token usage in Gradient dashboard
+- Set up billing alerts for cost control
+- Optimize prompts for efficiency
+
+---
+
 ## 🖥️ Production Server Deployment
 
 ### Docker Deployment
@@ -280,7 +317,8 @@ JWT_SECRET=your_jwt_secret_key
 CORS_ALLOWED_ORIGINS=https://yourdomain.com
 
 # AI Integration
-HUGGINGFACE_API_TOKEN=your_huggingface_token
+AI_AGENT_API_URL=https://lxhcfhua6qcqp3wx7qf4jx4f.agents.do-ai.run
+AI_AGENT_API_KEY=W3NMm2kJPbT406AkRBUyWYJ5YQwDzA7S
 
 # Server
 SERVER_PORT=8080
