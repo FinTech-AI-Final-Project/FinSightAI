@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
-  Typography,
   IconButton,
   Menu,
   MenuItem,
@@ -28,7 +27,6 @@ import { motion } from 'framer-motion';
 const Navbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
   const { logout, currentUser } = useAuth();
   const { darkMode, toggleDarkMode } = useCustomTheme();
   const theme = useTheme();
@@ -57,32 +55,15 @@ const Navbar = () => {
     handleClose();
   };
 
-  const getPageTitle = () => {
-    switch (location.pathname) {
-      case '/dashboard':
-        return 'Dashboard';
-      case '/expenses':
-        return 'Expenses';
-      case '/budgets':
-        return 'Budgets';
-      case '/reports':
-        return 'Reports';
-      case '/settings':
-        return 'Settings';
-      default:
-        return 'FinSight AI';
-    }
-  };
-
   return (
     <AppBar 
       position="fixed" 
       elevation={0}
       sx={{ 
-        backgroundColor: 'background.paper',
-        color: 'text.primary',
+        backgroundColor: '#000000',
+        color: '#ffffff',
         borderBottom: 1,
-        borderColor: 'divider',
+        borderColor: 'rgba(255, 255, 255, 0.12)',
         zIndex: theme.zIndex.drawer + 1,
       }}
     >
@@ -93,25 +74,20 @@ const Navbar = () => {
           transition={{ duration: 0.3 }}
           style={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}
         >
-          <Typography 
-            variant={isMobile ? "h6" : "h5"} 
-            component="div" 
-            sx={{ 
-              fontWeight: 600,
-              background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mr: 2,
-            }}
-          >
-            {isMobile ? getPageTitle() : 'FinSight AI'}
-          </Typography>
-          {!isMobile && (
-            <Typography variant="body2" color="text.secondary">
-              {getPageTitle()}
-            </Typography>
-          )}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <img 
+              src="/logo.png" 
+              alt="FinSight AI" 
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+              style={{ 
+                height: isMobile ? 72 : 96, 
+                width: 'auto',
+                marginRight: isMobile ? 12 : 16
+              }} 
+            />
+          </Box>
         </motion.div>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

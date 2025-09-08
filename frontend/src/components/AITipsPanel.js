@@ -206,11 +206,14 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
       elevation={1}
       sx={{
         p: 0,
+        mt: 4, // Increased top margin to ensure proper spacing from navbar
         mb: 3,
-        background: `linear-gradient(135deg, ${theme.palette.primary.main}08, ${theme.palette.secondary.main}08)`,
-        border: `1px solid ${theme.palette.primary.main}20`,
+        backgroundColor: '#000000',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
         borderRadius: 2,
         overflow: 'hidden',
+        position: 'relative', // Ensure it's in normal document flow
+        zIndex: 1, // Lower z-index than navbar
       }}
     >
       <CardContent sx={{ p: 2 }}>
@@ -218,11 +221,11 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isAiEnhanced ? (
-              <AutoAwesome sx={{ color: theme.palette.primary.main }} />
+              <AutoAwesome sx={{ color: '#ffffff' }} />
             ) : (
-              <Lightbulb sx={{ color: theme.palette.warning.main }} />
+              <Lightbulb sx={{ color: '#ffffff' }} />
             )}
-            <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
               Smart Tips
             </Typography>
           </Box>
@@ -233,12 +236,12 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
               disabled={loading}
               size="small"
               sx={{ 
-                color: theme.palette.primary.main,
-                '&:hover': { backgroundColor: theme.palette.primary.main + '10' }
+                color: '#ffffff',
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
               }}
             >
               {loading ? (
-                <CircularProgress size={20} color="primary" />
+                <CircularProgress size={20} sx={{ color: '#ffffff' }} />
               ) : (
                 <Refresh />
               )}
@@ -248,9 +251,10 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
               onClick={() => setExpanded(!expanded)}
               size="small"
               sx={{ 
-                color: theme.palette.text.secondary,
+                color: '#ffffff',
                 transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.3s'
+                transition: 'transform 0.3s',
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
               }}
             >
               <ExpandMore />
@@ -271,20 +275,28 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
               severity={getTipSeverity(currentTip)}
               icon={getTipIcon(currentTip)}
               sx={{
-                backgroundColor: theme.palette.background.paper,
-                border: `1px solid ${theme.palette.divider}`,
-                '& .MuiAlert-icon': { alignItems: 'center' }
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: '#ffffff',
+                '& .MuiAlert-icon': { alignItems: 'center', color: '#ffffff' },
+                '& .MuiAlert-message': { color: '#ffffff' }
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5 }}>
+                <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
                   {currentTip}
                 </Typography>
                 <Chip
                   label={getTipCategory(currentTip)}
                   size="small"
                   variant="outlined"
-                  sx={{ ml: 1, fontSize: '0.65rem', height: 20 }}
+                  sx={{ 
+                    ml: 1, 
+                    fontSize: '0.65rem', 
+                    height: 20,
+                    color: '#ffffff',
+                    borderColor: 'rgba(255, 255, 255, 0.3)'
+                  }}
                 />
               </Box>
             </Alert>
@@ -316,8 +328,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         {/* Expanded View */}
         <Collapse in={expanded}>
           <Box sx={{ mt: 2 }}>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+            <Divider sx={{ mb: 2, borderColor: 'rgba(255, 255, 255, 0.12)' }} />
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#ffffff' }}>
               All Tips ({tips.length})
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -334,19 +346,28 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                       severity={getTipSeverity(tip)}
                       icon={getTipIcon(tip)}
                       sx={{
-                        backgroundColor: theme.palette.background.paper,
-                        border: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        color: '#ffffff',
+                        '& .MuiAlert-icon': { color: '#ffffff' },
+                        '& .MuiAlert-message': { color: '#ffffff' }
                       }}
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5 }}>
+                        <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
                           {tip}
                         </Typography>
                         <Chip
                           label={getTipCategory(tip)}
                           size="small"
                           variant="outlined"
-                          sx={{ ml: 1, fontSize: '0.65rem', height: 20 }}
+                          sx={{ 
+                            ml: 1, 
+                            fontSize: '0.65rem', 
+                            height: 20,
+                            color: '#ffffff',
+                            borderColor: 'rgba(255, 255, 255, 0.3)'
+                          }}
                         />
                       </Box>
                     </Alert>

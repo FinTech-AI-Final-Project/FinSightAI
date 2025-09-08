@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -34,6 +34,8 @@ import {
   TrendingUp,
   TrendingDown,
   Warning,
+  ChevronLeft,
+  ChevronRight,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as ApiService from '../services/api';
@@ -53,16 +55,35 @@ const Budgets = () => {
   const { userProfile } = useUser();
 
   const currentMonth = getCurrentMonth();
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth.month);
+  const [selectedYear, setSelectedYear] = useState(currentMonth.year);
+  
   const [formData, setFormData] = useState({
     category: '',
     monthlyLimit: '',
-    month: currentMonth.month,
-    year: currentMonth.year,
+    month: selectedMonth,
+    year: selectedYear,
   });
+
+  const fetchBudgets = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await ApiService.getBudgets({
+        month: selectedMonth,
+        year: selectedYear,
+      });
+      setBudgets(data || []);
+    } catch (error) {
+      console.error('Error fetching budgets:', error);
+      setError('Failed to load budgets');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     fetchBudgets();
-  }, [userProfile.currency]); // Re-fetch when currency changes
+  }, [fetchBudgets, userProfile.currency]); // Re-fetch when currency or month/year changes
 
   useEffect(() => {
     // Listen for currency changes from other components
@@ -75,23 +96,7 @@ const Budgets = () => {
     return () => {
       window.removeEventListener('currencyChanged', handleCurrencyChange);
     };
-  }, []);
-
-  const fetchBudgets = async () => {
-    try {
-      setLoading(true);
-      const data = await ApiService.getBudgets({
-        month: currentMonth.month,
-        year: currentMonth.year,
-      });
-      setBudgets(data || []);
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
-      setError('Failed to load budgets');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchBudgets]);
 
   const handleCreateBudget = async () => {
     try {
@@ -144,8 +149,8 @@ const Budgets = () => {
       setFormData({
         category: '',
         monthlyLimit: '',
-        month: currentMonth.month,
-        year: currentMonth.year,
+        month: selectedMonth,
+        year: selectedYear,
       });
     }
     setOpenDialog(true);
@@ -164,6 +169,24 @@ const Budgets = () => {
   const handleCloseMenu = () => {
     setAnchorEl(null);
     setSelectedBudget(null);
+  };
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
   };
 
   const getBudgetStatus = (spent, limit) => {
@@ -314,9 +337,27 @@ const Budgets = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', position: 'relative' }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-        Budgets
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          Budgets
+        </Typography>
+        
+        {/* Month Navigation */}
+        <Box display="flex" alignItems="center" gap={1}>
+          <IconButton onClick={handlePreviousMonth}>
+            <ChevronLeft />
+          </IconButton>
+          <Typography variant="h6" sx={{ minWidth: 160, textAlign: 'center' }}>
+            {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
+              month: 'long', 
+              year: 'numeric' 
+            })}
+          </Typography>
+          <IconButton onClick={handleNextMonth}>
+            <ChevronRight />
+          </IconButton>
+        </Box>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -328,7 +369,7 @@ const Budgets = () => {
       <Card sx={{ mb: 4 }}>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom fontWeight={600}>
-            Monthly Overview - {new Date(currentMonth.year, currentMonth.month - 1).toLocaleDateString('en-US', { 
+            Monthly Overview - {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
               month: 'long', 
               year: 'numeric' 
             })}

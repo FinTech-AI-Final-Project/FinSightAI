@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Grid,
   Card,
@@ -11,12 +11,15 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
+  IconButton,
 } from '@mui/material';
 import {
   TrendingUp,
   TrendingDown,
   AccountBalance,
   Receipt,
+  ChevronLeft,
+  ChevronRight,
 } from '@mui/icons-material';
 import { Doughnut, Line } from 'react-chartjs-2';
 import {
@@ -59,22 +62,45 @@ const Dashboard = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { userProfile } = useUser();
 
-  const fetchDashboardData = async () => {
+  const currentMonth = getCurrentMonth();
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth.month);
+  const [selectedYear, setSelectedYear] = useState(currentMonth.year);
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
-      const currentMonth = getCurrentMonth();
+      const startDate = new Date(selectedYear, selectedMonth - 1, 1);
+      const endDate = new Date(selectedYear, selectedMonth, 0);
       
-      // Fetch current month's expenses
+      // Fetch selected month's expenses
       const expensesResponse = await ApiService.getExpenses({
-        startDate: currentMonth.startDate.toISOString().split('T')[0],
-        endDate: currentMonth.endDate.toISOString().split('T')[0],
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
       });
       
-      // Fetch current month's budgets
+      // Fetch selected month's budgets
       const budgetsResponse = await ApiService.getBudgets({
-        month: currentMonth.month,
-        year: currentMonth.year,
+        month: selectedMonth,
+        year: selectedYear,
       });
 
       setExpenses(expensesResponse || []);
@@ -97,11 +123,11 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [userProfile.currency]); // Only re-fetch when currency changes
+  }, [fetchDashboardData, userProfile.currency]); // Re-fetch when month/year or currency changes
 
   useEffect(() => {
     // Listen for data changes from other components
@@ -126,7 +152,7 @@ const Dashboard = () => {
       window.removeEventListener('budgetDeleted', handleDataUpdate);
       window.removeEventListener('currencyChanged', handleDataUpdate);
     };
-  }, []); // Empty dependency array - event listeners don't need to change
+  }, [fetchDashboardData]); // Include fetchDashboardData dependency
 
   const getCategoryData = () => {
     const categoryTotals = {};
@@ -219,9 +245,27 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-          Dashboard
-        </Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>
+            Dashboard
+          </Typography>
+          
+          {/* Month Navigation */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <IconButton onClick={handlePreviousMonth} size={isMobile ? "small" : "medium"}>
+              <ChevronLeft />
+            </IconButton>
+            <Typography variant={isMobile ? "body1" : "h6"} sx={{ minWidth: isMobile ? 120 : 160, textAlign: 'center' }}>
+              {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+              })}
+            </Typography>
+            <IconButton onClick={handleNextMonth} size={isMobile ? "small" : "medium"}>
+              <ChevronRight />
+            </IconButton>
+          </Box>
+        </Box>
 
         {/* AI Tips Panel */}
         <AITipsPanel expenses={expenses} budgets={budgets} />

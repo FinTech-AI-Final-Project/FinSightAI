@@ -68,11 +68,13 @@ const Sidebar = () => {
           backgroundColor: 'background.paper',
           borderRight: 1,
           borderColor: 'divider',
-          mt: '64px', // Account for navbar height
+          top: '96px', // Add space between navbar and sidebar
+          height: 'calc(100vh - 96px)', // Adjust height accordingly
+          position: 'fixed',
         },
       }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ px: 2, py: 1.5 }}>
         <Typography
           variant="h6"
           sx={{
@@ -88,7 +90,7 @@ const Sidebar = () => {
         </Typography>
       </Box>
       <Divider />
-      <List sx={{ pt: 1 }}>
+      <List sx={{ pt: 1.5 }}>
         {menuItems.map((item, index) => (
           <motion.div
             key={item.text}
