@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Fab,
   Grid,
   LinearProgress,
   Dialog,
@@ -337,25 +336,46 @@ const Budgets = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', position: 'relative' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
           Budgets
         </Typography>
         
-        {/* Month Navigation */}
-        <Box display="flex" alignItems="center" gap={1}>
-          <IconButton onClick={handlePreviousMonth}>
-            <ChevronLeft />
-          </IconButton>
-          <Typography variant="h6" sx={{ minWidth: 160, textAlign: 'center' }}>
-            {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
-              month: 'long', 
-              year: 'numeric' 
-            })}
-          </Typography>
-          <IconButton onClick={handleNextMonth}>
-            <ChevronRight />
-          </IconButton>
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+          {/* Add Budget Button */}
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenDialog()}
+            sx={{
+              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+              },
+              borderRadius: 2,
+              px: { xs: 2, sm: 3 },
+              py: 1,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            }}
+          >
+            {isMobile ? 'Add' : 'Add Budget'}
+          </Button>
+          
+          {/* Month Navigation */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <IconButton onClick={handlePreviousMonth}>
+              <ChevronLeft />
+            </IconButton>
+            <Typography variant="h6" sx={{ minWidth: 160, textAlign: 'center' }}>
+              {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+              })}
+            </Typography>
+            <IconButton onClick={handleNextMonth}>
+              <ChevronRight />
+            </IconButton>
+          </Box>
         </Box>
       </Box>
 
@@ -456,24 +476,6 @@ const Budgets = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Floating Action Button */}
-      {budgets.length > 0 && (
-        <Fab
-          color="primary"
-          aria-label="add budget"
-          className="fab-container"
-          onClick={() => handleOpenDialog()}
-          sx={{
-            background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #1565c0 30%, #f57c00 90%)',
-            },
-          }}
-        >
-          <Add />
-        </Fab>
-      )}
 
       {/* Context Menu */}
       <Menu

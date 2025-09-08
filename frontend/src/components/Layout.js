@@ -4,6 +4,7 @@ import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Navbar from './Navbar';
 import BottomNavigation from './BottomNavigation';
 import Sidebar from './Sidebar';
+import Chatbot from './Chatbot';
 import { motion } from 'framer-motion';
 
 const Layout = () => {
@@ -42,6 +43,7 @@ const Layout = () => {
         </Box>
       </Box>
       {isMobile && <BottomNavigation />}
+      <Chatbot />
     </Box>
   );
 };

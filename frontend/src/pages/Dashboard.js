@@ -299,7 +299,7 @@ const Dashboard = () => {
 
           <Grid item xs={12} sm={6} md={3}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)' }}>
+              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" justifyContent="space-between">
                     <Box>
@@ -319,7 +319,7 @@ const Dashboard = () => {
 
           <Grid item xs={12} sm={6} md={3}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #4caf50 0%, #81c784 100%)' }}>
+              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" justifyContent="space-between">
                     <Box>
@@ -339,7 +339,7 @@ const Dashboard = () => {
 
           <Grid item xs={12} sm={6} md={3}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)' }}>
+              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' }}>
                 <CardContent>
                   <Box display="flex" alignItems="center" justifyContent="space-between">
                     <Box>

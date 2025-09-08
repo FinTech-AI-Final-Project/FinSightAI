@@ -549,41 +549,11 @@ const Settings = () => {
             <List>
               <ListItem button>
                 <ListItemIcon>
-                  <Help />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Help & Support"
-                  secondary="Get help with using FinSight AI"
-                />
-              </ListItem>
-              <Divider />
-              <ListItem button>
-                <ListItemIcon>
                   <Info />
                 </ListItemIcon>
                 <ListItemText 
                   primary="About FinSight AI"
                   secondary="Version 1.0.0 - AI-powered finance management"
-                />
-              </ListItem>
-              <Divider />
-              <ListItem button>
-                <ListItemIcon>
-                  <Security />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Privacy Policy"
-                  secondary="Learn about how we protect your data"
-                />
-              </ListItem>
-              <Divider />
-              <ListItem button>
-                <ListItemIcon>
-                  <Language />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Terms of Service"
-                  secondary="Read our terms and conditions"
                 />
               </ListItem>
             </List>

@@ -315,9 +315,12 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                   borderRadius: '50%',
                   backgroundColor: index === currentTipIndex 
                     ? theme.palette.primary.main 
-                    : theme.palette.action.disabled,
+                    : theme.palette.mode === 'dark' 
+                      ? theme.palette.action.disabled
+                      : theme.palette.grey[400],
                   transition: 'background-color 0.3s',
                   cursor: 'pointer',
+                  border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
                 }}
                 onClick={() => setCurrentTipIndex(index)}
               />

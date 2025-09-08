@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Fab,
   Grid,
   Chip,
   IconButton,
@@ -415,22 +414,46 @@ const Expenses = () => {
         overflow: { xs: 'auto', sm: 'visible' }, // Only vertical scroll on mobile
         width: '100%',
       }}>
-        <Typography 
-          variant={isMobile ? "h5" : "h4"} 
-          gutterBottom 
+        {/* Header Section with Title and Add Button */}
+        <Box 
           sx={{ 
-            fontWeight: 600, 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
             mb: 3,
-            px: { xs: 1, sm: 0 }, // Extra padding on mobile
-            position: { xs: 'sticky', sm: 'static' }, // Sticky header on mobile
+            px: { xs: 1, sm: 0 },
+            position: { xs: 'sticky', sm: 'static' },
             top: 0,
             backgroundColor: { xs: 'background.default', sm: 'transparent' },
             zIndex: 1,
             pt: { xs: 2, sm: 0 },
           }}
         >
-          Expenses
-        </Typography>
+          <Typography 
+            variant={isMobile ? "h5" : "h4"} 
+            sx={{ fontWeight: 600 }}
+          >
+            Expenses
+          </Typography>
+          
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenDialog()}
+            sx={{
+              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+              },
+              borderRadius: 2,
+              px: { xs: 2, sm: 3 },
+              py: 1,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            }}
+          >
+            {isMobile ? 'Add' : 'Add Expense'}
+          </Button>
+        </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -509,25 +532,6 @@ const Expenses = () => {
         )}
       </AnimatePresence>
       </Box> {/* Close the inner scrollable box */}
-
-      {/* Floating Action Button - Outside scrollable area */}
-      <Fab
-        color="primary"
-        aria-label="add expense"
-        className="fab-container"
-        onClick={() => handleOpenDialog()}
-        sx={{
-          position: 'fixed',
-          bottom: { xs: 80, sm: 16 }, // Higher on mobile to avoid bottom navigation
-          right: 16,
-          background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
-          '&:hover': {
-            background: 'linear-gradient(45deg, #1565c0 30%, #f57c00 90%)',
-          },
-        }}
-      >
-        <Add />
-      </Fab>
 
       {/* Context Menu */}
       <Menu
