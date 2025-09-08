@@ -517,9 +517,6 @@ const Expenses = () => {
         className="fab-container"
         onClick={() => handleOpenDialog()}
         sx={{
-          position: 'fixed',
-          bottom: { xs: 80, sm: 16 }, // Higher on mobile to avoid bottom navigation
-          right: 16,
           background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
           '&:hover': {
             background: 'linear-gradient(45deg, #1565c0 30%, #f57c00 90%)',

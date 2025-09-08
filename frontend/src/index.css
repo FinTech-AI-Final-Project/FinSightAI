@@ -165,7 +165,7 @@ html, body, #root {
 
 @media (max-width: 600px) {
   .fab-container {
-    bottom: 80px;
+    bottom: 100px; /* Increased to avoid chatbot and bottom nav */
     right: 16px;
   }
 }

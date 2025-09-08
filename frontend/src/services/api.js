@@ -296,6 +296,32 @@ export const getMultipleTips = async () => {
   }
 };
 
+// 🤖 AI Chatbot function
+export const sendChatMessage = async (message, userContext = {}) => {
+  try {
+    console.log('🤖 Sending chat message:', message);
+    const response = await apiRequest('/ai-chatbot', {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        currency: userContext.currency || 'ZAR',
+        region: userContext.region || 'ZA',
+        userContext
+      })
+    });
+    
+    if (response && response.reply) {
+      console.log('✅ Got chatbot reply:', response.reply);
+      return response;
+    }
+    
+    throw new Error('No reply received from chatbot');
+  } catch (error) {
+    console.error('🚨 Error sending chat message:', error);
+    throw error;
+  }
+};
+
 // Export the apiRequest function for use in components
 export { apiRequest };
 

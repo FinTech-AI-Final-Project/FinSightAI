@@ -360,9 +360,7 @@ public class AITipsService {
             Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
             
             StringBuilder contextPrompt = new StringBuilder();
-            contextPrompt.append("Create personalized financial tips for ").append(user.getFirstName())
-                    .append(", a user in ").append(getCurrencyLocation(user.getCurrency()))
-                    .append(" using ").append(formatCurrencySymbol(user.getCurrency())).append(" currency.\n\n");
+            contextPrompt.append("Create 3 simple financial tips for ").append(user.getFirstName()).append(".");
             
             // Add user's financial context
             contextPrompt.append("USER FINANCIAL CONTEXT:\n");
