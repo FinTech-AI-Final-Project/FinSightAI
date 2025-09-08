@@ -1,0 +1,5 @@
+package com.finsight.ai;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

@@ -1,0 +1,360 @@
+# =======================
+# SECURITY & CREDENTIALS - CRITICAL PROTECTION
+# =======================
+
+# 🔐 API Keys and Secrets - NEVER COMMIT THESE!
+*.key
+*.pem
+*.p12
+*.p8
+**/google-services.json
+**/firebase-service-account.json
+**/firebase-adminsdk-*.json
+finsight-ai-*-firebase-adminsdk-*.json
+
+# 🔐 Configuration files with credentials
+backend/src/main/resources/application.properties
+backend/src/main/resources/application-*.properties
+backend/src/main/resources/application-*.yml
+backend/src/main/resources/application-*.yaml
+frontend/src/firebase.js
+
+# 🔐 Environment files
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+backend/.env
+backend/.env.*
+
+# 🔐 Database and credentials folders
+config/keys/
+secrets/
+credentials/
+certs/
+
+# 🔐 Deployment and production configs
+docker-compose.override.yml
+k8s-secrets.yml
+deploy-prod.*
+deploy-staging.*
+production.conf
+
+# =======================
+# FRONTEND (React/Node.js)
+# =======================
+
+# Dependencies
+frontend/node_modules/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/package-lock.json
+frontend/yarn.lock
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+frontend/build/
+frontend/dist/
+build/
+dist/
+
+# Runtime data
+frontend/pids
+frontend/*.pid
+frontend/*.seed
+frontend/*.pid.lock
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+frontend/coverage/
+frontend/.nyc_output
+coverage/
+.nyc_output
+
+# ESLint cache
+frontend/.eslintcache
+.eslintcache
+
+# Optional npm cache directory
+frontend/.npm
+.npm
+
+# Optional REPL history
+frontend/.node_repl_history
+.node_repl_history
+
+# Output of 'npm pack'
+frontend/*.tgz
+*.tgz
+
+# Yarn Integrity file
+frontend/.yarn-integrity
+.yarn-integrity
+
+# =======================
+# CAPACITOR (Mobile)
+# =======================
+frontend/android/app/build/
+frontend/android/app/release/
+frontend/android/build/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/gradle.properties
+frontend/android/app/google-services.json
+frontend/android/app/src/google-services.json
+frontend/ios/build/
+frontend/ios/Pods/
+frontend/ios/App/App.xcworkspace/xcuserdata/
+frontend/ios/App/App.xcodeproj/xcuserdata/
+frontend/ios/App/GoogleService-Info.plist
+
+# Capacitor generated files
+capacitor.config.ts
+capacitor.config.js
+!capacitor.config.json
+
+# =======================
+# BACKEND (Java/Spring Boot)
+# =======================
+
+# Compiled class files
+backend/target/
+backend/build/
+backend/out/
+backend/*.class
+target/
+build/
+out/
+*.class
+
+# Log files
+backend/*.log
+backend/logs/
+logs/
+*.log
+
+# BlueJ files
+backend/*.ctxt
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+backend/.mtj.tmp/
+.mtj.tmp/
+
+# Package Files
+backend/*.jar
+backend/*.war
+backend/*.nar
+backend/*.ear
+backend/*.zip
+backend/*.tar.gz
+backend/*.rar
+*.jar
+*.war
+*.nar
+*.ear
+
+# Virtual machine crash logs
+backend/hs_err_pid*
+backend/replay_pid*
+hs_err_pid*
+replay_pid*
+
+# Maven
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/pom.xml.tag
+backend/pom.xml.releaseBackup
+backend/pom.xml.versionsBackup
+backend/pom.xml.next
+backend/release.properties
+backend/dependency-reduced-pom.xml
+backend/buildNumber.properties
+backend/.mvn/timing.properties
+backend/.mvn/wrapper/maven-wrapper.jar
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+backend/.gradle/
+backend/gradlew
+backend/gradlew.bat
+.gradle/
+gradlew
+gradlew.bat
+
+# Database files
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# =======================
+# IDE FILES
+# =======================
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.project
+.classpath
+.factorypath
+.buildpath
+.target
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# =======================
+# OPERATING SYSTEM
+# =======================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =======================
+# TEMPORARY & CACHE
+# =======================
+
+# Temporary folders
+temp/
+tmp/
+cache/
+.cache/
+
+# Backup files
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+
+# =======================
+# DOCUMENTATION
+# =======================
+
+# Generated documentation
+docs/build/
+docs/_build/
+site/
+
+# =======================
+# TESTING
+# =======================
+
+# Test results
+test-results/
+coverage/
+*.coverage
+.nyc_output/
+junit.xml
+
+# =======================
+# REPORTS AND GENERATED FILES
+# =======================
+
+# Financial reports with potential sensitive data
+**/finsight-report-*.pdf
+**/financial-report-*.pdf
+**/user-data-*.json
+**/export-*.csv
+
+# =======================
+# DOCKER & DEPLOYMENT
+# =======================
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+Dockerfile.prod
+
+# =======================
+# PERSONAL/DEVELOPMENT FILES
+# =======================
+
+# Personal notes and development files
+TODO.md
+NOTES.md
+.personal/
+personal/
+scratch/

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FinSight AI</string>
+    <string name="title_activity_main">FinSight AI</string>
+    <string name="package_name">com.finsight.ai</string>
+    <string name="custom_url_scheme">com.finsight.ai</string>
+</resources>
