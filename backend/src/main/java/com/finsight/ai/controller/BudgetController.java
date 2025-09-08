@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -86,9 +87,9 @@ public class BudgetController {
             String token = authToken.replace("Bearer ", "");
             User user = userService.getUserFromToken(token);
             budgetService.deleteBudget(budgetId, user);
-            return ResponseEntity.ok("Budget deleted successfully");
+            return ResponseEntity.ok(Map.of("message", "Budget deleted successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 }

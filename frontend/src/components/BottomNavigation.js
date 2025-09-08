@@ -65,8 +65,8 @@ const BottomNavigation = () => {
         left: 0, 
         right: 0,
         zIndex: 1000,
-        borderTop: 1,
-        borderColor: 'divider',
+        backgroundColor: '#000000',
+        borderTop: '1px solid rgba(255, 255, 255, 0.12)',
       }}
       elevation={8}
     >
@@ -81,13 +81,21 @@ const BottomNavigation = () => {
           showLabels
           sx={{
             height: 64,
+            backgroundColor: '#000000',
             '& .MuiBottomNavigationAction-root': {
               minWidth: 'auto',
               padding: '6px 12px 8px',
+              color: 'rgba(255, 255, 255, 0.6)',
+              '&.Mui-selected': {
+                color: '#ffffff',
+              },
             },
             '& .MuiBottomNavigationAction-label': {
               fontSize: '0.75rem',
               marginTop: '4px',
+              '&.Mui-selected': {
+                fontSize: '0.75rem',
+              },
             },
           }}
         >

@@ -23,37 +23,55 @@ html, body, #root {
   padding: 0;
 }
 
-/* Hide scrollbars completely for native mobile app experience */
-::-webkit-scrollbar {
-  display: none !important;
-  width: 0px !important;
-  background: transparent !important;
+/* Scrollbar styling - show on desktop, hide on mobile */
+@media (min-width: 769px) {
+  /* Show scrollbars on desktop with custom styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  * {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
+  }
+
+  /* Ensure scrollbar appears above navbar */
+  .main-content-scrollable {
+    z-index: 1000;
+  }
 }
 
-/* For all browsers - completely hide scrollbars */
-* {
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE and Edge */
-}
+@media (max-width: 768px) {
+  /* Hide scrollbars on mobile for native app experience */
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0px !important;
+    background: transparent !important;
+  }
 
-*::-webkit-scrollbar {
-  display: none !important;
-}
+  * {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE and Edge */
+  }
 
-/* Remove scrollbar from specific elements */
-html, body, #root, 
-.MuiContainer-root, .MuiBox-root, 
-.MuiPaper-root, .MuiCard-root {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar,
-.MuiContainer-root::-webkit-scrollbar, .MuiBox-root::-webkit-scrollbar,
-.MuiPaper-root::-webkit-scrollbar, .MuiCard-root::-webkit-scrollbar {
-  display: none !important;
-  width: 0px !important;
-  background: transparent !important;
+  *::-webkit-scrollbar {
+    display: none !important;
+  }
 }
 
 /* Loading animations */
