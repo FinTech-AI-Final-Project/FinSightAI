@@ -59,6 +59,9 @@ public class ChatbotService {
             
             String lastMonth = (String) context.get("lastMonth");
             Integer lastMonthYear = (Integer) context.get("lastMonthYear");
+            
+            // Get monthly history data
+            Map<String, Object> monthlyHistory = (Map<String, Object>) context.get("monthlyHistory");
 
             // Convert BigDecimal to double for formatting
             double totalSpentThisMonth = totalSpentThisMonthBD != null ? totalSpentThisMonthBD.doubleValue() : 0.0;
@@ -73,16 +76,67 @@ public class ChatbotService {
             String formattedCurrentBudget = currencyService.formatAmount(totalCurrentBudget, currency);
             String formattedLastMonthSpent = currencyService.formatAmount(totalSpentLastMonth, currency);
             String formattedMonthlyAverage = currencyService.formatAmount(monthlyAverage, currency);
+            
+            // Build historical data summary for AI (limit to most relevant months)
+            StringBuilder historicalSummary = new StringBuilder();
+            if (monthlyHistory != null && !monthlyHistory.isEmpty()) {
+                historicalSummary.append("HISTORICAL DATA (").append(monthlyHistory.size()).append(" months): ");
+                
+                // Sort months by date (most recent first) and limit to avoid token overflow
+                List<Map.Entry<String, Object>> sortedEntries = new ArrayList<>(monthlyHistory.entrySet());
+                sortedEntries.sort((a, b) -> {
+                    Map<String, Object> dataA = (Map<String, Object>) a.getValue();
+                    Map<String, Object> dataB = (Map<String, Object>) b.getValue();
+                    Integer yearA = (Integer) dataA.get("year");
+                    Integer yearB = (Integer) dataB.get("year");
+                    String monthA = (String) dataA.get("month");
+                    String monthB = (String) dataB.get("month");
+                    
+                    if (!yearA.equals(yearB)) {
+                        return yearB.compareTo(yearA); // Most recent year first
+                    }
+                    return java.time.Month.valueOf(monthB).compareTo(java.time.Month.valueOf(monthA));
+                });
+                
+                // Include up to 12 most recent months to avoid token limits
+                int monthsToInclude = Math.min(12, sortedEntries.size());
+                for (int i = 0; i < monthsToInclude; i++) {
+                    Map.Entry<String, Object> entry = sortedEntries.get(i);
+                    Map<String, Object> monthData = (Map<String, Object>) entry.getValue();
+                    String month = (String) monthData.get("month");
+                    Integer year = (Integer) monthData.get("year");
+                    BigDecimal spending = (BigDecimal) monthData.get("spending");
+                    BigDecimal budget = (BigDecimal) monthData.get("budget");
+                    
+                    String formattedSpending = currencyService.formatAmount(
+                        spending != null ? spending.doubleValue() : 0.0, currency);
+                    String formattedBudget = currencyService.formatAmount(
+                        budget != null ? budget.doubleValue() : 0.0, currency);
+                    
+                    historicalSummary.append(String.format("%s %d: spent %s/%s; ", 
+                        month, year, formattedSpending, formattedBudget));
+                }
+                
+                if (monthlyHistory.size() > 12) {
+                    historicalSummary.append(String.format("(+%d more months available)", monthlyHistory.size() - 12));
+                }
+            }
 
-            // Create user-friendly prompt optimized for chat responses
+            // Create comprehensive prompt with complete financial history
             String contextualPrompt = String.format(
-                "You are FinSight AI, a helpful financial advisor. Keep responses short and friendly. " +
-                "User: %s from %s using %s. " +
-                "This month spent: %s of %s budget. " +
-                "Question: '%s' " +
-                "Answer briefly with specific advice based on their data.",
-                userFirstName, region, currency, 
-                formattedThisMonthSpent, formattedCurrentBudget,
+                "You are FinSight AI, a professional financial assistant for %s. " +
+                "CURRENT STATUS (%s %d): spent %s out of %s budget. " +
+                "RECENT SUMMARY: Last month spent %s, 6-month average %s/month. " +
+                "%s " +
+                "CAPABILITIES: I have access to ALL your financial data since you started tracking. " +
+                "I can answer questions about any specific month, compare periods, analyze trends, " +
+                "calculate totals across date ranges, and provide insights on your spending patterns. " +
+                "For general questions, I'll be helpful but focus on your financial well-being. " +
+                "USER QUESTION: %s",
+                userFirstName,
+                currentMonth, currentYear, formattedThisMonthSpent, formattedCurrentBudget,
+                formattedLastMonthSpent, formattedMonthlyAverage,
+                historicalSummary.toString(),
                 userMessage
             );
 
@@ -97,8 +151,8 @@ public class ChatbotService {
                 messages.add(messageObj);
 
                 requestBody.put("messages", messages);
-                requestBody.put("max_tokens", 100);
-                requestBody.put("temperature", 0.7);
+                requestBody.put("max_tokens", 300);
+                requestBody.put("temperature", 0.8);
 
                 logger.info("Making chatbot API call to: {}", aiAgentApiUrl);
 
@@ -133,11 +187,11 @@ public class ChatbotService {
                 logger.error("Error calling AI agent for chatbot: {}", e.getMessage());
             }
 
-            return String.format("Hi %s! 👋 I'd be happy to help with your finances. Could you rephrase your question?", userFirstName);
+            return String.format("Hello %s. I'm here to help with your financial questions. Could you please rephrase your question?", userFirstName);
 
         } catch (Exception e) {
             logger.error("Error getting chatbot reply", e);
-            return "I'm having trouble right now 😅 Please try again in a moment!";
+            return "I'm currently experiencing technical difficulties. Please try again in a moment.";
         }
     }
 }

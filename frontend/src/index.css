@@ -150,7 +150,7 @@ html, body, #root {
 
 /* Budget progress bar */
 .budget-progress {
-  background: linear-gradient(90deg, #4caf50 0%, #ff9800 70%, #f44336 100%);
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 70%, #64b5f6 100%);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -165,7 +165,7 @@ html, body, #root {
 
 @media (max-width: 600px) {
   .fab-container {
-    bottom: 100px; /* Increased to avoid chatbot and bottom nav */
+    bottom: 80px; /* Position above bottom navigation */
     right: 16px;
   }
 }

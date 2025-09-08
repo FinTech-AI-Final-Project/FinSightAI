@@ -26,7 +26,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
-      text: 'Hi! I\'m your AI financial advisor. I can help you with budgeting, saving tips, expense analysis, and personalized financial advice based on your spending patterns. What would you like to know?',
+      text: 'Hello! I\'m FinSight AI, your financial assistant. I can help you with budgeting, expense tracking, financial planning, and answer questions about your spending patterns. How can I assist you today?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -83,7 +83,7 @@ const Chatbot = () => {
       const data = await response.json();
       const botMessage = { 
         sender: 'bot', 
-        text: data.reply || 'Sorry, I couldn\'t process that request right now.',
+        text: data.reply || 'I\'m having difficulty processing your request. Please try rephrasing your question.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
@@ -92,7 +92,7 @@ const Chatbot = () => {
       console.error('Chatbot error:', error);
       const errorMessage = { 
         sender: 'bot', 
-        text: 'Sorry, I\'m having trouble connecting right now. Please try again in a moment.',
+        text: 'I\'m currently experiencing technical difficulties. Please try again in a moment.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -123,20 +123,23 @@ const Chatbot = () => {
       <Fab
         sx={{
           position: 'fixed',
-          bottom: isMobile ? 20 : 24,
-          right: isMobile ? 20 : 24,
-          zIndex: 1300,
-          backgroundColor: '#000000',
+          bottom: isMobile ? 90 : 24, // Higher on mobile to avoid bottom nav
+          right: isMobile ? 16 : 24,
+          zIndex: 1200, // Lower than navbar/modals but higher than content
+          background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
           color: '#ffffff',
           '&:hover': { 
-            backgroundColor: '#333333',
+            background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
             transform: 'scale(1.1)'
           },
           transition: 'all 0.3s ease',
+          // Make it smaller on mobile to be less intrusive
+          width: isMobile ? 48 : 56,
+          height: isMobile ? 48 : 56,
         }}
         onClick={() => setOpen(!open)}
       >
-        {open ? <CloseIcon /> : <ChatIcon />}
+        {open ? <CloseIcon sx={{ fontSize: isMobile ? 20 : 24 }} /> : <ChatIcon sx={{ fontSize: isMobile ? 20 : 24 }} />}
       </Fab>
 
       {/* Chat Window */}
@@ -149,12 +152,12 @@ const Chatbot = () => {
             transition={{ duration: 0.3, ease: "easeOut" }}
             style={{
               position: 'fixed',
-              bottom: isMobile ? 80 : 90,
-              right: isMobile ? 10 : 24,
-              width: isMobile ? 'calc(100vw - 20px)' : 380,
-              maxWidth: 'calc(100vw - 20px)',
-              height: isMobile ? 'calc(100vh - 160px)' : 500,
-              zIndex: 1300,
+              bottom: isMobile ? 90 : 90, // Position above the FAB
+              right: isMobile ? 8 : 24,
+              width: isMobile ? 'calc(100vw - 16px)' : 380,
+              maxWidth: 'calc(100vw - 16px)',
+              height: isMobile ? 'calc(100vh - 170px)' : 500, // Account for navbar + bottom nav + FAB
+              zIndex: 1200,
             }}
           >
             <Paper
@@ -163,16 +166,16 @@ const Chatbot = () => {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                backgroundColor: '#ffffff',
+                backgroundColor: theme.palette.background.paper,
                 borderRadius: 3,
                 overflow: 'hidden',
-                border: '1px solid rgba(0, 0, 0, 0.12)',
+                border: `1px solid ${theme.palette.divider}`,
               }}
             >
               {/* Header */}
               <Box
                 sx={{
-                  backgroundColor: '#000000',
+                  background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                   color: '#ffffff',
                   p: 2,
                   display: 'flex',
@@ -199,7 +202,7 @@ const Chatbot = () => {
                   flex: 1,
                   overflowY: 'auto',
                   p: 1,
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : '#f8f9fa',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 1
@@ -233,7 +236,7 @@ const Chatbot = () => {
                             sx={{
                               width: 32,
                               height: 32,
-                              backgroundColor: '#000000',
+                              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                               fontSize: '14px'
                             }}
                           >
@@ -243,15 +246,20 @@ const Chatbot = () => {
                         
                         <Box
                           sx={{
-                            backgroundColor: msg.sender === 'user' ? '#000000' : '#ffffff',
-                            color: msg.sender === 'user' ? '#ffffff' : '#000000',
+                            backgroundColor: msg.sender === 'user' 
+                              ? 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' 
+                              : theme.palette.background.paper,
+                            color: msg.sender === 'user' ? '#ffffff' : theme.palette.text.primary,
                             px: 2,
                             py: 1.5,
                             borderRadius: 2,
                             maxWidth: '100%',
                             wordWrap: 'break-word',
-                            border: msg.sender === 'bot' ? '1px solid rgba(0, 0, 0, 0.12)' : 'none',
-                            boxShadow: 1
+                            border: msg.sender === 'bot' ? `1px solid ${theme.palette.divider}` : 'none',
+                            boxShadow: 1,
+                            background: msg.sender === 'user' 
+                              ? 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' 
+                              : theme.palette.background.paper,
                           }}
                         >
                           <Typography variant="body2" sx={{ lineHeight: 1.4 }}>
@@ -281,24 +289,24 @@ const Chatbot = () => {
                         sx={{
                           width: 32,
                           height: 32,
-                          backgroundColor: '#000000',
+                          background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                         }}
                       >
                         <PsychologyIcon sx={{ fontSize: 18 }} />
                       </Avatar>
                       <Box
                         sx={{
-                          backgroundColor: '#ffffff',
+                          backgroundColor: theme.palette.background.paper,
                           px: 2,
                           py: 1.5,
                           borderRadius: 2,
-                          border: '1px solid rgba(0, 0, 0, 0.12)',
+                          border: `1px solid ${theme.palette.divider}`,
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1
                         }}
                       >
-                        <CircularProgress size={16} sx={{ color: '#000000' }} />
+                        <CircularProgress size={16} sx={{ color: '#1976d2' }} />
                         <Typography variant="body2" color="text.secondary">
                           Thinking...
                         </Typography>
@@ -313,8 +321,8 @@ const Chatbot = () => {
               <Box
                 sx={{
                   p: 2,
-                  backgroundColor: '#ffffff',
-                  borderTop: '1px solid rgba(0, 0, 0, 0.12)',
+                  backgroundColor: theme.palette.background.paper,
+                  borderTop: `1px solid ${theme.palette.divider}`,
                 }}
               >
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
@@ -322,7 +330,7 @@ const Chatbot = () => {
                     fullWidth
                     multiline
                     maxRows={3}
-                    placeholder="Ask me about your finances..."
+                    placeholder="Type your financial question here..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
@@ -332,7 +340,27 @@ const Chatbot = () => {
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
-                        backgroundColor: '#f8f9fa',
+                        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#f8f9fa',
+                        color: theme.palette.text.primary,
+                        '& fieldset': {
+                          borderColor: theme.palette.divider,
+                        },
+                        '&:hover fieldset': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                        '& input': {
+                          color: theme.palette.text.primary,
+                        },
+                        '& textarea': {
+                          color: theme.palette.text.primary,
+                        }
+                      },
+                      '& .MuiInputBase-input::placeholder': {
+                        color: theme.palette.text.secondary,
+                        opacity: 1,
                       }
                     }}
                   />
@@ -340,12 +368,14 @@ const Chatbot = () => {
                     onClick={handleSend}
                     disabled={loading || !input.trim()}
                     sx={{
-                      backgroundColor: '#000000',
+                      background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                       color: '#ffffff',
-                      '&:hover': { backgroundColor: '#333333' },
+                      '&:hover': { 
+                        background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+                      },
                       '&:disabled': { 
-                        backgroundColor: '#cccccc',
-                        color: '#666666'
+                        backgroundColor: theme.palette.action.disabled,
+                        color: theme.palette.action.disabled
                       },
                       borderRadius: 2,
                       p: 1

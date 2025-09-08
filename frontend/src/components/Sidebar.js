@@ -79,7 +79,7 @@ const Sidebar = () => {
           variant="h6"
           sx={{
             fontWeight: 600,
-            background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
+            background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',

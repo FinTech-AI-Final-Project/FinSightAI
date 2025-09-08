@@ -359,64 +359,18 @@ public class AITipsService {
             List<Budget> currentMonthBudgets = budgetService.getUserBudgetsByMonth(user, now.getMonthValue(), now.getYear());
             Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
             
+            // Create a simple, focused prompt
             StringBuilder contextPrompt = new StringBuilder();
-            contextPrompt.append("Create 3 simple financial tips for ").append(user.getFirstName()).append(".");
-            
-            // Add user's financial context
-            contextPrompt.append("USER FINANCIAL CONTEXT:\n");
-            contextPrompt.append("- Location: ").append(getCurrencyLocation(user.getCurrency())).append("\n");
-            contextPrompt.append("- Currency: ").append(formatCurrencySymbol(user.getCurrency())).append("\n");
-            contextPrompt.append("- Current month expenses: ").append(currentMonthExpenses.size()).append(" transactions\n");
+            contextPrompt.append("Create 3 financial tips for ").append(user.getFirstName()).append(" in ").append(getCurrencyLocation(user.getCurrency())).append(". ");
             
             if (!currentMonthExpenses.isEmpty()) {
                 BigDecimal totalSpent = currentMonthExpenses.stream()
                     .map(Expense::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-                contextPrompt.append("- Total spent this month: ").append(formatCurrencyAmount(user.getCurrency(), totalSpent)).append("\n");
-                
-                // Top spending categories
-                if (!categorySpending.isEmpty()) {
-                    contextPrompt.append("- Top spending categories: ");
-                    categorySpending.entrySet().stream()
-                        .sorted(Map.Entry.<ExpenseCategory, BigDecimal>comparingByValue().reversed())
-                        .limit(3)
-                        .forEach(entry -> contextPrompt.append(formatCategoryName(entry.getKey())).append(" (")
-                            .append(formatCurrencyAmount(user.getCurrency(), entry.getValue())).append("), "));
-                    contextPrompt.append("\n");
-                }
+                contextPrompt.append("Spent ").append(formatCurrencyAmount(user.getCurrency(), totalSpent)).append(" this month. ");
             }
             
-            if (!currentMonthBudgets.isEmpty()) {
-                contextPrompt.append("- Active budgets: ").append(currentMonthBudgets.size()).append(" categories\n");
-                for (Budget budget : currentMonthBudgets) {
-                    BigDecimal spent = categorySpending.getOrDefault(budget.getCategory(), BigDecimal.ZERO);
-                    BigDecimal percentage = budget.getMonthlyLimit().compareTo(BigDecimal.ZERO) > 0 
-                        ? spent.divide(budget.getMonthlyLimit(), 4, BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100))
-                        : BigDecimal.ZERO;
-                    contextPrompt.append("  * ").append(formatCategoryName(budget.getCategory())).append(": ")
-                        .append(spent).append("/").append(budget.getMonthlyLimit()).append(" ")
-                        .append(formatCurrencySymbol(user.getCurrency())).append(" (").append(percentage.intValue()).append("%)\n");
-                }
-            }
-            
-            contextPrompt.append("\nREQUIREMENTS:\n");
-            contextPrompt.append("- Make tips specific to ").append(getCurrencyLocation(user.getCurrency())).append(" financial context\n");
-            contextPrompt.append("- Include local banking options, investment products, and financial services\n");
-            contextPrompt.append("- Reference specific retailers, apps, or services available in the region\n");
-            contextPrompt.append("- Use actual spending data to provide relevant advice\n");
-            contextPrompt.append("- Keep tips concise but actionable (max 150 characters each)\n");
-            contextPrompt.append("- Use appropriate emojis and friendly tone\n");
-            contextPrompt.append("- Address the user by their first name\n\n");
-            
-            contextPrompt.append("ENHANCE THESE BASE TIPS:\n");
-            for (int i = 0; i < baseTips.size(); i++) {
-                contextPrompt.append("Tip ").append(i + 1).append(": ").append(baseTips.get(i)).append("\n\n");
-            }
-            
-            contextPrompt.append("Please return exactly 3 enhanced tips in this format:\n");
-            contextPrompt.append("TIP1: [enhanced tip 1]\n");
-            contextPrompt.append("TIP2: [enhanced tip 2]\n");
-            contextPrompt.append("TIP3: [enhanced tip 3]\n");
+            contextPrompt.append("Format as: TIP1: [tip] TIP2: [tip] TIP3: [tip]");
             
             String enhancedContent = callAIAgentAPI(contextPrompt.toString());
             
@@ -543,7 +497,7 @@ public class AITipsService {
             messages.add(userMessage);
             
             requestBody.put("messages", messages);
-            requestBody.put("max_tokens", 1000);
+            requestBody.put("max_tokens", 120);
             requestBody.put("temperature", 0.7);
             
             Mono<Map> response = webClient.post()

@@ -115,7 +115,7 @@ const Register = () => {
               flexDirection: 'column',
               alignItems: 'center',
               borderRadius: 3,
-              background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(255,152,0,0.05) 100%)',
+              background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(66,165,245,0.05) 100%)',
             }}
           >
             <Box sx={{ mb: 3, textAlign: 'center' }}>
@@ -124,7 +124,7 @@ const Register = () => {
                 variant={isMobile ? "h4" : "h3"}
                 sx={{
                   fontWeight: 700,
-                  background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -251,9 +251,9 @@ const Register = () => {
                   mb: 2,
                   py: 1.5,
                   borderRadius: 2,
-                  background: 'linear-gradient(45deg, #1976d2 30%, #ff9800 90%)',
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #1565c0 30%, #f57c00 90%)',
+                    background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
                   },
                 }}
               >

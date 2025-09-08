@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -150,6 +151,57 @@ public class ChatbotController {
             // Add specific month context
             aiContext.put("lastMonth", lastMonth.getMonth().toString());
             aiContext.put("lastMonthYear", lastMonth.getYear());
+            
+            // Add comprehensive historical data for ALL months the user has data
+            Map<String, Object> monthlyData = new HashMap<>();
+            
+            // Get all expenses to determine the full date range
+            LocalDate earliestDate = allExpenses.stream()
+                .map(Expense::getDate)
+                .min(LocalDate::compareTo)
+                .orElse(currentDate.minusYears(2)); // fallback to 2 years ago if no expenses
+            
+            // Get all budgets to see what months have budget data
+            Set<String> budgetMonths = allUserBudgets.stream()
+                .map(budget -> budget.getMonth() + "_" + budget.getYear())
+                .collect(java.util.stream.Collectors.toSet());
+            
+            // Iterate through ALL months from earliest data to current month
+            LocalDate iterDate = earliestDate.withDayOfMonth(1);
+            while (!iterDate.isAfter(currentDate)) {
+                LocalDate monthStart = iterDate.withDayOfMonth(1);
+                LocalDate monthEnd = iterDate.withDayOfMonth(iterDate.lengthOfMonth());
+                
+                // Get spending for this month
+                BigDecimal monthSpending = expenseService.getTotalExpenses(user, monthStart, monthEnd);
+                
+                // Get budgets for this month
+                List<Budget> monthBudgets = budgetService.getUserBudgetsByMonth(user, iterDate.getMonthValue(), iterDate.getYear());
+                BigDecimal monthBudgetTotal = monthBudgets.stream()
+                    .map(Budget::getMonthlyLimit)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+                // Only include months that have either spending or budget data
+                if ((monthSpending != null && monthSpending.compareTo(BigDecimal.ZERO) > 0) || 
+                    (monthBudgetTotal != null && monthBudgetTotal.compareTo(BigDecimal.ZERO) > 0)) {
+                    
+                    String monthKey = iterDate.getMonth().toString().toLowerCase() + "_" + iterDate.getYear();
+                    Map<String, Object> monthInfo = new HashMap<>();
+                    monthInfo.put("month", iterDate.getMonth().toString());
+                    monthInfo.put("year", iterDate.getYear());
+                    monthInfo.put("spending", monthSpending != null ? monthSpending : BigDecimal.ZERO);
+                    monthInfo.put("budget", monthBudgetTotal != null ? monthBudgetTotal : BigDecimal.ZERO);
+                    monthInfo.put("budgetCount", monthBudgets.size());
+                    
+                    monthlyData.put(monthKey, monthInfo);
+                }
+                
+                // Move to next month
+                iterDate = iterDate.plusMonths(1);
+            }
+            
+            aiContext.put("monthlyHistory", monthlyData);
+            aiContext.put("totalMonthsWithData", monthlyData.size());
             
             // Get AI response using chatbot service
             String aiReply = chatbotService.getChatbotReply(aiContext);
