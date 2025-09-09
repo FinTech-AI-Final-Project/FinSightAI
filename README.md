@@ -32,7 +32,7 @@ A comprehensive personal finance management application with AI-powered insights
 
 ### Frontend
 
-- **React 18.2.0** - Modern UI framework
+- **React 18.2** - Modern UI framework
 - **Material-UI 5.15.1** - Component library
 - **Chart.js** - Data visualization
 - **Framer Motion** - Smooth animations
