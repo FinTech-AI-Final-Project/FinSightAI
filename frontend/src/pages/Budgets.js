@@ -216,7 +216,6 @@ const Budgets = () => {
             height: '100%',
             position: 'relative',
             overflow: 'hidden',
-            mb: { xs: 2, sm: 0 },
             mx: { xs: 0, sm: 'auto' },
             cursor: isMobile ? 'default' : 'pointer',
             '&:hover': {
@@ -494,12 +493,15 @@ const Budgets = () => {
       </Card>
 
       {/* Budget Cards */}
-      <AnimatePresence>
-        {budgets.length > 0 ? (
-          budgets.map((budget) => (
-            <BudgetCard key={budget.id} budget={budget} />
-          ))
-        ) : (
+      <Box sx={{ mt: 2 }}>
+        <AnimatePresence>
+          {budgets.length > 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {budgets.map((budget) => (
+                <BudgetCard key={budget.id} budget={budget} />
+              ))}
+            </Box>
+          ) : (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -525,7 +527,8 @@ const Budgets = () => {
             </Card>
           </motion.div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </Box>
 
       {/* Context Menu */}
       <Menu
