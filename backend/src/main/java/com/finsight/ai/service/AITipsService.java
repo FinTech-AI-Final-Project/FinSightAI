@@ -1,3 +1,4 @@
+
 package com.finsight.ai.service;
 
 import com.finsight.ai.entity.Budget;
@@ -14,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,15 +120,241 @@ public class AITipsService {
 
     // Method for personalized single tip (controller compatibility)
     public String generatePersonalizedTip(User user) {
-        logger.info("Getting personalized tip for user: {}", user.getFirebaseUid());
+        logger.info("Getting personalized single tip for user: {}", user.getFirebaseUid());
         
         try {
+            // Generate a single enhanced tip directly using AI - be generous with rate
+            String enhancedTip = generateSingleEnhancedTip(user);
+            
+            if (enhancedTip != null && !enhancedTip.trim().isEmpty()) {
+                return enhancedTip;
+            }
+            
+            // If AI fails, try the multiple tips method as fallback
             List<String> tips = getMultipleTips(user);
             return tips.isEmpty() ? getGenericTip() : tips.get(0);
+            
         } catch (Exception e) {
             logger.error("Error generating personalized tip for user {}: {}", user.getFirebaseUid(), e.getMessage());
+            
+            // Generate high-quality fallback tip - enhanced personalization
             List<String> fallbackTips = generateFallbackTips(user);
-            return formatTipText(fallbackTips.get(0), user.getCurrency());
+            String fallbackTip;
+            
+            if (!fallbackTips.isEmpty()) {
+                // Pick a random tip to add variety
+                Random random = new Random();
+                fallbackTip = fallbackTips.get(random.nextInt(fallbackTips.size()));
+            } else {
+                fallbackTip = generatePersonalizedFallbackTip(user);
+            }
+            
+            return formatTipText(fallbackTip, user.getCurrency());
+        }
+    }
+    
+    // Generate a single enhanced tip using AI - optimized for quality and user-friendly formatting
+    private String generateSingleEnhancedTip(User user) {
+        try {
+            // Get user's financial context for AI enhancement
+            LocalDate now = LocalDate.now();
+            LocalDate startOfMonth = now.withDayOfMonth(1);
+            LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+            
+            List<Expense> currentMonthExpenses = expenseService.getUserExpensesByDateRange(user, startOfMonth, endOfMonth);
+            List<Budget> currentMonthBudgets = budgetService.getUserBudgetsByMonth(user, now.getMonthValue(), now.getYear());
+            Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
+            
+            // Create a comprehensive prompt optimized for single, complete tips
+            StringBuilder contextPrompt = new StringBuilder();
+            
+            // Format amounts properly
+            BigDecimal totalSpent = currentMonthExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal totalBudget = currentMonthBudgets.stream()
+                .map(Budget::getMonthlyLimit)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            String currency = user.getCurrency();
+            String currencySymbol = formatCurrencySymbol(currency);
+            String region = getCurrencyLocation(currency);
+            String firstName = user.getFirstName() != null ? user.getFirstName() : "there";
+            
+            // Build very short, focused context for maximum response tokens
+            contextPrompt.append("Financial tip for ").append(firstName).append(" (").append(region).append("): ");
+            contextPrompt.append("Spent ").append(currencySymbol).append(String.format("%.0f", totalSpent));
+            if (totalBudget.compareTo(BigDecimal.ZERO) > 0) {
+                double budgetUsedPercent = totalSpent.divide(totalBudget, 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
+                contextPrompt.append(" of ").append(currencySymbol).append(String.format("%.0f", totalBudget));
+                contextPrompt.append(" (").append(String.format("%.0f", budgetUsedPercent)).append("%)");
+            }
+            contextPrompt.append(". ");
+            
+            // Add top category if available
+            if (!categorySpending.isEmpty()) {
+                ExpenseCategory topCategory = categorySpending.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(null);
+                
+                if (topCategory != null) {
+                    BigDecimal topAmount = categorySpending.get(topCategory);
+                    contextPrompt.append("Top: ").append(topCategory.getDisplayName())
+                        .append(" ").append(currencySymbol).append(String.format("%.0f", topAmount)).append(". ");
+                }
+            }
+            
+            contextPrompt.append("Give one short money tip for ").append(region).append(". Max 100 characters, no formatting.");
+            
+            String enhancedContent = callAIAgentAPI(contextPrompt.toString());
+            
+            // Try multiple times if we get empty responses
+            int attempts = 0;
+            while ((enhancedContent == null || enhancedContent.trim().isEmpty()) && attempts < 2) {
+                attempts++;
+                logger.info("AI response was empty, retrying attempt {}/2", attempts);
+                try {
+                    Thread.sleep(1000); // Brief pause before retry
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                enhancedContent = callAIAgentAPI(contextPrompt.toString());
+            }
+            
+            if (enhancedContent != null && !enhancedContent.trim().isEmpty()) {
+                // Enhanced processing for single tip
+                String processedTip = processSingleAITip(enhancedContent, user.getCurrency());
+                if (processedTip != null && processedTip.length() > 15) {
+                    logger.info("Successfully generated enhanced single tip for user: {} after {} attempts", user.getFirebaseUid(), attempts + 1);
+                    return processedTip;
+                } else {
+                    logger.warn("AI response processing failed - tip too short or null");
+                }
+            } else {
+                logger.warn("AI API returned empty response after {} attempts", attempts + 1);
+            }
+            
+        } catch (Exception e) {
+            logger.warn("Failed to generate single enhanced tip for user {}: {}", user.getFirebaseUid(), e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    // Process a single AI tip for optimal user presentation
+    private String processSingleAITip(String aiResponse, String currency) {
+        if (aiResponse == null || aiResponse.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Comprehensive character encoding cleanup - enhanced for corrupted characters
+        String cleanedResponse = aiResponse
+            .replaceAll("ΓÇ[£¥ô]", "\"")     // Fix various quote characters
+            .replaceAll("ΓÇ[æ–—]", "-")      // Fix various dash characters  
+            .replaceAll("ΓÇ[»¿•]", "")       // Remove bullet/weird characters
+            .replaceAll("ΓÇÖ", "'")          // Fix apostrophes
+            .replaceAll("ΓÇô", "-")          // Fix en-dashes
+            .replaceAll("ΓëêΓÇ»", "~")       // Fix approximation symbols
+            .replaceAll("ΓÇæ", "-")          // Fix hyphen corruption
+            .replaceAll("ΓÇ»", "")           // Remove percent symbol corruption
+            .replaceAll("\\*\\*[^*]*\\*\\*", "") // Remove **bold text**
+            .replaceAll("\\*[^*]*\\*", "")       // Remove *italic text*
+            .replaceAll("\\*+", "")              // Remove any remaining asterisks
+            .replaceAll("\\u201[CD]", "\"")      // Smart quotes
+            .replaceAll("\\u201[89]", "'")       // Single quotes
+            .replaceAll("\\u201[3-4]", "-")      // En/Em dashes
+            .replaceAll("\\u00A0", " ")          // Non-breaking space
+            .replaceAll("≡ƒ[\\w]*", "")          // Remove emoji corruption symbols
+            .replaceAll("Γ[\\w]*", "")           // Remove other corruption
+            .replaceAll("\\s+", " ")             // Normalize whitespace
+            .trim();
+        
+        // Remove common AI prefixes and formatting
+        cleanedResponse = cleanedResponse
+            .replaceAll("(?i)^\\*\\*[^*]+\\*\\*:?\\s*", "") // Remove **headers**
+            .replaceAll("(?i)^(actionable tip|financial tip|tip|here is|here's|recommendation):?\\s*", "")
+            .replaceAll("(?i)(hope this helps|let me know).*$", "")
+            .replaceAll("^[\"'`]|[\"'`]$", "")  // Remove surrounding quotes/backticks
+            .replaceAll("^:+\\s*", "")          // Remove leading colons
+            .trim();
+        
+        // Enforce length limit - keep only first sentence if too long
+        if (cleanedResponse.length() > 200) {
+            String[] sentences = cleanedResponse.split("[.!?]");
+            if (sentences.length > 0 && sentences[0].trim().length() > 20) {
+                cleanedResponse = sentences[0].trim();
+            } else {
+                // If even first sentence is too long, truncate it
+                cleanedResponse = cleanedResponse.substring(0, 180).trim() + "...";
+            }
+        }
+        
+        // Reject if still too short or contains formatting issues
+        if (cleanedResponse.length() < 15 || cleanedResponse.contains("ΓÇ")) {
+            return null;
+        }
+        
+        // Add emoji if not present
+        if (!cleanedResponse.matches("^[\\p{So}\\p{Cn}].*")) {
+            cleanedResponse = "💡 " + cleanedResponse;
+        }
+        
+        // Ensure proper ending
+        if (!cleanedResponse.endsWith(".") && !cleanedResponse.endsWith("!") && !cleanedResponse.endsWith("?")) {
+            cleanedResponse += ".";
+        }
+        
+        // Ensure proper capitalization after emoji
+        if (cleanedResponse.startsWith("💡 ") && cleanedResponse.length() > 3) {
+            char firstChar = cleanedResponse.charAt(2);
+            if (Character.isLowerCase(firstChar)) {
+                cleanedResponse = "💡 " + Character.toUpperCase(firstChar) + cleanedResponse.substring(3);
+            }
+        }
+        
+        // Apply currency formatting
+        String formattedTip = formatTipText(cleanedResponse, currency);
+        
+        logger.debug("Processed single AI tip: {}", formattedTip);
+        return formattedTip;
+    }
+    
+    // Generate a personalized fallback tip when AI fails
+    private String generatePersonalizedFallbackTip(User user) {
+        String firstName = user.getFirstName() != null ? user.getFirstName() : "there";
+        String currency = user.getCurrency();
+        String region = getCurrencyLocation(currency);
+        String currencySymbol = formatCurrencySymbol(currency);
+        
+        try {
+            // Get some basic financial context
+            LocalDate now = LocalDate.now();
+            LocalDate startOfMonth = now.withDayOfMonth(1);
+            List<Expense> expenses = expenseService.getUserExpensesByDateRange(user, startOfMonth, now);
+            List<Budget> budgets = budgetService.getUserBudgetsByMonth(user, now.getMonthValue(), now.getYear());
+            
+            String[] tips = {
+                String.format("💡 %s, try the 50/30/20 rule: 50%% needs, 30%% wants, 20%% savings!", firstName),
+                String.format("🎯 %s, automate %s50 monthly transfers to boost your savings!", firstName, currencySymbol),
+                String.format("📊 %s, track your top spending category and cut it by 10%%!", firstName),
+                String.format("🏦 %s, open a high-yield savings account to grow your money!", firstName),
+                String.format("💳 %s, cancel unused subscriptions to save %s200+ yearly!", firstName, currencySymbol),
+                String.format("🎯 %s, wait 24 hours before buying anything over %s100!", firstName, currencySymbol),
+                String.format("📈 %s, start an emergency fund with %s500!", firstName, currencySymbol),
+                String.format("🏠 %s, negotiate insurance rates annually to save 10-20%%!", firstName),
+                String.format("💰 %s, use cashback apps to earn while spending!", firstName),
+                String.format("📱 %s, review weekly spending in FinSight AI for insights!", firstName)
+            };
+            
+            // Return a random tip for variety
+            Random random = new Random();
+            return tips[random.nextInt(tips.length)];
+            
+        } catch (Exception e) {
+            logger.warn("Error generating personalized fallback tip: {}", e.getMessage());
+            return String.format("💡 %s, start tracking your expenses in %s to discover personalized savings opportunities!", firstName, currency);
         }
     }
 
@@ -155,7 +383,7 @@ public class AITipsService {
         // Randomize the tips selection
         Collections.shuffle(allTips);
         
-        // Ensure we have at least 3 tips
+        // Ensure we have sufficient tips for random selection
         while (allTips.size() < 3) {
             allTips.add(String.format("💡 %s, keep tracking your expenses in %s to build better financial habits!", firstName, user.getCurrency()));
             allTips.add(String.format("🎯 %s, set a budget for your biggest spending category and watch your savings grow!", firstName));
@@ -347,7 +575,7 @@ public class AITipsService {
         return tips;
     }
 
-    // AI Enhancement Methods - no rate limiting
+    // AI Enhancement Methods - using chatbot approach
     private List<String> enhanceMultipleTipsWithAI(List<String> baseTips, User user) {
         try {
             // Get user's financial context for AI enhancement
@@ -359,22 +587,49 @@ public class AITipsService {
             List<Budget> currentMonthBudgets = budgetService.getUserBudgetsByMonth(user, now.getMonthValue(), now.getYear());
             Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
             
-            // Create a simple, focused prompt
+            // Create a comprehensive prompt like the chatbot does
             StringBuilder contextPrompt = new StringBuilder();
-            contextPrompt.append("Create 3 financial tips for ").append(user.getFirstName()).append(" in ").append(getCurrencyLocation(user.getCurrency())).append(". ");
             
-            if (!currentMonthExpenses.isEmpty()) {
-                BigDecimal totalSpent = currentMonthExpenses.stream()
-                    .map(Expense::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-                contextPrompt.append("Spent ").append(formatCurrencyAmount(user.getCurrency(), totalSpent)).append(" this month. ");
+            // Format amounts properly
+            BigDecimal totalSpent = currentMonthExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal totalBudget = currentMonthBudgets.stream()
+                .map(Budget::getMonthlyLimit)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            String currency = user.getCurrency();
+            String currencySymbol = formatCurrencySymbol(currency);
+            String region = getCurrencyLocation(currency);
+            String firstName = user.getFirstName() != null ? user.getFirstName() : "there";
+            
+            // Build simple, concise prompt to maximize response tokens
+            contextPrompt.append("Give ").append(firstName).append(" one money tip. ");
+            contextPrompt.append("Spent ").append(currencySymbol).append(String.format("%.2f", totalSpent));
+            
+            if (totalBudget.compareTo(BigDecimal.ZERO) > 0) {
+                contextPrompt.append(" of ").append(currencySymbol).append(String.format("%.2f", totalBudget)).append(" budget. ");
             }
             
-            contextPrompt.append("Format as: TIP1: [tip] TIP2: [tip] TIP3: [tip]");
+            // Add top spending category if available
+            if (!categorySpending.isEmpty()) {
+                ExpenseCategory topCategory = categorySpending.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(null);
+                
+                if (topCategory != null) {
+                    contextPrompt.append("Most spent: ").append(topCategory.getDisplayName()).append(". ");
+                }
+            }
+            
+            contextPrompt.append("Plain text only, no formatting.");
             
             String enhancedContent = callAIAgentAPI(contextPrompt.toString());
             
-            return parseEnhancedTipsWithFormatting(enhancedContent, baseTips, user.getCurrency());
+            // Use simpler parsing approach like the chatbot
+            return parseAIResponseSimple(enhancedContent, baseTips, user.getCurrency());
             
         } catch (Exception e) {
             logger.warn("Failed to enhance tips with AI for user {}: {}", user.getFirebaseUid(), e.getMessage());
@@ -386,67 +641,199 @@ public class AITipsService {
         }
     }
 
-    // Parse the AI response into individual tips
-    private List<String> parseEnhancedTips(String enhancedContent, List<String> fallbackTips) {
-        List<String> parsedTips = new ArrayList<>();
+    // Simple AI response parsing - chatbot approach
+    private List<String> parseAIResponseSimple(String aiResponse, List<String> fallbackTips, String currency) {
+        List<String> tips = new ArrayList<>();
         
-        if (enhancedContent != null && !enhancedContent.trim().isEmpty()) {
-            // First, try the expected TIP1:, TIP2:, TIP3: format
-            if (enhancedContent.contains("TIP1:") && enhancedContent.contains("TIP2:") && enhancedContent.contains("TIP3:")) {
-                String[] lines = enhancedContent.split("\n");
+        if (aiResponse != null && !aiResponse.trim().isEmpty()) {
+            // First, clean up character encoding issues
+            String cleanedResponse = aiResponse
+                .replaceAll("ΓÇÖ", "'")     // Fix smart quotes
+                .replaceAll("ΓÇ£", "\"")    // Fix opening quotes
+                .replaceAll("ΓÇ¥", "\"")    // Fix closing quotes
+                .replaceAll("ΓÇô", "-")     // Fix em-dash
+                .replaceAll("ΓÇæ", "-")     // Fix en-dash
+                .replaceAll("ΓÇ»", "")      // Remove weird bullet characters
+                .replaceAll("ΓÇ¿", "")      // Remove weird characters
+                .replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "") // Remove control characters except newlines/tabs
+                .replaceAll("\\s+", " ")    // Normalize whitespace
+                .trim();
+            
+            logger.debug("Cleaned AI response: {}", cleanedResponse);
+            
+            // For single tip format, try to extract the main tip directly
+            String mainTip = extractMainTip(cleanedResponse);
+            if (mainTip != null && mainTip.length() > 15) {
+                // Clean up the tip
+                mainTip = mainTip.replaceAll("^\\d+\\.\\s*", "")  // Remove number prefixes
+                               .replaceAll("^-\\s*", "")          // Remove dash prefixes  
+                               .replaceAll("^Tip\\s*\\d*:?\\s*", "")  // Remove "Tip:" prefixes
+                               .replaceAll("^TIP\\s*\\d*:?\\s*", "")  // Remove "TIP:" prefixes
+                               .trim();
                 
-                for (String line : lines) {
-                    if (line.trim().startsWith("TIP") && line.contains(":")) {
-                        String tip = line.substring(line.indexOf(":") + 1).trim();
-                        if (!tip.isEmpty()) {
-                            parsedTips.add(tip);
-                        }
-                    }
-                }
-            } else {
-                // Try to parse a more flexible format - split by lines and look for meaningful tips
-                String[] lines = enhancedContent.split("\n");
-                int tipCount = 0;
-                
-                for (String line : lines) {
-                    line = line.trim();
-                    // Skip empty lines and common prefixes
-                    if (line.isEmpty() || line.length() < 20) continue;
-                    
-                    // Look for lines that seem like tips (contain emojis, mentions user, etc.)
-                    if ((line.contains("💰") || line.contains("💡") || line.contains("📱") || 
-                         line.contains("🏦") || line.contains("💳") || line.contains("📈") ||
-                         line.toLowerCase().contains("sandile") || line.toLowerCase().contains("tip")) 
-                         && tipCount < 3) {
-                        
-                        // Clean up the tip text
-                        String cleanTip = line.replaceAll("^\\d+\\.\\s*", "") // Remove number prefixes
-                                             .replaceAll("^Tip\\s*\\d*:?\\s*", "") // Remove "Tip X:" prefixes
-                                             .replaceAll("^-\\s*", "") // Remove dash prefixes
-                                             .trim();
-                        
-                        if (!cleanTip.isEmpty() && cleanTip.length() > 10) {
-                            parsedTips.add(cleanTip);
-                            tipCount++;
-                        }
-                    }
+                // Add emoji if not present
+                if (!mainTip.matches(".*[\\p{So}\\p{Cn}].*")) {
+                    mainTip = "💡 " + mainTip;
                 }
                 
-                // If we didn't find 3 tips, try a simpler approach - just split into sentences
-                if (parsedTips.size() < 3) {
-                    parsedTips.clear();
-                    String[] sentences = enhancedContent.split("[.!?]");
-                    int count = 0;
+                // Ensure proper ending
+                if (!mainTip.endsWith(".") && !mainTip.endsWith("!") && !mainTip.endsWith("?")) {
+                    mainTip += ".";
+                }
+                
+                // Apply currency formatting and add to tips
+                tips.add(formatTipText(mainTip, currency));
+                logger.info("Successfully parsed single tip from AI response");
+            }
+            
+            // If we couldn't extract a good tip, try sentence splitting as fallback
+            if (tips.isEmpty()) {
+                String[] sentences = cleanedResponse.split("[.!?]");
+                
+                for (String sentence : sentences) {
+                    sentence = sentence.trim();
                     
-                    for (String sentence : sentences) {
-                        sentence = sentence.trim();
-                        if (sentence.length() > 20 && count < 3) {
+                    // Skip very short sentences or common phrases
+                    if (sentence.length() > 20 && 
+                        !sentence.toLowerCase().startsWith("hello") &&
+                        !sentence.toLowerCase().startsWith("hi") &&
+                        !sentence.toLowerCase().contains("here are") &&
+                        !sentence.toLowerCase().startsWith("i'm") &&
+                        !sentence.toLowerCase().contains("tip1:") &&
+                        !sentence.toLowerCase().contains("tip2:") &&
+                        !sentence.toLowerCase().contains("tip3:") &&
+                        tips.isEmpty()) {  // Only take the first good sentence
+                        
+                        // Clean up the sentence
+                        sentence = sentence.replaceAll("^\\d+\\.\\s*", "")  // Remove number prefixes
+                                         .replaceAll("^-\\s*", "")          // Remove dash prefixes  
+                                         .replaceAll("^Tip\\s*\\d*:?\\s*", "")  // Remove "Tip:" prefixes
+                                         .replaceAll("^TIP\\s*\\d*:?\\s*", "")  // Remove "TIP:" prefixes
+                                         .trim();
+                        
+                        if (sentence.length() > 15) {
                             // Add emoji if not present
                             if (!sentence.matches(".*[\\p{So}\\p{Cn}].*")) {
                                 sentence = "💡 " + sentence;
                             }
-                            parsedTips.add(sentence + (sentence.endsWith(".") ? "" : "."));
-                            count++;
+                            
+                            // Ensure proper ending
+                            if (!sentence.endsWith(".") && !sentence.endsWith("!") && !sentence.endsWith("?")) {
+                                sentence += ".";
+                            }
+                            
+                            // Apply currency formatting
+                            sentence = formatTipText(sentence, currency);
+                            tips.add(sentence);
+                            break;  // Only take one tip
+                        }
+                    }
+                }
+            }
+            
+            logger.info("Parsed {} tips from AI response using simple method", tips.size());
+        }
+        
+        // If we don't have a tip, use a single fallback
+        if (tips.isEmpty()) {
+            if (!fallbackTips.isEmpty()) {
+                tips.add(formatTipText(fallbackTips.get(0), currency));
+            } else {
+                tips.add(formatTipText("💡 Keep tracking your expenses to get more personalized insights!", currency));
+            }
+        }
+        
+        return tips;  // Return single tip
+    }
+    
+    // Helper method to extract the main tip from AI response
+    private String extractMainTip(String response) {
+        if (response == null || response.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Remove common prefixes and suffixes
+        String cleaned = response
+            .replaceAll("(?i)^(here is|here's|i recommend|i suggest|my tip is|tip:|recommendation:)\\s*", "")
+            .replaceAll("(?i)(hope this helps|let me know if|feel free to|good luck).*$", "")
+            .trim();
+        
+        // If the response is a single coherent sentence/paragraph, return it
+        if (cleaned.length() > 20 && cleaned.length() < 500) {
+            return cleaned;
+        }
+        
+        // Otherwise try to find the first substantial sentence
+        String[] sentences = cleaned.split("[.!?]");
+        for (String sentence : sentences) {
+            sentence = sentence.trim();
+            if (sentence.length() > 20 && sentence.length() < 300) {
+                return sentence;
+            }
+        }
+        
+        return null;
+    }
+
+    // Parse the AI response into individual tips - improved version
+    private List<String> parseEnhancedTips(String enhancedContent, List<String> fallbackTips) {
+        List<String> parsedTips = new ArrayList<>();
+        
+        if (enhancedContent != null && !enhancedContent.trim().isEmpty()) {
+            // Clean up corrupted characters first
+            String cleanContent = enhancedContent
+                .replaceAll("ΓÇ£", "\"")  // Fix left quote
+                .replaceAll("ΓÇô", "\"")  // Fix right quote
+                .replaceAll("\\u201C", "\"")    // Fix smart quotes (left)
+                .replaceAll("\\u201D", "\"")    // Fix smart quotes (right)
+                .replaceAll("\\u2018", "\"")    // Fix single quotes (left)
+                .replaceAll("\\u2019", "\"")    // Fix single quotes (right)
+                .replaceAll("Γǣ", "")              // Remove corrupted characters
+                .replaceAll("[\\u00A0\\u2000-\\u200B\\u2028\\u2029\\uFEFF]", " ") // Replace various space characters
+                .replaceAll("\\s+", " ")             // Normalize whitespace
+                .trim();
+            
+            logger.debug("Cleaned AI content: {}", cleanContent);
+            
+            // For single tip format, extract the main tip directly
+            String mainTip = extractMainTip(cleanContent);
+            if (mainTip != null && mainTip.length() > 10) {
+                String formattedTip = cleanAndFormatTip(mainTip);
+                if (!formattedTip.isEmpty()) {
+                    parsedTips.add(formattedTip + (formattedTip.endsWith(".") ? "" : "."));
+                }
+            }
+            
+            // If we couldn't extract a main tip, try legacy parsing as fallback
+            if (parsedTips.isEmpty()) {
+                // Try the old TIP1:, TIP2:, TIP3: format first (for backward compatibility)
+                if (cleanContent.contains("TIP1:") || cleanContent.contains("TIP2:") || cleanContent.contains("TIP3:")) {
+                    String[] parts = cleanContent.split("TIP\\d+:");
+                    
+                    for (int i = 1; i < parts.length && parsedTips.isEmpty(); i++) {  // Only take first tip
+                        String tip = parts[i].trim();
+                        if (!tip.isEmpty()) {
+                            // Clean the tip and add emoji if needed
+                            tip = cleanAndFormatTip(tip);
+                            if (tip.length() > 10) {
+                                parsedTips.add(tip);
+                                break;  // Only take one tip
+                            }
+                        }
+                    }
+                } 
+                // If that doesn't work, try splitting by sentences
+                else if (cleanContent.length() > 20) {
+                    String[] sentences = cleanContent.split("[.!?]");
+                    
+                    for (String sentence : sentences) {
+                        sentence = sentence.trim();
+                        if (sentence.length() > 15) {
+                            sentence = cleanAndFormatTip(sentence);
+                            if (!sentence.isEmpty()) {
+                                parsedTips.add(sentence + (sentence.endsWith(".") ? "" : "."));
+                                break;  // Only take the first good sentence
+                            }
                         }
                     }
                 }
@@ -459,17 +846,51 @@ public class AITipsService {
             logger.debug("Parsed tip {}: {}", i+1, parsedTips.get(i));
         }
         
-        // If parsing failed or didn't get enough tips, fill with fallbacks
-        while (parsedTips.size() < 3) {
-            int index = parsedTips.size();
-            if (index < fallbackTips.size()) {
-                parsedTips.add(fallbackTips.get(index));
+        // If we don't have a tip, use a single fallback
+        if (parsedTips.isEmpty()) {
+            if (!fallbackTips.isEmpty()) {
+                parsedTips.add(fallbackTips.get(0));
             } else {
-                parsedTips.add("💡 Keep tracking your expenses to get more personalized insights!");
+                parsedTips.add("💡 Continue tracking your expenses to get more personalized insights!");
             }
         }
         
-        return parsedTips.subList(0, 3); // Always return exactly 3 tips
+        return parsedTips;  // Return single tip
+    }
+
+    // Helper method to clean and format individual tips
+    private String cleanAndFormatTip(String tip) {
+        if (tip == null || tip.trim().isEmpty()) return "";
+        
+        String cleaned = tip.trim()
+            // Clean up corrupted characters first
+            .replaceAll("ΓÇ£", "\"")  // Fix left quote
+            .replaceAll("ΓÇô", "\"")  // Fix right quote
+            .replaceAll("\\u201C", "\"")    // Fix smart quotes (left)
+            .replaceAll("\\u201D", "\"")    // Fix smart quotes (right)
+            .replaceAll("\\u2018", "\"")    // Fix single quotes (left)
+            .replaceAll("\\u2019", "\"")    // Fix single quotes (right)
+            .replaceAll("Γǣ", "")              // Remove corrupted characters
+            .replaceAll("[\\u00A0\\u2000-\\u200B\\u2028\\u2029\\uFEFF]", " ") // Replace various space characters
+            .replaceAll("^\\d+\\.\\s*", "")     // Remove number prefixes like "1. "
+            .replaceAll("^-\\s*", "")           // Remove dash prefixes
+            .replaceAll("^Tip\\s*\\d*:?\\s*", "")  // Remove "Tip X:" prefixes
+            .replaceAll("\\s+", " ")            // Normalize spaces
+            .trim();
+        
+        // Add emoji if not present and tip is substantial
+        if (!cleaned.isEmpty() && cleaned.length() > 10) {
+            if (!cleaned.matches(".*[\\p{So}\\p{Cn}].*")) {
+                cleaned = "💡 " + cleaned;
+            }
+            
+            // Ensure proper capitalization
+            if (cleaned.length() > 2 && Character.isLowerCase(cleaned.charAt(2))) {
+                cleaned = cleaned.substring(0, 2) + Character.toUpperCase(cleaned.charAt(2)) + cleaned.substring(3);
+            }
+        }
+        
+        return cleaned;
     }
 
     // Parse the AI response and format tips for user display
@@ -482,12 +903,13 @@ public class AITipsService {
                 .collect(Collectors.toList());
     }
 
-    // Call Gradient AI Agent API
+    // Call Gradient AI Agent API - improved version using chatbot approach
     private String callAIAgentAPI(String prompt) {
         try {
-            logger.info("Making Gradient AI Agent API call");
+            logger.info("Making Gradient AI Agent API call with enhanced configuration for tips");
+            logger.debug("AI Tips prompt: {}", prompt.substring(0, Math.min(200, prompt.length())));
             
-            // Create the request body for the agent following OpenAI ChatCompletion format
+            // Create the request body using the same approach as the successful chatbot
             Map<String, Object> requestBody = new HashMap<>();
             List<Map<String, String>> messages = new ArrayList<>();
             
@@ -497,8 +919,10 @@ public class AITipsService {
             messages.add(userMessage);
             
             requestBody.put("messages", messages);
-            requestBody.put("max_tokens", 120);
-            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", 600);  // Increased as requested
+            requestBody.put("temperature", 0.7);  // Slightly reduced for more focused responses
+            
+            logger.debug("AI Tips request body: max_tokens=500, temperature=0.8, messages size={}", messages.size());
             
             Mono<Map> response = webClient.post()
                 .uri(aiAgentApiUrl + "/api/v1/chat/completions")
@@ -519,39 +943,46 @@ public class AITipsService {
 
             Map<String, Object> result = response.block();
             
-            if (result != null && result.containsKey("choices")) {
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) result.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> firstChoice = choices.get(0);
-                    if (firstChoice.containsKey("message")) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
-                        if (message.containsKey("content")) {
-                            String content = (String) message.get("content");
-                            if (content != null && !content.trim().isEmpty()) {
-                                logger.info("Gradient AI Agent API call successful - Response received: {}", content.substring(0, Math.min(200, content.length())));
-                                
-                                // Log the full response for debugging
-                                logger.debug("Full AI response: {}", content);
-                                
-                                // Check if it's the expected format (contains TIP1:, TIP2:, TIP3:)
-                                if (content.contains("TIP1:") && content.contains("TIP2:") && content.contains("TIP3:")) {
+            if (result != null) {
+                logger.debug("AI Agent API response keys: {}", result.keySet());
+                
+                if (result.containsKey("choices")) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) result.get("choices");
+                    logger.debug("AI Agent API choices count: {}", choices.size());
+                    
+                    if (!choices.isEmpty()) {
+                        Map<String, Object> firstChoice = choices.get(0);
+                        logger.debug("First choice keys: {}", firstChoice.keySet());
+                        
+                        if (firstChoice.containsKey("message")) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+                            logger.debug("Message keys: {}", message.keySet());
+                            
+                            if (message.containsKey("content")) {
+                                String content = (String) message.get("content");
+                                if (content != null && !content.trim().isEmpty()) {
+                                    logger.info("AI Tips API call successful - Response length: {} chars, Preview: {}", 
+                                        content.length(), content.substring(0, Math.min(150, content.length())));
                                     return content.trim();
                                 } else {
-                                    logger.warn("AI Agent API returned unexpected response format - no TIP format found");
-                                    logger.info("Full response for debugging: {}", content.length() > 500 ? content.substring(0, 500) + "..." : content);
-                                    
-                                    // Try to use the content anyway if it contains useful tips
-                                    if (content.length() > 50) {
-                                        logger.info("Using AI response as-is since it contains content");
-                                        return content.trim();
-                                    }
+                                    logger.warn("AI Agent API returned empty content");
                                 }
+                            } else {
+                                logger.warn("AI Agent API message missing 'content' field");
                             }
+                        } else {
+                            logger.warn("AI Agent API choice missing 'message' field");
                         }
+                    } else {
+                        logger.warn("AI Agent API returned empty choices array");
                     }
+                } else {
+                    logger.warn("AI Agent API response missing 'choices' field. Available fields: {}", result.keySet());
                 }
+            } else {
+                logger.error("AI Agent API returned null response");
             }
             
             logger.warn("AI Agent API returned unexpected response structure");
@@ -568,11 +999,12 @@ public class AITipsService {
         return null;
     }
 
-    // Generate fallback tips when AI fails
+    // Generate fallback tips when AI fails - improved version
     private List<String> generateFallbackTips(User user) {
         List<String> fallbackTips = new ArrayList<>();
         String userName = user.getFirstName() != null ? user.getFirstName() : "there";
         String region = getCurrencyLocation(user.getCurrency());
+        String currencySymbol = formatCurrencySymbol(user.getCurrency());
         
         // Get some basic financial data for fallback tips
         try {
@@ -584,39 +1016,139 @@ public class AITipsService {
             List<Budget> currentMonthBudgets = budgetService.getUserBudgetsByMonth(user, now.getMonthValue(), now.getYear());
             
             if (currentMonthExpenses.isEmpty()) {
-                fallbackTips.add(String.format("🌟 Hey %s! Start tracking your %s expenses to get personalized insights for %s.", 
-                    userName, user.getCurrency(), region));
+                fallbackTips.add(String.format("🌟 %s, start tracking your daily expenses to understand your spending patterns!", userName));
+                fallbackTips.add(String.format("📱 %s, use FinSight AI to scan receipts and categorize expenses automatically!", userName));
+                fallbackTips.add(String.format("🎯 %s, set up budgets for main categories like food, transport, and entertainment!", userName));
             } else {
                 BigDecimal totalSpent = currentMonthExpenses.stream()
                     .map(Expense::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-                fallbackTips.add(String.format("💰 %s, you've spent %s %.2f across %d transactions this month in %s.", 
-                    userName, user.getCurrency(), totalSpent, currentMonthExpenses.size(), region));
+                
+                fallbackTips.add(String.format("💰 %s, you've spent %s%.2f this month across %d transactions - great tracking!", 
+                    userName, currencySymbol, totalSpent, currentMonthExpenses.size()));
+                
+                // Analyze spending patterns
+                Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
+                if (!categorySpending.isEmpty()) {
+                    ExpenseCategory topCategory = categorySpending.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse(ExpenseCategory.OTHER);
+                    
+                    fallbackTips.add(String.format("📊 %s, your highest spending is on %s - consider setting a budget for this category!", 
+                        userName, topCategory.getDisplayName().toLowerCase()));
+                } else {
+                    fallbackTips.add(String.format("📊 %s, categorize your expenses to get better insights into your spending habits!", userName));
+                }
             }
             
             if (currentMonthBudgets.isEmpty()) {
-                fallbackTips.add(String.format("🎯 %s, setting up budgets helps you stay on track with your financial goals in %s.", 
-                    userName, region));
+                fallbackTips.add(String.format("🎯 %s, create budgets to stay on track with your financial goals in %s!", userName, region));
             } else {
-                fallbackTips.add(String.format("📊 %s, you have %d active budgets this month. Keep monitoring your spending in %s!", 
-                    userName, currentMonthBudgets.size(), region));
+                // Check budget performance
+                Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
+                boolean foundBudgetAdvice = false;
+                
+                for (Budget budget : currentMonthBudgets) {
+                    BigDecimal spent = categorySpending.getOrDefault(budget.getCategory(), BigDecimal.ZERO);
+                    BigDecimal percentage = spent.divide(budget.getMonthlyLimit(), 4, BigDecimal.ROUND_HALF_UP)
+                        .multiply(BigDecimal.valueOf(100));
+                    
+                    if (percentage.compareTo(BigDecimal.valueOf(80)) > 0 && !foundBudgetAdvice) {
+                        fallbackTips.add(String.format("⚠️ %s, you're at %.0f%% of your %s budget - consider reducing spending in this area!", 
+                            userName, percentage, budget.getCategory().getDisplayName().toLowerCase()));
+                        foundBudgetAdvice = true;
+                        break;
+                    }
+                }
+                
+                if (!foundBudgetAdvice) {
+                    fallbackTips.add(String.format("✅ %s, good job managing your %d active budgets this month!", userName, currentMonthBudgets.size()));
+                }
             }
             
         } catch (Exception e) {
             logger.warn("Error generating data-driven fallback tips: {}", e.getMessage());
-            // Basic fallback tips
-            fallbackTips.add(String.format("💰 Hey %s! Start tracking your %s expenses to build better financial awareness.", userName, user.getCurrency()));
-            fallbackTips.add(String.format("🎯 %s, setting up budgets for your main categories helps you stay on track in %s.", userName, region));
+            // Basic fallback tips if data access fails
+            fallbackTips.add(String.format("� %s, track your expenses daily to build better financial awareness!", userName));
+            fallbackTips.add(String.format("📈 %s, setting up budgets helps you stay on track with your goals!", userName));
+            fallbackTips.add(String.format("🎯 %s, small changes in spending can lead to big savings over time!", userName));
         }
         
-        // Always add a regional tip
-        if ("South Africa".equals(region)) {
-            fallbackTips.add(String.format("🇿🇦 %s, consider exploring South African investment options like unit trusts, ETFs, or tax-free savings accounts!", userName));
-        } else {
-            fallbackTips.add(String.format("📈 %s, explore local investment and savings options available in %s for long-term wealth building.", userName, region));
+        // Add diverse financial wisdom tips
+        List<String> diverseTips = new ArrayList<>();
+        diverseTips.add(String.format("💰 %s, the 50/30/20 rule is a great starting point: 50%% needs, 30%% wants, 20%% savings!", userName));
+        diverseTips.add(String.format("📊 %s, diversify your investments across different asset classes to reduce risk!", userName));
+        diverseTips.add(String.format("🏦 %s, build an emergency fund covering 3-6 months of expenses before investing!", userName));
+        diverseTips.add(String.format("💎 %s, start investing early - compound interest is the eighth wonder of the world!", userName));
+        diverseTips.add(String.format("📉 %s, market volatility is normal - stay invested for long-term growth!", userName));
+        diverseTips.add(String.format("🎯 %s, set specific financial goals and deadlines to stay motivated!", userName));
+        diverseTips.add(String.format("💳 %s, pay off high-interest debt before investing - guaranteed returns!", userName));
+        diverseTips.add(String.format("🔄 %s, automate your savings and investments to build wealth consistently!", userName));
+        diverseTips.add(String.format("📱 %s, review your subscriptions monthly - small recurring costs add up!", userName));
+        diverseTips.add(String.format("🛡️ %s, protect your wealth with appropriate insurance coverage!", userName));
+        diverseTips.add(String.format("⚖️ %s, rebalance your portfolio annually to maintain your target asset allocation!", userName));
+        diverseTips.add(String.format("📚 %s, invest in financial education - knowledge is your best investment!", userName));
+        diverseTips.add(String.format("🔥 %s, FIRE strategy (Financial Independence, Retire Early) requires saving 25x annual expenses!", userName));
+        diverseTips.add(String.format("💡 %s, tax-loss harvesting can reduce your tax bill while maintaining portfolio exposure!", userName));
+        diverseTips.add(String.format("🏠 %s, real estate can be a good inflation hedge but requires significant capital!", userName));
+        
+        // Randomly select one diverse tip
+        if (!diverseTips.isEmpty()) {
+            int randomIndex = (int) (Math.random() * diverseTips.size());
+            fallbackTips.add(diverseTips.get(randomIndex));
         }
         
-        return fallbackTips.subList(0, Math.min(fallbackTips.size(), 3));
+        // Add regional/currency-specific advice
+        switch (user.getCurrency().toUpperCase()) {
+            case "ZAR":
+                List<String> zarTips = new ArrayList<>();
+                zarTips.add(String.format("🇿🇦 %s, maximize your R36,000 annual TFSA contribution - it's tax-free growth!", userName));
+                zarTips.add(String.format("🏢 %s, consider JSE-listed ETFs like STXIND or ASHGEQ for broad market exposure!", userName));
+                zarTips.add(String.format("💼 %s, explore unit trusts from Allan Gray, Coronation, or Investec for professional management!", userName));
+                zarTips.add(String.format("🏦 %s, use retirement annuities (RAs) for tax deductions up to 27.5%% of income!", userName));
+                zarTips.add(String.format("💳 %s, take advantage of FNB, Standard Bank, or Capitec investment platforms!", userName));
+                int zarIndex = (int) (Math.random() * zarTips.size());
+                fallbackTips.add(zarTips.get(zarIndex));
+                break;
+            case "USD":
+                List<String> usdTips = new ArrayList<>();
+                usdTips.add(String.format("🇺🇸 %s, maximize employer 401k matching - it's free money up to the limit!", userName));
+                usdTips.add(String.format("📈 %s, consider low-cost index funds like VTI or VOO for broad market exposure!", userName));
+                usdTips.add(String.format("💰 %s, contribute to Roth IRA for tax-free retirement growth ($6,500 limit)!", userName));
+                usdTips.add(String.format("🏦 %s, explore high-yield savings accounts offering 4-5%% APY!", userName));
+                usdTips.add(String.format("🎯 %s, use dollar-cost averaging to invest consistently regardless of market timing!", userName));
+                int usdIndex = (int) (Math.random() * usdTips.size());
+                fallbackTips.add(usdTips.get(usdIndex));
+                break;
+            case "EUR":
+                List<String> eurTips = new ArrayList<>();
+                eurTips.add(String.format("🇪🇺 %s, explore UCITS ETFs for tax-efficient European market exposure!", userName));
+                eurTips.add(String.format("🏦 %s, investigate government bonds from stable EU countries for safe returns!", userName));
+                eurTips.add(String.format("💼 %s, consider pan-European pension schemes for cross-border retirement planning!", userName));
+                eurTips.add(String.format("📊 %s, look into ESG investing - Europe leads in sustainable finance options!", userName));
+                int eurIndex = (int) (Math.random() * eurTips.size());
+                fallbackTips.add(eurTips.get(eurIndex));
+                break;
+            case "GBP":
+                List<String> gbpTips = new ArrayList<>();
+                gbpTips.add(String.format("🇬🇧 %s, use your £20,000 ISA allowance - gains are completely tax-free!", userName));
+                gbpTips.add(String.format("📈 %s, consider FTSE index trackers for low-cost UK market exposure!", userName));
+                gbpTips.add(String.format("💰 %s, explore Premium Bonds for tax-free prizes up to £50,000!", userName));
+                gbpTips.add(String.format("🏦 %s, maximize workplace pension contributions to get employer matching!", userName));
+                int gbpIndex = (int) (Math.random() * gbpTips.size());
+                fallbackTips.add(gbpTips.get(gbpIndex));
+                break;
+            default:
+                fallbackTips.add(String.format("🌍 %s, research local investment options and tax-advantaged accounts in %s!", userName, region));
+        }
+        
+        // Clean and format fallback tips to prevent character corruption
+        List<String> cleanedTips = fallbackTips.stream()
+            .map(this::cleanAndFormatTip)
+            .collect(Collectors.toList());
+        
+        return cleanedTips.subList(0, Math.min(cleanedTips.size(), 3));
     }
 
     // Legacy methods for backward compatibility
@@ -738,21 +1270,21 @@ public class AITipsService {
     
     private String getSpendingAdviceForRegion(String region, String currency) {
         return switch (region) {
-            case "South Africa" -> "Consider using apps like SnapScan, Zapper, or 22seven for expense tracking in SA.";
-            case "United States" -> "Use apps like Mint, YNAB, or Personal Capital to track your USD spending effectively.";
-            case "Europe" -> "Try apps like Money Lover, Spendee, or local banking apps for EUR expense tracking.";
-            case "United Kingdom" -> "Consider apps like Monzo, Starling Bank, or Emma for GBP budgeting and tracking.";
-            default -> String.format("Use local budgeting apps and digital banking tools to track your %s spending effectively.", currency);
+            case "South Africa" -> "Use FinSight AI's expense tracking and budgeting features to monitor your ZAR spending effectively.";
+            case "United States" -> "Leverage FinSight AI's comprehensive tracking tools to monitor your USD spending and identify savings opportunities.";
+            case "Europe" -> "Take advantage of FinSight AI's budgeting features to track your EUR expenses and optimize spending patterns.";
+            case "United Kingdom" -> "Use FinSight AI's expense categorization and budget tracking for effective GBP financial management.";
+            default -> String.format("Use FinSight AI's powerful tracking and budgeting tools to monitor your %s spending effectively.", currency);
         };
     }
     
     private String getRecentSpendingAdvice(String region, String currency) {
         return switch (region) {
-            case "South Africa" -> "Keep receipts for tax deductions and consider using Capitec or FNB's budgeting tools.";
-            case "United States" -> "Track receipts for tax purposes and consider using bank budgeting tools or credit card rewards.";
-            case "Europe" -> "Keep receipts for VAT purposes and use your bank's spending insights and budgeting features.";
-            case "United Kingdom" -> "Save receipts for expenses and use your bank's spending categorization and budgeting tools.";
-            default -> String.format("Review your spending patterns and look for areas to optimize in your %s budget.", currency);
+            case "South Africa" -> "Keep receipts for tax deductions and use FinSight AI's expense tracking to categorize your spending.";
+            case "United States" -> "Track receipts for tax purposes and use FinSight AI's budgeting tools to monitor your financial progress.";
+            case "Europe" -> "Keep receipts for VAT purposes and leverage FinSight AI's spending insights and budget features.";
+            case "United Kingdom" -> "Save receipts for expenses and use FinSight AI's categorization and budgeting tools for better control.";
+            default -> String.format("Review your spending patterns using FinSight AI's analytics and optimize your %s budget.", currency);
         };
     }
     
