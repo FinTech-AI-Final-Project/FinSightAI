@@ -19,10 +19,6 @@ import {
 import {
   Download,
   PictureAsPdf,
-  GetApp,
-  TrendingUp,
-  TrendingDown,
-  Assessment,
 } from '@mui/icons-material';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
@@ -55,6 +51,20 @@ ChartJS.register(
   Legend,
   ArcElement,
   Filler
+);
+
+// Custom Icon Component for dashboard cards
+const DashboardIcon = ({ src, alt }) => (
+  <img
+    src={src}
+    alt={alt}
+    style={{
+      width: 32,
+      height: 32,
+      // No filter applied to keep original colors
+      opacity: 0.9,
+    }}
+  />
 );
 
 const Reports = () => {
@@ -387,7 +397,7 @@ const Reports = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <TrendingUp sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/total-spent-icon.png" alt="Total Spent" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -437,7 +447,7 @@ const Reports = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <Assessment sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/transaction-icons.png" alt="Transactions" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -487,7 +497,7 @@ const Reports = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <TrendingDown sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/average-daily-icon.png" alt="Average Transaction" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -537,7 +547,15 @@ const Reports = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <GetApp sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <img
+                        src="/categories.png"
+                        alt="Categories"
+                        style={{
+                          width: 32,
+                          height: 32,
+                          // No filter applied to keep original colors
+                        }}
+                      />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -612,7 +630,16 @@ const Reports = () => {
           </Grid>
         ) : (
           <Paper sx={{ p: 6, textAlign: 'center' }}>
-            <Assessment sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <img
+              src="/report.png"
+              alt="No data"
+              style={{
+                width: 64,
+                height: 64,
+                opacity: 0.5,
+                marginBottom: 16,
+              }}
+            />
             <Typography variant="h6" color="text.secondary" gutterBottom>
               No data available for selected period
             </Typography>

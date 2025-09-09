@@ -11,14 +11,22 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import {
-  Dashboard,
-  AccountBalanceWallet,
-  Assessment,
-  TrendingUp,
-  Settings,
-} from '@mui/icons-material';
 import { motion } from 'framer-motion';
+
+// Custom Icon Component for navigation icons
+const NavIcon = ({ src, alt, selected }) => (
+  <img
+    src={src}
+    alt={alt}
+    style={{
+      width: 24,
+      height: 24,
+      filter: 'none', // Keep original colors for all states
+      opacity: 1, // Full opacity for both selected and unselected states
+      transition: 'opacity 0.2s ease',
+    }}
+  />
+);
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -27,27 +35,27 @@ const Sidebar = () => {
   const menuItems = [
     {
       text: 'Dashboard',
-      icon: <Dashboard />,
+      iconSrc: '/dashboard.png',
       path: '/dashboard',
     },
     {
       text: 'Expenses',
-      icon: <AccountBalanceWallet />,
+      iconSrc: '/expenses.png',
       path: '/expenses',
     },
     {
       text: 'Budgets',
-      icon: <TrendingUp />,
+      iconSrc: '/budget.png',
       path: '/budgets',
     },
     {
       text: 'Reports',
-      icon: <Assessment />,
+      iconSrc: '/report.png',
       path: '/reports',
     },
     {
       text: 'Settings',
-      icon: <Settings />,
+      iconSrc: '/settings.png',
       path: '/settings',
     },
   ];
@@ -126,7 +134,11 @@ const Sidebar = () => {
                     minWidth: 40,
                   }}
                 >
-                  {item.icon}
+                  <NavIcon 
+                    src={item.iconSrc} 
+                    alt={item.text} 
+                    selected={location.pathname === item.path}
+                  />
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
