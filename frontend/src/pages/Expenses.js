@@ -406,27 +406,19 @@ const Expenses = () => {
       position: 'relative',
       px: { xs: 1, sm: 2 }, // Mobile-responsive padding
       pb: { xs: 10, sm: 2 }, // Extra bottom padding for mobile navigation
-      height: { xs: '100vh', sm: 'auto' }, // Fixed height on mobile
-      overflow: { xs: 'hidden', sm: 'visible' }, // Prevent horizontal scroll on mobile
     }}>
-      <Box sx={{
-        height: { xs: 'calc(100vh - 120px)', sm: 'auto' }, // Account for top navigation on mobile
-        overflow: { xs: 'auto', sm: 'visible' }, // Only vertical scroll on mobile
-        width: '100%',
-      }}>
-        {/* Header Section with Title and Add Button */}
+        {/* Header Section with Title */}
         <Box 
           sx={{ 
             display: 'flex', 
-            justifyContent: 'space-between', 
+            justifyContent: 'flex-start', 
             alignItems: 'center',
             mb: 3,
             px: { xs: 1, sm: 0 },
-            position: { xs: 'sticky', sm: 'static' },
-            top: 0,
-            backgroundColor: { xs: 'background.default', sm: 'transparent' },
-            zIndex: 1,
-            pt: { xs: 2, sm: 0 },
+            position: 'static',
+            backgroundColor: 'transparent',
+            pt: { xs: 0, sm: 0 },
+            mt: { xs: 0, sm: 0 },
           }}
         >
           <Typography 
@@ -435,24 +427,6 @@ const Expenses = () => {
           >
             Expenses
           </Typography>
-          
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            sx={{
-              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-              },
-              borderRadius: 2,
-              px: { xs: 2, sm: 3 },
-              py: 1,
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-            }}
-          >
-            {isMobile ? 'Add' : 'Add Expense'}
-          </Button>
         </Box>
 
       {error && (
@@ -465,7 +439,7 @@ const Expenses = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 2 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 placeholder="Search expenses..."
@@ -482,7 +456,7 @@ const Expenses = () => {
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth size="small">
                 <InputLabel>Filter by Category</InputLabel>
                 <Select
@@ -498,6 +472,27 @@ const Expenses = () => {
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleOpenDialog()}
+                sx={{
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                  },
+                  borderRadius: 2,
+                  py: 1.5,
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 600,
+                  height: '40px', // Match the height of other form elements
+                }}
+              >
+                {isMobile ? 'Add Expense' : 'Add New Expense'}
+              </Button>
             </Grid>
           </Grid>
         </CardContent>
@@ -531,13 +526,20 @@ const Expenses = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      </Box> {/* Close the inner scrollable box */}
 
       {/* Context Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
       >
         <MenuItem onClick={() => {
           handleOpenDialog(selectedExpense);

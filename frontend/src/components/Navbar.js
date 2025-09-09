@@ -67,7 +67,7 @@ const Navbar = () => {
         zIndex: theme.zIndex.drawer + 1,
       }}
     >
-      <Toolbar>
+      <Toolbar sx={{ minHeight: { xs: 56, md: 64 }, px: { xs: 1, md: 2 } }}>
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -82,9 +82,9 @@ const Navbar = () => {
                 e.target.style.display = 'none';
               }}
               style={{ 
-                height: isMobile ? 72 : 96, 
+                height: isMobile ? 40 : 56, 
                 width: 'auto',
-                marginRight: isMobile ? 12 : 16
+                marginRight: isMobile ? 8 : 12
               }} 
             />
           </Box>

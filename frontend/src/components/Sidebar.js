@@ -68,8 +68,8 @@ const Sidebar = () => {
           backgroundColor: 'background.paper',
           borderRight: 1,
           borderColor: 'divider',
-          top: '96px', // Add space between navbar and sidebar
-          height: 'calc(100vh - 96px)', // Adjust height accordingly
+          top: '64px', // Match the navbar height exactly
+          height: 'calc(100vh - 64px)', // Adjust height accordingly
           position: 'fixed',
         },
       }}

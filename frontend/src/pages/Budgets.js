@@ -215,35 +215,48 @@ const Budgets = () => {
           sx={{ 
             height: '100%',
             position: 'relative',
-            overflow: 'visible',
+            overflow: 'hidden',
+            mb: { xs: 2, sm: 0 },
+            mx: { xs: 0, sm: 'auto' },
+            cursor: isMobile ? 'default' : 'pointer',
             '&:hover': {
               boxShadow: isMobile ? undefined : '0 8px 16px rgba(0,0,0,0.15)',
             }
           }}
         >
-          <CardContent sx={{ p: 3 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-              <Box display="flex" alignItems="center">
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2} sx={{ width: '100%' }}>
+              <Box display="flex" alignItems="center" sx={{ flex: 1, minWidth: 0, mr: 1 }}>
                 <Box
                   sx={{
-                    width: 48,
-                    height: 48,
+                    width: { xs: 40, sm: 48 },
+                    height: { xs: 40, sm: 48 },
                     borderRadius: '50%',
                     backgroundColor: theme.palette.primary.main + '20',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    mr: 2,
-                    fontSize: '20px',
+                    mr: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '16px', sm: '20px' },
+                    flexShrink: 0,
                   }}
                 >
                   {categoryInfo.icon}
                 </Box>
-                <Box>
-                  <Typography variant="h6" fontWeight={600}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography 
+                    variant={isMobile ? "subtitle1" : "h6"} 
+                    fontWeight={600}
+                    sx={{ 
+                      mb: 0.5,
+                    }}
+                  >
                     {categoryInfo.name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                  >
                     {new Date(budget.year, budget.month - 1).toLocaleDateString('en-US', { 
                       month: 'long', 
                       year: 'numeric' 
@@ -251,16 +264,28 @@ const Budgets = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Box display="flex" alignItems="center">
+              <Box 
+                display="flex" 
+                alignItems="center" 
+                sx={{ 
+                  flexShrink: 0,
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-end', sm: 'center' },
+                  gap: { xs: 0.5, sm: 1 },
+                }}
+              >
                 <Chip
                   label={`${Math.round(progress)}%`}
                   color={budgetStatus.color}
                   size="small"
-                  sx={{ mr: 1 }}
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                  }}
                 />
                 <IconButton
                   size="small"
                   onClick={(e) => handleMenu(e, budget)}
+                  sx={{ flexShrink: 0 }}
                 >
                   <MoreVert />
                 </IconButton>
@@ -268,11 +293,23 @@ const Budgets = () => {
             </Box>
 
             <Box mb={2}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="body2" color="text.secondary">
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  }}
+                >
                   Spent: {formatCurrency(budget.currentSpent, userProfile.currency)}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  }}
+                >
                   Limit: {formatCurrency(budget.monthlyLimit, userProfile.currency)}
                 </Typography>
               </Box>
@@ -281,38 +318,52 @@ const Budgets = () => {
                 value={progress}
                 color={budgetStatus.color}
                 sx={{ 
-                  height: 8, 
+                  height: { xs: 6, sm: 8 }, 
                   borderRadius: 4,
                   backgroundColor: theme.palette.grey[200],
                 }}
               />
             </Box>
 
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center">
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ flexWrap: 'wrap', gap: 1 }}>
+              <Box display="flex" alignItems="center" sx={{ minWidth: 0 }}>
                 {remaining >= 0 ? (
                   <>
-                    <TrendingUp color="success" sx={{ mr: 0.5, fontSize: 20 }} />
-                    <Typography variant="body2" color="success.main" fontWeight={500}>
+                    <TrendingUp color="success" sx={{ mr: 0.5, fontSize: { xs: 18, sm: 20 } }} />
+                    <Typography 
+                      variant="body2" 
+                      color="success.main" 
+                      fontWeight={500}
+                      sx={{
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      }}
+                    >
                       {formatCurrency(remaining, userProfile.currency)} remaining
                     </Typography>
                   </>
                 ) : (
                   <>
-                    <TrendingDown color="error" sx={{ mr: 0.5, fontSize: 20 }} />
-                    <Typography variant="body2" color="error.main" fontWeight={500}>
+                    <TrendingDown color="error" sx={{ mr: 0.5, fontSize: { xs: 18, sm: 20 } }} />
+                    <Typography 
+                      variant="body2" 
+                      color="error.main" 
+                      fontWeight={500}
+                      sx={{
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      }}
+                    >
                       {formatCurrency(Math.abs(remaining), userProfile.currency)} over budget
                     </Typography>
                   </>
                 )}
               </Box>
               {budgetStatus.status === 'warning' && (
-                <Warning color="warning" sx={{ fontSize: 20 }} />
+                <Warning color="warning" sx={{ fontSize: { xs: 18, sm: 20 }, flexShrink: 0 }} />
               )}
             </Box>
 
             {budget.isOverBudget && (
-              <Alert severity="error" sx={{ mt: 2 }}>
+              <Alert severity="error" sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                 Budget exceeded! Consider reviewing your spending.
               </Alert>
             )}
@@ -342,25 +393,6 @@ const Budgets = () => {
         </Typography>
         
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          {/* Add Budget Button */}
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            sx={{
-              background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-              },
-              borderRadius: 2,
-              px: { xs: 2, sm: 3 },
-              py: 1,
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-            }}
-          >
-            {isMobile ? 'Add' : 'Add Budget'}
-          </Button>
-          
           {/* Month Navigation */}
           <Box display="flex" alignItems="center" gap={1}>
             <IconButton onClick={handlePreviousMonth}>
@@ -436,19 +468,37 @@ const Budgets = () => {
               </Box>
             </Grid>
           </Grid>
+          
+          {/* Add Budget Button */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+              sx={{
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                },
+                borderRadius: 2,
+                px: { xs: 3, sm: 4 },
+                py: 1.5,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 600,
+              }}
+            >
+              {isMobile ? 'Add Budget' : 'Add New Budget'}
+            </Button>
+          </Box>
         </CardContent>
       </Card>
 
       {/* Budget Cards */}
       <AnimatePresence>
         {budgets.length > 0 ? (
-          <Grid container spacing={3}>
-            {budgets.map((budget) => (
-              <Grid item xs={12} sm={6} lg={4} key={budget.id}>
-                <BudgetCard budget={budget} />
-              </Grid>
-            ))}
-          </Grid>
+          budgets.map((budget) => (
+            <BudgetCard key={budget.id} budget={budget} />
+          ))
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
@@ -482,6 +532,14 @@ const Budgets = () => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
       >
         <MenuItem onClick={() => {
           handleOpenDialog(selectedBudget);

@@ -130,16 +130,16 @@ const Chatbot = () => {
           color: '#ffffff',
           '&:hover': { 
             background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
-            transform: 'scale(1.1)'
+            transform: 'scale(1.05)' // Reduced scale effect
           },
           transition: 'all 0.3s ease',
-          // Make it smaller on mobile to be less intrusive
-          width: isMobile ? 48 : 56,
-          height: isMobile ? 48 : 56,
+          // Smaller size for less intrusion
+          width: isMobile ? 44 : 52,
+          height: isMobile ? 44 : 52,
         }}
         onClick={() => setOpen(!open)}
       >
-        {open ? <CloseIcon sx={{ fontSize: isMobile ? 20 : 24 }} /> : <ChatIcon sx={{ fontSize: isMobile ? 20 : 24 }} />}
+        {open ? <CloseIcon sx={{ fontSize: isMobile ? 18 : 22 }} /> : <ChatIcon sx={{ fontSize: isMobile ? 18 : 22 }} />}
       </Fab>
 
       {/* Chat Window */}
@@ -154,9 +154,11 @@ const Chatbot = () => {
               position: 'fixed',
               bottom: isMobile ? 90 : 90, // Position above the FAB
               right: isMobile ? 8 : 24,
-              width: isMobile ? 'calc(100vw - 16px)' : 380,
+              width: isMobile ? 'calc(100vw - 16px)' : 350, // Smaller on desktop
               maxWidth: 'calc(100vw - 16px)',
-              height: isMobile ? 'calc(100vh - 170px)' : 500, // Account for navbar + bottom nav + FAB
+              height: isMobile ? 'calc(100vh - 170px)' : 450, // Smaller heights to avoid navbar
+              maxHeight: isMobile ? 'calc(100vh - 170px)' : 450, // Ensure it doesn't touch navbar
+              top: isMobile ? 'auto' : 'auto', // Let it position naturally from bottom
               zIndex: 1200,
             }}
           >

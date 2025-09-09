@@ -21,16 +21,16 @@ const Layout = () => {
           className="main-content-scrollable"
           sx={{
             flexGrow: 1,
-            pt: { xs: 14, md: 16 }, // Increased padding to properly clear navbar
+            pt: { xs: 7, md: 8 }, // Reduced padding for smaller navbar
             pb: { xs: 8, md: 2 },
             px: { xs: 1, sm: 2, md: 3 },
             backgroundColor: 'background.default',
             ml: { md: '280px' }, // Account for sidebar width
             overflow: 'auto', // Enable scrolling
-            height: 'calc(100vh - 112px)', // Updated height calculation (navbar + padding)
-            maxHeight: 'calc(100vh - 112px)', // Ensure it doesn't exceed viewport
+            height: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, // Proper height calculation
+            maxHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, // Ensure it doesn't exceed viewport
             position: 'relative', // Ensure proper stacking context
-            zIndex: 10, // Below navbar but above other elements
+            zIndex: 1, // Below navbar but above other elements
           }}
         >
           <motion.div
