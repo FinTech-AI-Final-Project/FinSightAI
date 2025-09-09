@@ -52,7 +52,29 @@ html, body, #root {
 
   /* Ensure scrollbar appears above navbar */
   .main-content-scrollable {
-    z-index: 1000;
+    z-index: 1;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  /* Fix scrollbar positioning */
+  .main-content-scrollable::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .main-content-scrollable::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+  }
+  
+  .main-content-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+  
+  .main-content-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -117,6 +139,46 @@ html, body, #root {
   * {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+  }
+  
+  /* Smaller navbar for mobile */
+  .MuiAppBar-root {
+    min-height: 56px !important;
+  }
+  
+  .MuiToolbar-root {
+    min-height: 56px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}
+
+/* Small laptop screens (720p displays) */
+@media (max-width: 1366px) and (max-height: 768px) {
+  /* Compact layout for small screens */
+  .MuiCard-root {
+    margin-bottom: 8px !important;
+  }
+  
+  /* Smaller font sizes for summary cards */
+  .summary-card-title {
+    font-size: 0.75rem !important;
+  }
+  
+  .summary-card-value {
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Compact chart heights */
+  .chart-container {
+    height: 300px !important;
+  }
+  
+  /* Ensure chatbot doesn't overlap with content */
+  .chatbot-container {
+    max-height: calc(100vh - 140px) !important;
+    top: 70px !important;
   }
 }
 
