@@ -14,10 +14,6 @@ import {
   IconButton,
 } from '@mui/material';
 import {
-  TrendingUp,
-  TrendingDown,
-  AccountBalance,
-  Receipt,
   ChevronLeft,
   ChevronRight,
 } from '@mui/icons-material';
@@ -39,6 +35,20 @@ import * as ApiService from '../services/api';
 import { formatCurrency, getCurrentMonth, expenseCategories, chartColors } from '../utils/helpers';
 import { useUser } from '../contexts/UserContext';
 import AITipsPanel from '../components/AITipsPanel';
+
+// Custom Icon Component for dashboard cards
+const DashboardIcon = ({ src, alt }) => (
+  <img
+    src={src}
+    alt={alt}
+    style={{
+      width: 32,
+      height: 32,
+      // No filter applied to keep original colors
+      opacity: 0.9,
+    }}
+  />
+);
 
 ChartJS.register(
   ArcElement,
@@ -292,7 +302,7 @@ const Dashboard = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <Receipt sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/total-spent-icon.png" alt="Total Spent" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -342,7 +352,7 @@ const Dashboard = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <AccountBalance sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/total-budget-icon.png" alt="Total Budget" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -392,7 +402,7 @@ const Dashboard = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <TrendingUp sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/transaction-icons.png" alt="Transactions" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 
@@ -442,7 +452,7 @@ const Dashboard = () => {
                       justifyContent: 'center',
                       order: { xs: 2, md: 1 }
                     }}>
-                      <TrendingDown sx={{ color: 'white', opacity: 0.8, fontSize: { xs: 24, sm: 28, md: 32 } }} />
+                      <DashboardIcon src="/average-daily-icon.png" alt="Average Daily" />
                     </Box>
                     <Box sx={{ 
                       flex: '1 1 0%', 

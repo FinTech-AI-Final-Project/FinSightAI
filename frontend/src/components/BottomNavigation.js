@@ -5,14 +5,22 @@ import {
   BottomNavigationAction,
   Paper,
 } from '@mui/material';
-import {
-  Dashboard,
-  Receipt,
-  AccountBalance,
-  Analytics,
-  Settings,
-} from '@mui/icons-material';
 import { motion } from 'framer-motion';
+
+// Custom Icon Component for mobile navigation icons
+const MobileNavIcon = ({ src, alt, selected }) => (
+  <img
+    src={src}
+    alt={alt}
+    style={{
+      width: 24,
+      height: 24,
+      filter: 'none', // Keep original colors for all states
+      opacity: selected ? 1 : 0.6, // Full opacity when selected, reduced when not
+      transition: 'opacity 0.2s ease',
+    }}
+  />
+);
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -101,23 +109,23 @@ const BottomNavigation = () => {
         >
           <BottomNavigationAction
             label="Dashboard"
-            icon={<Dashboard />}
+            icon={<MobileNavIcon src="/mobile-dashboard.png" alt="Dashboard" selected={getValue() === 0} />}
           />
           <BottomNavigationAction
             label="Expenses"
-            icon={<Receipt />}
+            icon={<MobileNavIcon src="/mobile-expenses.png" alt="Expenses" selected={getValue() === 1} />}
           />
           <BottomNavigationAction
             label="Budgets"
-            icon={<AccountBalance />}
+            icon={<MobileNavIcon src="/mobile-budget.png" alt="Budgets" selected={getValue() === 2} />}
           />
           <BottomNavigationAction
             label="Reports"
-            icon={<Analytics />}
+            icon={<MobileNavIcon src="/mobile-reports.png" alt="Reports" selected={getValue() === 3} />}
           />
           <BottomNavigationAction
             label="Settings"
-            icon={<Settings />}
+            icon={<MobileNavIcon src="/mobile-settings.png" alt="Settings" selected={getValue() === 4} />}
           />
         </MuiBottomNavigation>
       </motion.div>
