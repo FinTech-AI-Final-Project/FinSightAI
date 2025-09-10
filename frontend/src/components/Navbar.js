@@ -8,6 +8,7 @@ import {
   MenuItem,
   Avatar,
   Box,
+  Typography,
   useMediaQuery,
   useTheme,
   Tooltip,
@@ -87,6 +88,19 @@ const Navbar = () => {
                 marginRight: isMobile ? 8 : 12
               }} 
             />
+            <Typography
+              variant={isMobile ? "subtitle1" : "h6"}
+              sx={{
+                fontWeight: 700,
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: { xs: 'none', sm: 'block' }, // Hide on very small screens
+              }}
+            >
+              FinSight AI
+            </Typography>
           </Box>
         </motion.div>
 

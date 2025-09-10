@@ -94,7 +94,7 @@ const Sidebar = () => {
             textAlign: 'center',
           }}
         >
-          Navigation
+          Menu
         </Typography>
       </Box>
       <Divider />
