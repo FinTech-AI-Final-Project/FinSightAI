@@ -21,7 +21,7 @@ const Layout = () => {
           className="main-content-scrollable"
           sx={{
             flexGrow: 1,
-            pt: { xs: 7, md: 8 }, // Reduced padding for smaller navbar
+            pt: { xs: 10, md: 12 }, // Increased padding for better spacing from navbar
             pb: { xs: 8, md: 2 },
             px: { xs: 1, sm: 2, md: 3 },
             backgroundColor: 'background.default',
