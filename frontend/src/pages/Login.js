@@ -78,6 +78,16 @@ const Login = () => {
             }}
           >
             <Box sx={{ mb: 3, textAlign: 'center' }}>
+              <Box
+                component="img"
+                src="/logo.png"
+                alt="FinSight AI Logo"
+                sx={{
+                  width: isMobile ? '120px' : '150px',
+                  height: 'auto',
+                  mb: 2
+                }}
+              />
               <Typography
                 component="h1"
                 variant={isMobile ? "h4" : "h3"}
@@ -93,11 +103,9 @@ const Login = () => {
                 FinSight AI
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Your intelligent financial companion
+                Insight to foresight, In real-time
               </Typography>
-            </Box>
-
-            {error && (
+            </Box>            {error && (
               <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
                 {error}
               </Alert>
@@ -176,7 +184,7 @@ const Login = () => {
                 onClick={handleDemoLogin}
                 sx={{ mb: 3, py: 1.5, borderRadius: 2 }}
               >
-                Try Demo Account
+                Change Password
               </Button>
 
               <Divider sx={{ my: 2 }}>
