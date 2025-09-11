@@ -122,35 +122,35 @@ const Navbar = () => {
           )}
 
           <Tooltip title="Account">
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit"
-            >
-              {userProfile?.profilePictureUrl ? (
-                <Avatar 
-                  src={userProfile.profilePictureUrl} 
-                  alt={`${userProfile.firstName}'s profile`}
-                  sx={{ 
-                    width: 32, 
-                    height: 32,
-                    border: '2px solid rgba(255, 255, 255, 0.2)',
-                  }}
-                  imgProps={{
-                    onError: (e) => {
-                      e.target.src = ''; // Clear the source on error
-                      e.target.onerror = null; // Prevent infinite loop
-                    }
-                  }}
-                />
-              ) : (
-                <AccountCircle />
-              )}
-            </IconButton>
-          </Tooltip>
+  <IconButton
+    size="large"
+    aria-label="account of current user"
+    aria-controls="menu-appbar"
+    aria-haspopup="true"
+    onClick={handleMenu}
+    color="inherit"
+  >
+    {userProfile?.profilePictureUrl ? (
+      <Avatar 
+        src={userProfile.profilePictureUrl} 
+        alt={`${userProfile.firstName}'s profile`}
+        sx={{ 
+          width: 32, 
+          height: 32,
+          border: '2px solid rgba(255, 255, 255, 0.2)',
+        }}
+        imgProps={{
+          onError: (e) => {
+            e.target.src = ''; // Clear the source on error
+            e.target.onerror = null; // Prevent infinite loop
+          }
+        }}
+      />
+    ) : (
+      <AccountCircle />
+    )}
+  </IconButton>
+</Tooltip>
 
           <Menu
             id="menu-appbar"
