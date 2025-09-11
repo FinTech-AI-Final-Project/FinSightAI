@@ -77,8 +77,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Clear all user related data
     setToken(null);
-    localStorage.removeItem('authToken');
+    setCurrentUser(null);
+    localStorage.clear(); // Clear all localStorage instead of just authToken
     return signOut(auth);
   };
 
@@ -88,39 +90,47 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const idToken = await user.getIdToken();
-        setToken(idToken);
-        localStorage.setItem('authToken', idToken);
-        setCurrentUser(user);
-        
-        // Check if user exists in backend, if not, create them
-        try {
-          await getUserProfile();
-        } catch (error) {
-          // User doesn't exist in backend, create them
-          const userData = {
-            firebaseUid: user.uid,
-            email: user.email,
-            firstName: user.displayName?.split(' ')[0] || 'User',
-            lastName: user.displayName?.split(' ')[1] || 'Name',
-            currency: 'ZAR',
-            darkMode: false
-          };
+      try {
+        if (user) {
+          const idToken = await user.getIdToken();
+          setToken(idToken);
+          localStorage.setItem('authToken', idToken);
+          setCurrentUser(user);
           
+          // Check if user exists in backend, if not, create them
           try {
-            await createUser(userData);
-            console.log('User auto-registered in backend');
-          } catch (createError) {
-            console.error('Error creating user in backend:', createError);
+            await getUserProfile();
+          } catch (error) {
+            // User doesn't exist in backend, create them
+            const userData = {
+              firebaseUid: user.uid,
+              email: user.email,
+              firstName: user.displayName?.split(' ')[0] || 'User',
+              lastName: user.displayName?.split(' ')[1] || 'Name',
+              currency: 'ZAR',
+              darkMode: false
+            };
+            
+            try {
+              await createUser(userData);
+              console.log('User auto-registered in backend');
+            } catch (createError) {
+              console.error('Error creating user in backend:', createError);
+            }
           }
+        } else {
+          setCurrentUser(null);
+          setToken(null);
+          localStorage.removeItem('authToken');
         }
-      } else {
+      } catch (error) {
+        console.error('Error in auth state change:', error);
         setCurrentUser(null);
         setToken(null);
         localStorage.removeItem('authToken');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // Check for existing token on component mount
