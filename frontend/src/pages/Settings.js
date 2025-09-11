@@ -26,6 +26,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import {
   Brightness4,
@@ -62,7 +63,7 @@ const Settings = () => {
   const [success, setSuccess] = useState('');
   const { currentUser, logout } = useAuth();
   const { darkMode, toggleDarkMode } = useCustomTheme();
-  const { userProfile, updateUserProfile, fetchUserProfile } = useUser();
+  const { userProfile, updateUserProfile, fetchUserProfile, loading: userLoading, initialized } = useUser();
   const theme = useTheme();
   const navigate = useNavigate();
 
@@ -84,21 +85,28 @@ const Settings = () => {
   const [notificationStatus, setNotificationStatus] = useState('unknown');
 
   useEffect(() => {
-    // Sync profileData with userProfile from context and currentUser from Firebase
+    // Only sync profile data after UserContext has been initialized
+    if (!initialized && currentUser) {
+      // Still loading user profile, don't update yet
+      console.log('👤 Settings: Waiting for UserContext to initialize...');
+      return;
+    }
+
     console.log('👤 Settings: Syncing profile data from context and auth');
     console.log('📊 UserProfile from context:', userProfile);
     console.log('🔥 CurrentUser from Firebase:', currentUser);
+    console.log('✅ UserContext initialized:', initialized);
     
-    // Prioritize userProfile from context, fallback to Firebase user, then fallback to empty values
+    // Only use Firebase user data as fallback if UserContext is initialized but empty
+    // This prevents showing stale Firebase data while UserContext is loading new user data
     const firstName = userProfile.firstName || 
-                     (currentUser?.displayName?.split(' ')[0]) || 
-                     '';
+                     (initialized ? (currentUser?.displayName?.split(' ')[0] || '') : '');
     const lastName = userProfile.lastName || 
-                    (currentUser?.displayName?.split(' ')[1]) || 
-                    '';
-    const email = userProfile.email || currentUser?.email || '';
+                    (initialized ? (currentUser?.displayName?.split(' ')[1] || '') : '');
+    const email = userProfile.email || (initialized ? (currentUser?.email || '') : '');
     const currency = userProfile.currency || 'ZAR';
-    const profilePictureUrl = userProfile.profilePictureUrl || currentUser?.photoURL || '';
+    const profilePictureUrl = userProfile.profilePictureUrl || 
+                             (initialized ? (currentUser?.photoURL || '') : '');
     
     setProfileData({
       firstName,
@@ -117,7 +125,7 @@ const Settings = () => {
     });
     
     setUser({ firstName, lastName, email, currency, profilePictureUrl });
-  }, [userProfile, currentUser]);
+  }, [userProfile, currentUser, initialized]);
 
   useEffect(() => {
     // Check notification status
@@ -332,6 +340,12 @@ const Settings = () => {
               )}
             </Box>
 
+            {!initialized && currentUser ? (
+              <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                <CircularProgress size={24} sx={{ mr: 2 }} />
+                <Typography color="text.secondary">Loading profile...</Typography>
+              </Box>
+            ) : (
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} sm={3} sx={{ textAlign: 'center' }}>
                 <ProfilePictureUpload
@@ -429,6 +443,7 @@ const Settings = () => {
                 )}
               </Grid>
             </Grid>
+            )}
           </CardContent>
         </Card>
 
