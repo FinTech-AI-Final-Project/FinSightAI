@@ -19,9 +19,11 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const signup = async (email, password, firstName, lastName) => {
     try {
+      setIsSigningUp(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
@@ -42,6 +44,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('authToken', idToken);
       
       // Register in backend with better error handling
+      let registrationSucceeded = false;
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081/api'}/users/register`, {
           method: 'POST',
@@ -59,14 +62,27 @@ export const AuthProvider = ({ children }) => {
           // Just log the backend error for debugging
         } else {
           console.log('User registered successfully in backend');
+          registrationSucceeded = true;
+          
+          // Dispatch custom event to notify UserContext that registration completed
+          window.dispatchEvent(new CustomEvent('userRegistrationComplete', {
+            detail: { firebaseUid: user.uid }
+          }));
         }
       } catch (backendError) {
         console.error('Backend registration error:', backendError);
         // Don't throw error here - Firebase user was created successfully
       }
       
+      // Clear signup flag after backend registration attempt is complete
+      // Small delay to ensure UserContext has time to refresh
+      setTimeout(() => {
+        setIsSigningUp(false);
+      }, registrationSucceeded ? 500 : 1000);
+      
       return userCredential;
     } catch (error) {
+      setIsSigningUp(false);
       console.error('Signup error:', error);
       throw error;
     }
@@ -97,25 +113,28 @@ export const AuthProvider = ({ children }) => {
           localStorage.setItem('authToken', idToken);
           setCurrentUser(user);
           
-          // Check if user exists in backend, if not, create them
-          try {
-            await getUserProfile();
-          } catch (error) {
-            // User doesn't exist in backend, create them
-            const userData = {
-              firebaseUid: user.uid,
-              email: user.email,
-              firstName: user.displayName?.split(' ')[0] || 'User',
-              lastName: user.displayName?.split(' ')[1] || 'Name',
-              currency: 'ZAR',
-              darkMode: false
-            };
-            
+          // Only check/create user in backend if we're not in the middle of signup
+          if (!isSigningUp) {
+            // Check if user exists in backend, if not, create them
             try {
-              await createUser(userData);
-              console.log('User auto-registered in backend');
-            } catch (createError) {
-              console.error('Error creating user in backend:', createError);
+              await getUserProfile();
+            } catch (error) {
+              // User doesn't exist in backend, create them
+              const userData = {
+                firebaseUid: user.uid,
+                email: user.email,
+                firstName: user.displayName?.split(' ')[0] || 'User',
+                lastName: user.displayName?.split(' ')[1] || 'Name',
+                currency: 'ZAR',
+                darkMode: false
+              };
+              
+              try {
+                await createUser(userData);
+                console.log('User auto-registered in backend');
+              } catch (createError) {
+                console.error('Error creating user in backend:', createError);
+              }
             }
           }
         } else {
@@ -140,7 +159,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     return unsubscribe;
-  }, []);
+  }, [isSigningUp]);
 
   const value = {
     currentUser,

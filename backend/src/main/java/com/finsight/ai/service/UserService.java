@@ -1,12 +1,14 @@
 package com.finsight.ai.service;
 
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.finsight.ai.dto.UserRegistrationDto;
 import com.finsight.ai.entity.User;
 import com.finsight.ai.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -17,11 +19,16 @@ public class UserService {
     @Autowired
     private FirebaseAuthService firebaseAuthService;
 
+    @Transactional
     public User createUser(UserRegistrationDto userDto) {
-        if (userRepository.existsByFirebaseUid(userDto.getFirebaseUid())) {
-            throw new RuntimeException("User already exists with this Firebase UID");
+        // Check if user already exists by Firebase UID first (most reliable)
+        Optional<User> existingUser = userRepository.findByFirebaseUid(userDto.getFirebaseUid());
+        if (existingUser.isPresent()) {
+            // User already exists, return the existing user instead of throwing error
+            return existingUser.get();
         }
 
+        // Check by email as well
         if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new RuntimeException("User already exists with this email");
         }
@@ -36,7 +43,16 @@ public class UserService {
         user.setProfilePictureUrl(userDto.getProfilePictureUrl());
         user.setCurrency(userDto.getCurrency());
 
-        return userRepository.save(user);
+        try {
+            return userRepository.save(user);
+        } catch (Exception e) {
+            // If save fails due to constraint violation, try to return existing user
+            Optional<User> existingUserAfterError = userRepository.findByFirebaseUid(userDto.getFirebaseUid());
+            if (existingUserAfterError.isPresent()) {
+                return existingUserAfterError.get();
+            }
+            throw new RuntimeException("Failed to create user: " + e.getMessage(), e);
+        }
     }
 
     public Optional<User> getUserByFirebaseUid(String firebaseUid) {
