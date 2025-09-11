@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
+import { useUser } from '../contexts/UserContext';
 import { motion } from 'framer-motion';
 
 const Navbar = () => {
@@ -30,6 +31,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { logout, currentUser } = useAuth();
   const { darkMode, toggleDarkMode } = useCustomTheme();
+  const { userProfile } = useUser();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -128,8 +130,22 @@ const Navbar = () => {
               onClick={handleMenu}
               color="inherit"
             >
-              {currentUser?.photoURL ? (
-                <Avatar src={currentUser.photoURL} sx={{ width: 32, height: 32 }} />
+              {userProfile?.profilePictureUrl ? (
+                <Avatar 
+                  src={userProfile.profilePictureUrl} 
+                  alt={`${userProfile.firstName}'s profile`}
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    border: '2px solid rgba(255, 255, 255, 0.2)',
+                  }}
+                  imgProps={{
+                    onError: (e) => {
+                      e.target.src = ''; // Clear the source on error
+                      e.target.onerror = null; // Prevent infinite loop
+                    }
+                  }}
+                />
               ) : (
                 <AccountCircle />
               )}
