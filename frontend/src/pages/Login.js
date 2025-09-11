@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import { Google, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../firebase';
 import { motion } from 'framer-motion';
 import { IconButton, InputAdornment } from '@mui/material';
 
@@ -24,7 +26,39 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState('');
+  const { login, resetPassword } = useAuth();
+  // Google login handler
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate('/dashboard');
+    } catch (error) {
+      setError('Google sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Forgot password handler
+  const handleForgotPassword = async () => {
+    setResetLoading(true);
+    setResetSuccess('');
+    setError('');
+    try {
+      await resetPassword(resetEmail || email);
+      setResetSuccess('Password reset email sent! Check your inbox.');
+    } catch (error) {
+      setError('Failed to send password reset email. Please check the email address.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -45,10 +79,6 @@ const Login = () => {
     }
   };
 
-  const handleDemoLogin = () => {
-    setEmail('demo@finsight.ai');
-    setPassword('password123');
-  };
 
   return (
     <Container component="main" maxWidth="sm">
@@ -177,15 +207,39 @@ const Login = () => {
                 )}
               </Button>
 
+
               <Button
                 fullWidth
                 variant="outlined"
                 size="large"
-                onClick={handleDemoLogin}
-                sx={{ mb: 3, py: 1.5, borderRadius: 2 }}
+                sx={{ mb: 2, py: 1.5, borderRadius: 2 }}
+                onClick={() => setResetEmail(email)}
               >
-                Change Password
+                Forgot Password?
               </Button>
+
+              {resetEmail && (
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Enter your email to reset password"
+                    value={resetEmail}
+                    onChange={e => setResetEmail(e.target.value)}
+                    sx={{ mb: 1 }}
+                  />
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={handleForgotPassword}
+                    disabled={resetLoading}
+                  >
+                    {resetLoading ? <CircularProgress size={20} color="inherit" /> : 'Send Reset Email'}
+                  </Button>
+                  {resetSuccess && (
+                    <Alert severity="success" sx={{ mt: 1 }}>{resetSuccess}</Alert>
+                  )}
+                </Box>
+              )}
 
               <Divider sx={{ my: 2 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -199,9 +253,10 @@ const Login = () => {
                 size="large"
                 startIcon={<Google />}
                 sx={{ mb: 3, py: 1.5, borderRadius: 2 }}
-                disabled
+                onClick={handleGoogleLogin}
+                disabled={loading}
               >
-                Sign in with Google
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Sign in with Google'}
               </Button>
 
               <Box sx={{ textAlign: 'center' }}>
