@@ -49,8 +49,16 @@ const apiRequest = async (endpoint, options = {}) => {
       console.error(`❌ API Error: ${response.status} - ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    // Check if the response is meant to be JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      return data;
+    }
     
-    const data = await response.json();
+    // For non-JSON responses, return the text
+    const data = await response.text();
     console.log('📦 Response data:', data);
     return data;
   } catch (error) {
@@ -261,9 +269,11 @@ export const updateProfilePicture = async (base64Image) => {
 
 // 🗑️ User account functions
 export const deleteUser = async () => {
-  return apiRequest('/users/profile', {
+  const response = await apiRequest('/users/profile', {
     method: 'DELETE',
   });
+  // Return true if the deletion was successful
+  return response === "User deleted successfully";
 };
 
 // 🎯 Multiple AI Tips function

@@ -218,17 +218,43 @@ const Settings = () => {
 
     try {
       setLoading(true);
-      await ApiService.deleteUser();
+      
+      if (!currentUser) {
+        throw new Error('No user is currently logged in');
+      }
+
+      // Get a fresh token first to ensure we have a valid one
+      const token = await currentUser.getIdToken(true);
+      localStorage.setItem('authToken', token);
+
+      // First delete the user in the backend while we have a valid token
+      const wasDeleted = await ApiService.deleteUser();
+      if (!wasDeleted) {
+        throw new Error('Failed to delete user from backend');
+      }
+      
+      // Then delete the Firebase user
+      await currentUser.delete();
+      
+      // Clear all local storage data
+      localStorage.clear();
+      
+      // Finally perform logout and redirect
       await logout();
       navigate('/login');
+      
     } catch (error) {
       console.error('Error deleting account:', error);
       setError(`Failed to delete account: ${error.message}`);
-    } finally {
+      // Re-enable the delete button by clearing loading state
       setLoading(false);
-      setShowDeleteDialog(false);
-      setDeleteConfirmText('');
+      return;
     }
+    
+    // Only clear dialog state if deletion was successful
+    setLoading(false);
+    setShowDeleteDialog(false);
+    setDeleteConfirmText('');
   };
 
   const handleNotificationChange = (key) => {
