@@ -7,9 +7,9 @@ import {
   Button,
   Typography,
   Box,
-  Alert,
   CircularProgress,
   Divider,
+  Alert,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -19,13 +19,15 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
 import { motion } from 'framer-motion';
 import { IconButton, InputAdornment } from '@mui/material';
+import { useErrorHandler } from '../utils/errorHandler';
+import ErrorAlert from '../components/ErrorAlert';
 
 const Login = () => {
   const [email, setEmail] = useState('demo@finsight.ai');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { error, handleError, clearError } = useErrorHandler();
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState('');
@@ -33,13 +35,13 @@ const Login = () => {
   // Google login handler
   const handleGoogleLogin = async () => {
     setLoading(true);
-    setError('');
+    clearError();
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       navigate('/dashboard');
     } catch (error) {
-      setError('Google sign-in failed. Please try again.');
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -49,12 +51,12 @@ const Login = () => {
   const handleForgotPassword = async () => {
     setResetLoading(true);
     setResetSuccess('');
-    setError('');
+    clearError();
     try {
       await resetPassword(resetEmail || email);
       setResetSuccess('Password reset email sent! Check your inbox.');
     } catch (error) {
-      setError('Failed to send password reset email. Please check the email address.');
+      handleError(error);
     } finally {
       setResetLoading(false);
     }
@@ -66,14 +68,14 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    clearError();
 
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      setError('Failed to sign in. Please check your credentials.');
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -135,11 +137,8 @@ const Login = () => {
               <Typography variant="body1" color="text.secondary">
                 Insight to foresight, In real-time
               </Typography>
-            </Box>            {error && (
-              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+            </Box>            
+            <ErrorAlert error={error} />
 
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
               <TextField

@@ -52,11 +52,43 @@ const Expenses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [error, setError] = useState('');
+  const [dialogError, setDialogError] = useState(''); // Error specific to dialog operations
   const [ocrProgress, setOcrProgress] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { userProfile } = useUser();
+
+  // Convert technical errors to user-friendly messages
+  const getErrorMessage = (error) => {
+    const errorMsg = error.message || error.toString() || 'An error occurred';
+    
+    // Check for specific error patterns and convert to user-friendly messages
+    if (errorMsg.includes('budget') && errorMsg.includes('category') && errorMsg.includes('month')) {
+      return `Please create a budget for this category first. Go to the Budgets page to set up a budget before adding expenses.`;
+    }
+    if (errorMsg.includes('value too long')) {
+      return `The notes field is too long. Please keep notes under 950 characters.`;
+    }
+    if (errorMsg.includes('violates check constraint') && errorMsg.includes('category')) {
+      return `Invalid category selected. Please choose a valid expense category.`;
+    }
+    if (errorMsg.includes('Network Error') || errorMsg.includes('connection')) {
+      return `Connection error. Please check your internet connection and try again.`;
+    }
+    if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+      return `Session expired. Please refresh the page and sign in again.`;
+    }
+    if (errorMsg.includes('400') || errorMsg.includes('Bad Request')) {
+      return `Invalid data provided. Please check all fields and try again.`;
+    }
+    if (errorMsg.includes('500') || errorMsg.includes('Internal Server Error')) {
+      return `Server error. Please try again in a moment.`;
+    }
+    
+    // Return simplified version for other errors
+    return errorMsg.length > 100 ? 'An unexpected error occurred. Please try again.' : errorMsg;
+  };
 
   const [formData, setFormData] = useState({
     description: '',
@@ -104,6 +136,30 @@ const Expenses = () => {
         date: formData.date.toISOString().split('T')[0],
       };
 
+      // Check if budget exists for this category and month (only for new expenses)
+      if (!editingExpense) {
+        try {
+          const budgets = await ApiService.getBudgets({
+            month: formData.date.getMonth() + 1,
+            year: formData.date.getFullYear()
+          });
+          
+          const budgetExists = budgets.some(budget => budget.category === formData.category);
+          
+          if (!budgetExists) {
+            const categoryDisplayName = expenseCategories[formData.category]?.name || formData.category;
+            const monthName = formData.date.toLocaleDateString('en-US', { month: 'long' });
+            const year = formData.date.getFullYear();
+            
+            setDialogError(`You must create a budget for ${categoryDisplayName} in ${monthName} ${year} before adding expenses to this category.`);
+            return;
+          }
+        } catch (budgetCheckError) {
+          console.warn('Could not validate budget existence:', budgetCheckError);
+          // Continue with expense creation - let backend validation handle it
+        }
+      }
+
       if (editingExpense) {
         await ApiService.updateExpense(editingExpense.id, expenseData);
         // Dispatch update event
@@ -118,7 +174,8 @@ const Expenses = () => {
       handleCloseDialog();
     } catch (error) {
       console.error('Error saving expense:', error);
-      setError('Failed to save expense');
+      const friendlyMessage = getErrorMessage(error.response?.data || error);
+      setDialogError(friendlyMessage);
     }
   };
 
@@ -136,6 +193,7 @@ const Expenses = () => {
   };
 
   const handleOpenDialog = (expense = null) => {
+    setDialogError(''); // Clear any previous dialog errors
     setEditingExpense(expense);
     if (expense) {
       setFormData({
@@ -160,6 +218,7 @@ const Expenses = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingExpense(null);
+    setDialogError(''); // Clear dialog-specific errors
   };
 
   const handleMenu = (event, expense) => {
@@ -205,13 +264,29 @@ const Expenses = () => {
             console.log('📸 Parsed data:', parsedData);
             
             // Update form with extracted data
+            // Create notes with length validation
+            const merchantText = parsedData.merchant ? ` from ${parsedData.merchant}` : '';
+            const baseNotes = `Receipt scan${merchantText}`;
+            
+            // Calculate remaining space for OCR text (950 char limit with buffer)
+            const maxNotesLength = 950;
+            const remainingSpace = maxNotesLength - baseNotes.length - 15; // 15 chars for "\n\nOCR Text:\n"
+            
+            let ocrText = '';
+            if (result.rawText && remainingSpace > 50) {
+              const truncatedRawText = result.rawText.substring(0, remainingSpace - 3);
+              ocrText = `\n\nOCR Text:\n${truncatedRawText}${result.rawText.length > (remainingSpace - 3) ? '...' : ''}`;
+            }
+            
+            const finalNotes = baseNotes + ocrText;
+
             setFormData(prev => ({
               ...prev,
               description: parsedData.description || prev.description,
               amount: parsedData.amount ? parsedData.amount.toString() : prev.amount,
               category: parsedData.category || prev.category,
               date: parsedData.date ? new Date(parsedData.date) : prev.date,
-              notes: `Receipt scan${parsedData.merchant ? ` from ${parsedData.merchant}` : ''}${result.rawText ? `\n\nOCR Text:\n${result.rawText.substring(0, 300)}${result.rawText.length > 300 ? '...' : ''}` : ''}`
+              notes: finalNotes
             }));
             
             // Open the dialog so user can review and edit
@@ -566,6 +641,11 @@ const Expenses = () => {
           {editingExpense ? 'Edit Expense' : 'Add Expense'}
         </DialogTitle>
         <DialogContent>
+          {dialogError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDialogError('')}>
+              {dialogError}
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <Box display="flex" gap={1} alignItems="end">
@@ -637,7 +717,14 @@ const Expenses = () => {
                 multiline
                 rows={2}
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Truncate at 1000 characters
+                  const truncatedValue = value.length > 1000 ? value.substring(0, 1000) : value;
+                  setFormData({ ...formData, notes: truncatedValue });
+                }}
+                helperText={`${formData.notes.length}/1000 characters${formData.notes.length > 900 ? ' (approaching limit)' : ''}`}
+                error={formData.notes.length >= 1000}
               />
             </Grid>
           </Grid>

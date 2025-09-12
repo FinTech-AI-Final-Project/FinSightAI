@@ -39,6 +39,7 @@ public class Expense {
 
     private String receiptUrl;
 
+    @Column(length = 1000)
     private String notes;
 
     @CreationTimestamp

@@ -419,6 +419,33 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
           </motion.div>
         )}
 
+        {/* AI Tips Counter */}
+        {!expanded && tips.length > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 1 }}>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {tips.map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: index === currentTipIndex 
+                      ? theme.palette.primary.main 
+                      : theme.palette.mode === 'dark' 
+                        ? theme.palette.action.disabled
+                        : theme.palette.grey[400],
+                    transition: 'background-color 0.3s',
+                    cursor: 'pointer',
+                    border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
+                  }}
+                  onClick={() => setCurrentTipIndex(index)}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
+
         {/* Crypto Tips Section */}
         {!expanded && currentCryptoTip && (
           <Box sx={{ mt: 2 }}>
@@ -463,6 +490,33 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                 </Box>
               </Alert>
             </motion.div>
+          </Box>
+        )}
+
+        {/* Crypto Tips Counter */}
+        {!expanded && cryptoTips.length > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 1 }}>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {cryptoTips.map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: index === currentCryptoTipIndex 
+                      ? '#FFB74D' 
+                      : theme.palette.mode === 'dark' 
+                        ? theme.palette.action.disabled
+                        : theme.palette.grey[400],
+                    transition: 'background-color 0.3s',
+                    cursor: 'pointer',
+                    border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
+                  }}
+                  onClick={() => setCurrentCryptoTipIndex(index)}
+                />
+              ))}
+            </Box>
           </Box>
         )}
 
@@ -513,98 +567,30 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
           </Box>
         )}
 
-        {/* Tip Counter */}
-        {!expanded && (tips.length > 1 || cryptoTips.length > 1 || cashFlowTips.length > 1) && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 2 }}>
-            {/* AI Tips Counter */}
-            {tips.length > 1 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                  AI Tips
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {tips.map((_, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: index === currentTipIndex 
-                          ? theme.palette.primary.main 
-                          : theme.palette.mode === 'dark' 
-                            ? theme.palette.action.disabled
-                            : theme.palette.grey[400],
-                        transition: 'background-color 0.3s',
-                        cursor: 'pointer',
-                        border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
-                      }}
-                      onClick={() => setCurrentTipIndex(index)}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {/* Crypto Tips Counter */}
-            {cryptoTips.length > 1 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                  Crypto Tips
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {cryptoTips.map((_, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: index === currentCryptoTipIndex 
-                          ? '#FFB74D' 
-                          : theme.palette.mode === 'dark' 
-                            ? theme.palette.action.disabled
-                            : theme.palette.grey[400],
-                        transition: 'background-color 0.3s',
-                        cursor: 'pointer',
-                        border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
-                      }}
-                      onClick={() => setCurrentCryptoTipIndex(index)}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {/* Cash Flow Tips Counter */}
-            {cashFlowTips.length > 1 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontSize: '0.65rem' }}>
-                  Cash Flow
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {cashFlowTips.map((_, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: index === currentCashFlowTipIndex 
-                          ? '#4FC3F7' 
-                          : theme.palette.mode === 'dark' 
-                            ? theme.palette.action.disabled
-                            : theme.palette.grey[400],
-                        transition: 'background-color 0.3s',
-                        cursor: 'pointer',
-                        border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
-                      }}
-                      onClick={() => setCurrentCashFlowTipIndex(index)}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
+        {/* Cash Flow Tips Counter */}
+        {!expanded && cashFlowTips.length > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 1 }}>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {cashFlowTips.map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: index === currentCashFlowTipIndex 
+                      ? '#4FC3F7' 
+                      : theme.palette.mode === 'dark' 
+                        ? theme.palette.action.disabled
+                        : theme.palette.grey[400],
+                    transition: 'background-color 0.3s',
+                    cursor: 'pointer',
+                    border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.grey[600]}` : 'none',
+                  }}
+                  onClick={() => setCurrentCashFlowTipIndex(index)}
+                />
+              ))}
+            </Box>
           </Box>
         )}
 
@@ -787,9 +773,7 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
           
           {!expanded && (
             <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-              AI: {tips.length > 1 ? `${currentTipIndex + 1}/${tips.length}` : tips.length} • 
-              Crypto: {cryptoTips.length > 1 ? `${currentCryptoTipIndex + 1}/${cryptoTips.length}` : cryptoTips.length} •
-              Cash Flow: {cashFlowTips.length > 1 ? `${currentCashFlowTipIndex + 1}/${cashFlowTips.length}` : cashFlowTips.length}
+              Total Tips: {tips.length + cryptoTips.length + cashFlowTips.length}
             </Typography>
           )}
         </Box>

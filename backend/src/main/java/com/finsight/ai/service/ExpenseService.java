@@ -1,10 +1,12 @@
 package com.finsight.ai.service;
 
 import com.finsight.ai.dto.ExpenseDto;
+import com.finsight.ai.entity.Budget;
 import com.finsight.ai.entity.Expense;
 import com.finsight.ai.entity.ExpenseCategory;
 import com.finsight.ai.entity.RecurringExpense;
 import com.finsight.ai.entity.User;
+import com.finsight.ai.repository.BudgetRepository;
 import com.finsight.ai.repository.ExpenseRepository;
 import com.finsight.ai.repository.RecurringExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,9 +29,30 @@ public class ExpenseService {
     private RecurringExpenseRepository recurringExpenseRepository;
 
     @Autowired
+    private BudgetRepository budgetRepository;
+
+    @Autowired
     private BudgetService budgetService;
 
     public Expense createExpense(ExpenseDto expenseDto, User user) {
+        // Check if budget exists for this category, month, and year
+        LocalDate expenseDate = expenseDto.getDate();
+        Optional<Budget> budgetOpt = budgetRepository.findByUserAndCategoryAndMonthAndYear(
+            user, 
+            expenseDto.getCategory(), 
+            expenseDate.getMonthValue(), 
+            expenseDate.getYear()
+        );
+        
+        if (budgetOpt.isEmpty()) {
+            String categoryName = expenseDto.getCategory().getDisplayName();
+            String monthName = expenseDate.getMonth().name();
+            throw new IllegalArgumentException(
+                String.format("You must create a budget for %s in %s %d before adding expenses to this category.", 
+                    categoryName, monthName, expenseDate.getYear())
+            );
+        }
+        
         Expense expense = new Expense(
             expenseDto.getDescription(),
             expenseDto.getAmount(),
@@ -38,7 +62,13 @@ public class ExpenseService {
         );
 
         expense.setReceiptUrl(expenseDto.getReceiptUrl());
-        expense.setNotes(expenseDto.getNotes());
+        
+        // Validate and truncate notes if too long (max 1000 characters)
+        String notes = expenseDto.getNotes();
+        if (notes != null && notes.length() > 1000) {
+            notes = notes.substring(0, 997) + "...";
+        }
+        expense.setNotes(notes);
 
         if (expenseDto.getRecurringExpenseId() != null) {
             RecurringExpense recurringExpense = recurringExpenseRepository

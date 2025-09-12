@@ -49,9 +49,38 @@ const Budgets = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedBudget, setSelectedBudget] = useState(null);
   const [error, setError] = useState('');
+  const [dialogError, setDialogError] = useState(''); // Error specific to dialog operations
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { userProfile } = useUser();
+
+  // Convert technical errors to user-friendly messages
+  const getErrorMessage = (error) => {
+    const errorMsg = error.message || error.toString() || 'An error occurred';
+    
+    // Check for specific error patterns and convert to user-friendly messages
+    if (errorMsg.includes('already exists') || errorMsg.includes('duplicate')) {
+      return `A budget for this category already exists for the selected month. Please edit the existing budget instead.`;
+    }
+    if (errorMsg.includes('violates check constraint') && errorMsg.includes('category')) {
+      return `Invalid category selected. Please choose a valid budget category.`;
+    }
+    if (errorMsg.includes('Network Error') || errorMsg.includes('connection')) {
+      return `Connection error. Please check your internet connection and try again.`;
+    }
+    if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+      return `Session expired. Please refresh the page and sign in again.`;
+    }
+    if (errorMsg.includes('400') || errorMsg.includes('Bad Request')) {
+      return `Invalid data provided. Please check all fields and try again.`;
+    }
+    if (errorMsg.includes('500') || errorMsg.includes('Internal Server Error')) {
+      return `Server error. Please try again in a moment.`;
+    }
+    
+    // Return simplified version for other errors
+    return errorMsg.length > 100 ? 'An unexpected error occurred. Please try again.' : errorMsg;
+  };
 
   const currentMonth = getCurrentMonth();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth.month);
@@ -118,7 +147,8 @@ const Budgets = () => {
       handleCloseDialog();
     } catch (error) {
       console.error('Error saving budget:', error);
-      setError('Failed to save budget');
+      const friendlyMessage = getErrorMessage(error.response?.data || error);
+      setDialogError(friendlyMessage);
     }
   };
 
@@ -136,6 +166,7 @@ const Budgets = () => {
   };
 
   const handleOpenDialog = (budget = null) => {
+    setDialogError(''); // Clear any previous dialog errors
     setEditingBudget(budget);
     if (budget) {
       setFormData({
@@ -158,6 +189,7 @@ const Budgets = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingBudget(null);
+    setDialogError(''); // Clear dialog-specific errors
   };
 
   const handleMenu = (event, budget) => {
@@ -569,6 +601,11 @@ const Budgets = () => {
           {editingBudget ? 'Edit Budget' : 'Create Budget'}
         </DialogTitle>
         <DialogContent>
+          {dialogError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDialogError('')}>
+              {dialogError}
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <FormControl fullWidth required>
