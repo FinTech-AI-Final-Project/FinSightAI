@@ -1,10 +1,19 @@
 
 package com.finsight.ai.service;
 
-import com.finsight.ai.entity.Budget;
-import com.finsight.ai.entity.Expense;
-import com.finsight.ai.entity.ExpenseCategory;
-import com.finsight.ai.entity.User;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +21,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import com.finsight.ai.entity.Budget;
+import com.finsight.ai.entity.Expense;
+import com.finsight.ai.entity.ExpenseCategory;
+import com.finsight.ai.entity.User;
+
+import reactor.core.publisher.Mono;
 
 @Service
 public class AITipsService {
@@ -39,14 +47,6 @@ public class AITipsService {
     
     @Value("${ai.agent.api.key}")
     private String aiAgentApiKey;
-    
-    // No rate limiting - removed all restrictions
-    private final Map<String, Long> lastRequestTime = new ConcurrentHashMap<>();
-    private final Map<String, List<String>> tipCache = new ConcurrentHashMap<>();
-    private static final long RATE_LIMIT_MS = 0; // No rate limiting
-    private static final long CACHE_DURATION_MS = 0; // No caching
-    private static volatile long lastGlobalApiCall = 0;
-    private static final long GLOBAL_RATE_LIMIT_MS = 0; // No global rate limiting
 
     public AITipsService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
@@ -262,9 +262,9 @@ public class AITipsService {
             .replaceAll("\\*\\*[^*]*\\*\\*", "") // Remove **bold text**
             .replaceAll("\\*[^*]*\\*", "")       // Remove *italic text*
             .replaceAll("\\*+", "")              // Remove any remaining asterisks
-            .replaceAll("\\u201[CD]", "\"")      // Smart quotes
-            .replaceAll("\\u201[89]", "'")       // Single quotes
-            .replaceAll("\\u201[3-4]", "-")      // En/Em dashes
+            .replaceAll("\\\\u201[CD]", "\"")      // Smart quotes
+            .replaceAll("\\\\u201[89]", "'")       // Single quotes
+            .replaceAll("\\\\u201[3-4]", "-")      // En/Em dashes
             .replaceAll("\\u00A0", " ")          // Non-breaking space
             .replaceAll("≡ƒ[\\w]*", "")          // Remove emoji corruption symbols
             .replaceAll("Γ[\\w]*", "")           // Remove other corruption
@@ -1732,5 +1732,196 @@ public class AITipsService {
                 case OTHER -> String.format("Put this %s %.2f towards your highest priority financial goal!", currency, savings);
             };
         }
+    }
+    
+    // Generate contextual AI response for user questions/statements
+    public String generateContextualResponse(User user, String userMessage) {
+        logger.info("Generating contextual AI response for user: {}", user.getFirebaseUid());
+        
+        try {
+            // Get comprehensive financial context
+            LocalDate now = LocalDate.now();
+            LocalDate startOfMonth = now.withDayOfMonth(1);
+            LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+            LocalDate startOfYear = now.withDayOfYear(1);
+            
+            List<Expense> currentMonthExpenses = expenseService.getUserExpensesByDateRange(user, startOfMonth, endOfMonth);
+            List<Expense> currentYearExpenses = expenseService.getUserExpensesByDateRange(user, startOfYear, now);
+            List<Budget> currentMonthBudgets = budgetService.getUserBudgetsByMonth(user, now.getMonthValue(), now.getYear());
+            Map<ExpenseCategory, BigDecimal> categorySpending = expenseService.getExpensesByCategory(user, startOfMonth, endOfMonth);
+            
+            // Create comprehensive context with database schema info
+            StringBuilder contextPrompt = new StringBuilder();
+            
+            String currency = user.getCurrency();
+            String currencySymbol = formatCurrencySymbol(currency);
+            String region = getCurrencyLocation(currency);
+            String firstName = user.getFirstName() != null ? user.getFirstName() : "User";
+            
+            // Add database schema context for AI to understand data structure
+            contextPrompt.append("Database Schema Context:\n");
+            contextPrompt.append("EXPENSES table: id, user_id, amount, category, description, date, receipt_url, notes\n");
+            contextPrompt.append("BUDGETS table: id, user_id, category, monthly_limit, current_spent, month, year\n");
+            contextPrompt.append("CATEGORIES: ").append(Arrays.stream(ExpenseCategory.values())
+                .map(ExpenseCategory::getDisplayName)
+                .collect(Collectors.joining(", "))).append("\n\n");
+            
+            // Add user financial context
+            contextPrompt.append("User: ").append(firstName).append(" (").append(region).append(")\n");
+            contextPrompt.append("Currency: ").append(currencySymbol).append("\n");
+            
+            // Add spending summary
+            BigDecimal totalSpentMonth = currentMonthExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalSpentYear = currentYearExpenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            contextPrompt.append("This month spent: ").append(currencySymbol).append(String.format("%.2f", totalSpentMonth));
+            contextPrompt.append(" (").append(currentMonthExpenses.size()).append(" transactions)\n");
+            contextPrompt.append("This year spent: ").append(currencySymbol).append(String.format("%.2f", totalSpentYear));
+            contextPrompt.append(" (").append(currentYearExpenses.size()).append(" transactions)\n");
+            
+            // Add recent transactions with descriptions for context
+            contextPrompt.append("\nRecent transactions (last 5):\n");
+            currentMonthExpenses.stream()
+                .sorted((e1, e2) -> e2.getDate().compareTo(e1.getDate()))
+                .limit(5)
+                .forEach(expense -> {
+                    contextPrompt.append("- ").append(currencySymbol).append(String.format("%.2f", expense.getAmount()))
+                        .append(" on ").append(expense.getCategory().getDisplayName());
+                    if (expense.getDescription() != null && !expense.getDescription().trim().isEmpty()) {
+                        contextPrompt.append(" (").append(expense.getDescription()).append(")");
+                    }
+                    contextPrompt.append(" on ").append(expense.getDate()).append("\n");
+                });
+            
+            // Add budget information
+            if (!currentMonthBudgets.isEmpty()) {
+                contextPrompt.append("\nBudgets this month:\n");
+                for (Budget budget : currentMonthBudgets) {
+                    BigDecimal spent = categorySpending.getOrDefault(budget.getCategory(), BigDecimal.ZERO);
+                    double percentage = spent.divide(budget.getMonthlyLimit(), 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100)).doubleValue();
+                    contextPrompt.append("- ").append(budget.getCategory().getDisplayName()).append(": ")
+                        .append(currencySymbol).append(String.format("%.2f", spent))
+                        .append("/").append(currencySymbol).append(String.format("%.2f", budget.getMonthlyLimit()))
+                        .append(" (").append(String.format("%.0f", percentage)).append("%)\n");
+                }
+            }
+            
+            // Add top spending categories
+            if (!categorySpending.isEmpty()) {
+                contextPrompt.append("\nTop spending categories this month:\n");
+                categorySpending.entrySet().stream()
+                    .sorted(Map.Entry.<ExpenseCategory, BigDecimal>comparingByValue().reversed())
+                    .limit(3)
+                    .forEach(entry -> {
+                        contextPrompt.append("- ").append(entry.getKey().getDisplayName())
+                            .append(": ").append(currencySymbol).append(String.format("%.2f", entry.getValue())).append("\n");
+                    });
+            }
+            
+            // Add the user's question/statement
+            contextPrompt.append("\nUser Question/Statement: \"").append(userMessage).append("\"\n\n");
+            
+            // Instructions for AI
+            contextPrompt.append("Instructions: Analyze the user's question/statement and provide a helpful, personalized response. ");
+            contextPrompt.append("If they're asking about spending patterns, amounts, or transactions, reference the actual data above. ");
+            contextPrompt.append("If they mention a specific purchase or ask for advice, provide thoughtful financial guidance. ");
+            contextPrompt.append("If you need to query specific data beyond what's provided, suggest what additional information would be helpful. ");
+            contextPrompt.append("Keep response under 200 words, conversational, and practical. No markdown formatting.");
+            
+            String aiResponse = callAIAgentAPI(contextPrompt.toString());
+            
+            if (aiResponse != null && !aiResponse.trim().isEmpty()) {
+                String processedResponse = processContextualAIResponse(aiResponse, currency);
+                if (processedResponse != null && processedResponse.length() > 15) {
+                    logger.info("Successfully generated contextual AI response for user: {}", user.getFirebaseUid());
+                    return processedResponse;
+                }
+            }
+            
+        } catch (Exception e) {
+            logger.warn("Failed to generate contextual AI response for user {}: {}", user.getFirebaseUid(), e.getMessage());
+        }
+        
+        // Fallback response
+        return "I understand you're asking about your finances, but I'm having trouble processing that right now. Try asking about specific amounts, categories, or time periods, like 'How much did I spend on groceries last month?'";
+    }
+    
+    // Process contextual AI response for optimal user presentation
+    private String processContextualAIResponse(String aiResponse, String currency) {
+        if (aiResponse == null || aiResponse.trim().isEmpty()) {
+            return null;
+        }
+        
+        // Clean up character encoding and formatting issues
+        String cleanedResponse = aiResponse
+            .replaceAll("ΓÇ[£¥ô]", "\"")     // Fix various quote characters
+            .replaceAll("ΓÇ[æ–—]", "-")      // Fix various dash characters  
+            .replaceAll("ΓÇ[»¿•]", "")       // Remove bullet/weird characters
+            .replaceAll("ΓÇÖ", "'")          // Fix apostrophes
+            .replaceAll("ΓÇô", "-")          // Fix en-dashes
+            .replaceAll("ΓëêΓÇ»", "~")       // Fix approximation symbols
+            .replaceAll("ΓÇæ", "-")          // Fix hyphen corruption
+            .replaceAll("ΓÇ»", "")           // Remove percent symbol corruption
+            .replaceAll("\\*\\*[^*]*\\*\\*", "") // Remove **bold text**
+            .replaceAll("\\*[^*]*\\*", "")       // Remove *italic text*
+            .replaceAll("\\*+", "")              // Remove any remaining asterisks
+            .replaceAll("\\\\u201[CD]", "\"")      // Smart quotes
+            .replaceAll("\\\\u201[89]", "'")       // Single quotes
+            .replaceAll("\\\\u201[3-4]", "-")      // En/Em dashes
+            .replaceAll("\\u00A0", " ")          // Non-breaking space
+            .replaceAll("≡ƒ[\\w]*", "")          // Remove emoji corruption symbols
+            .replaceAll("Γ[\\w]*", "")           // Remove other corruption
+            .replaceAll("\\s+", " ")             // Normalize whitespace
+            .trim();
+        
+        // Remove common AI prefixes and formatting
+        cleanedResponse = cleanedResponse
+            .replaceAll("(?i)^(based on your|looking at your|according to your).*?(data|expenses|spending)[,:]?\\s*", "")
+            .replaceAll("(?i)^(here's what i found|here's my analysis|my response):?\\s*", "")
+            .replaceAll("(?i)^(analyzing your|reviewing your).*?[,:]\\s*", "")
+            .replaceAll("(?i)(hope this helps|let me know|feel free to ask).*$", "")
+            .replaceAll("^[\"'`]|[\"'`]$", "")  // Remove surrounding quotes/backticks
+            .trim();
+        
+        // Ensure reasonable length
+        if (cleanedResponse.length() > 400) {
+            // Find a good breaking point
+            String[] sentences = cleanedResponse.split("[.!?]");
+            StringBuilder result = new StringBuilder();
+            for (String sentence : sentences) {
+                if (result.length() + sentence.length() + 1 <= 350) {
+                    if (result.length() > 0) result.append(". ");
+                    result.append(sentence.trim());
+                } else {
+                    break;
+                }
+            }
+            if (result.length() > 0) {
+                cleanedResponse = result.toString() + ".";
+            } else {
+                cleanedResponse = cleanedResponse.substring(0, 350).trim() + "...";
+            }
+        }
+        
+        // Reject if too short or contains formatting issues
+        if (cleanedResponse.length() < 20 || cleanedResponse.contains("ΓÇ")) {
+            return null;
+        }
+        
+        // Ensure proper ending
+        if (!cleanedResponse.endsWith(".") && !cleanedResponse.endsWith("!") && !cleanedResponse.endsWith("?")) {
+            cleanedResponse += ".";
+        }
+        
+        // Apply currency formatting
+        String formattedResponse = formatTipText(cleanedResponse, currency);
+        
+        logger.debug("Processed contextual AI response: {}", formattedResponse);
+        return formattedResponse;
     }
 }

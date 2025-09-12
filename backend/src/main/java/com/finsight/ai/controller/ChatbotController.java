@@ -22,8 +22,8 @@ import com.finsight.ai.entity.Budget;
 import com.finsight.ai.entity.Expense;
 import com.finsight.ai.entity.ExpenseCategory;
 import com.finsight.ai.entity.User;
-import com.finsight.ai.service.ChatbotService;
 import com.finsight.ai.service.BudgetService;
+import com.finsight.ai.service.ChatbotService;
 import com.finsight.ai.service.ExpenseService;
 import com.finsight.ai.service.FirebaseAuthService;
 import com.finsight.ai.service.UserService;
@@ -204,7 +204,7 @@ public class ChatbotController {
             aiContext.put("totalMonthsWithData", monthlyData.size());
             
             // Get AI response using chatbot service
-            String aiReply = chatbotService.getChatbotReply(aiContext);
+            String aiReply = chatbotService.getChatbotReply(userMessage, firebaseUid, currency);
             
             return ResponseEntity.ok(Map.of("reply", aiReply));
             

@@ -1,9 +1,9 @@
 package com.finsight.ai.service;
 
-import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class CurrencyService {
@@ -88,14 +88,13 @@ public class CurrencyService {
      */
     public String formatAmount(double amount, String currencyCode) {
         String symbol = getCurrencySymbol(currencyCode);
-        
-        // Format with appropriate decimal places
+        // Format with appropriate decimal places, plain text only
         if (amount == Math.floor(amount)) {
             // Whole number
-            return String.format("%s %.0f", symbol, amount);
+            return symbol + " " + String.valueOf((long) amount);
         } else {
             // With decimals
-            return String.format("%s %.2f", symbol, amount);
+            return symbol + " " + String.format("%.2f", amount);
         }
     }
 
