@@ -7,7 +7,6 @@ import {
   Button,
   Typography,
   Box,
-  Alert,
   CircularProgress,
   Grid,
   useTheme,
@@ -18,7 +17,8 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import * as ApiService from '../services/api';
+import { useErrorHandler } from '../utils/errorHandler';
+import ErrorAlert from '../components/ErrorAlert';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -31,7 +31,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { error, handleError, clearError } = useErrorHandler();
   const { signup } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -45,24 +45,26 @@ const Register = () => {
   };
 
   const validateForm = () => {
+    clearError();
+    
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      setError('All fields are required');
+      handleError(new Error('All fields are required'));
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      handleError(new Error('Passwords do not match'));
       return false;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      handleError(new Error('Password must be at least 6 characters long'));
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      handleError(new Error('Please enter a valid email address'));
       return false;
     }
 
@@ -71,7 +73,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    clearError();
 
     if (!validateForm()) {
       return;
@@ -85,7 +87,7 @@ const Register = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error('Registration error:', error);
-      setError(error.message || 'Failed to create account. Please try again.');
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -138,11 +140,7 @@ const Register = () => {
               </Typography>
             </Box>
 
-            {error && (
-              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+            <ErrorAlert error={error} />
 
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
               <Grid container spacing={2}>

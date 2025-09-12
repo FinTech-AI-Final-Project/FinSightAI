@@ -35,6 +35,8 @@ import * as ApiService from '../services/api';
 import { formatCurrency, getCurrentMonth, expenseCategories, chartColors } from '../utils/helpers';
 import { useUser } from '../contexts/UserContext';
 import AITipsPanel from '../components/AITipsPanel';
+import { useErrorHandler } from '../utils/errorHandler';
+import ErrorAlert from '../components/ErrorAlert';
 
 // Custom Icon Component for dashboard cards
 const DashboardIcon = ({ src, alt }) => (
@@ -68,9 +70,10 @@ const Dashboard = () => {
   const [budgets, setBudgets] = useState([]);
   const [totalSpent, setTotalSpent] = useState(0);
   const [dailyExpenses, setDailyExpenses] = useState({});
+  const { error, handleError, clearError } = useErrorHandler();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { userProfile } = useUser();
+  const { userProfile, initialized } = useUser();
 
   const currentMonth = getCurrentMonth();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth.month);
@@ -95,11 +98,19 @@ const Dashboard = () => {
   };
 
   const fetchDashboardData = useCallback(async () => {
+    if (!initialized || !userProfile) {
+      console.log('Dashboard: Skipping data fetch - user not initialized or profile not available');
+      return;
+    }
+
     try {
       setLoading(true);
+      clearError(); // Clear any previous errors
       
       const startDate = new Date(selectedYear, selectedMonth - 1, 1);
       const endDate = new Date(selectedYear, selectedMonth, 0);
+      
+      console.log('Dashboard: Fetching data for period:', { startDate, endDate, month: selectedMonth, year: selectedYear });
       
       // Fetch selected month's expenses
       const expensesResponse = await ApiService.getExpenses({
@@ -111,6 +122,11 @@ const Dashboard = () => {
       const budgetsResponse = await ApiService.getBudgets({
         month: selectedMonth,
         year: selectedYear,
+      });
+
+      console.log('Dashboard: Data fetched successfully', { 
+        expenses: expensesResponse?.length, 
+        budgets: budgetsResponse?.length 
       });
 
       setExpenses(expensesResponse || []);
@@ -129,15 +145,18 @@ const Dashboard = () => {
       setDailyExpenses(daily);
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Dashboard: Error fetching dashboard data:', error);
+      handleError(error);
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, initialized, userProfile]); // handleError and clearError are memoized with useCallback
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData, userProfile.currency]); // Re-fetch when month/year or currency changes
+    if (initialized && userProfile) {
+      fetchDashboardData();
+    }
+  }, [fetchDashboardData, initialized, userProfile]); // Re-fetch when user is initialized and profile available
 
   useEffect(() => {
     // Listen for data changes from other components
@@ -240,10 +259,20 @@ const Dashboard = () => {
     },
   };
 
-  if (loading) {
+  // Show loading if user context is not initialized yet or if component is loading
+  if (!initialized || loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress size={40} />
+      </Box>
+    );
+  }
+
+  // Show loading if userProfile is not available yet (fallback check)
+  if (!userProfile) {
+    return (
+      <Box sx={{ maxWidth: 1200, mx: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <CircularProgress />
       </Box>
     );
   }
@@ -276,6 +305,8 @@ const Dashboard = () => {
             </IconButton>
           </Box>
         </Box>
+
+        <ErrorAlert error={error} />
 
         {/* AI Tips Panel */}
         <AITipsPanel expenses={expenses} budgets={budgets} />

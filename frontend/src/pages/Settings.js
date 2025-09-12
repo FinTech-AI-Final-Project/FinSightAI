@@ -48,6 +48,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 import { useUser } from '../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { useErrorHandler } from '../utils/errorHandler';
+import ErrorAlert from '../components/ErrorAlert';
 import * as ApiService from '../services/api';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
 import NotificationService from '../services/notificationService';
@@ -59,7 +61,7 @@ const Settings = () => {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [error, setError] = useState('');
+  const { error, handleError, clearError } = useErrorHandler();
   const [success, setSuccess] = useState('');
   const { currentUser, logout } = useAuth();
   const { darkMode, toggleDarkMode } = useCustomTheme();
@@ -151,11 +153,11 @@ const Settings = () => {
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
-      setError('');
+      clearError();
       
       // Validate required fields
       if (!profileData.firstName || !profileData.lastName || !profileData.email) {
-        setError('Please fill in all required fields');
+        handleError(new Error('Please fill in all required fields'));
         return;
       }
 
@@ -166,11 +168,11 @@ const Settings = () => {
         setSuccess('Profile updated successfully');
         // ProfileData will be updated automatically via context
       } else {
-        setError('Failed to update profile');
+        handleError(new Error('Failed to update profile'));
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError(`Failed to update profile: ${error.message}`);
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -179,7 +181,7 @@ const Settings = () => {
   const handleProfilePictureChange = async (base64Image) => {
     try {
       setLoading(true);
-      setError('');
+      clearError();
       
       if (base64Image) {
         // Update profile picture via API
@@ -201,7 +203,7 @@ const Settings = () => {
       setSuccess(base64Image ? 'Profile picture updated successfully' : 'Profile picture removed successfully');
     } catch (error) {
       console.error('Error updating profile picture:', error);
-      setError(`Failed to update profile picture: ${error.message}`);
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -214,13 +216,13 @@ const Settings = () => {
       navigate('/login');
     } catch (error) {
       console.error('Error logging out:', error);
-      setError('Failed to logout');
+      handleError(new Error('Failed to logout'));
     }
   };
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'DELETE') {
-      setError('Please type "DELETE" to confirm account deletion');
+      handleError(new Error('Please type "DELETE" to confirm account deletion'));
       return;
     }
 
@@ -253,7 +255,7 @@ const Settings = () => {
       
     } catch (error) {
       console.error('Error deleting account:', error);
-      setError(`Failed to delete account: ${error.message}`);
+      handleError(error);
       // Re-enable the delete button by clearing loading state
       setLoading(false);
       return;
@@ -296,10 +298,10 @@ const Settings = () => {
       if (success) {
         setSuccess('Test notification sent! Check your notifications.');
       } else {
-        setError('Failed to send test notification. Please check your notification permissions.');
+        handleError(new Error('Failed to send test notification. Please check your notification permissions.'));
       }
     } catch (error) {
-      setError('Error testing notifications: ' + error.message);
+      handleError(error);
     }
   };
 
@@ -314,11 +316,7 @@ const Settings = () => {
           Settings
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-            {error}
-          </Alert>
-        )}
+        <ErrorAlert error={error} />
 
         {success && (
           <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
@@ -670,7 +668,7 @@ const Settings = () => {
           onClose={() => {
             setShowDeleteDialog(false);
             setDeleteConfirmText('');
-            setError('');
+            clearError();
           }}
           maxWidth="sm"
           fullWidth
@@ -709,7 +707,7 @@ const Settings = () => {
               onClick={() => {
                 setShowDeleteDialog(false);
                 setDeleteConfirmText('');
-                setError('');
+                clearError();
               }}
             >
               Cancel

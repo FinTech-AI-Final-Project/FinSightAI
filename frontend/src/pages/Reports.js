@@ -39,6 +39,8 @@ import jsPDF from 'jspdf';
 import * as ApiService from '../services/api';
 import { formatCurrency, getDateRange, expenseCategories, chartColors, exportToCSV } from '../utils/helpers';
 import { useUser } from '../contexts/UserContext';
+import { useErrorHandler } from '../utils/errorHandler';
+import ErrorAlert from '../components/ErrorAlert';
 
 ChartJS.register(
   CategoryScale,
@@ -72,6 +74,7 @@ const Reports = () => {
   const [period, setPeriod] = useState('month');
   const [expenses, setExpenses] = useState([]);
   const [budgets, setBudgets] = useState([]);
+  const { error, handleError, clearError } = useErrorHandler();
   const [reportData, setReportData] = useState({});
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -127,6 +130,7 @@ const Reports = () => {
 
     } catch (error) {
       console.error('Error fetching report data:', error);
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -251,7 +255,7 @@ const Reports = () => {
     console.log('✅ PDF export completed:', filename);
     } catch (error) {
       console.error('❌ PDF export failed:', error);
-      alert('Failed to export PDF: ' + error.message);
+      handleError(error);
     }
   };
 
@@ -275,7 +279,7 @@ const Reports = () => {
       exportToCSV(csvData, `finsight-expenses-${period}-${new Date().toISOString().split('T')[0]}.csv`);
     } catch (error) {
       console.error('❌ CSV export failed:', error);
-      alert('Failed to export CSV: ' + error.message);
+      handleError(error);
     }
   };
 
@@ -331,6 +335,8 @@ const Reports = () => {
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
           Reports & Analytics
         </Typography>
+
+        <ErrorAlert error={error} />
 
         {/* Controls */}
         <Card sx={{ mb: 4 }}>
