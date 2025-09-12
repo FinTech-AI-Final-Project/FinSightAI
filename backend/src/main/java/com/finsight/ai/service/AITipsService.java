@@ -1195,6 +1195,7 @@ public class AITipsService {
                 case BUSINESS -> "Consider co-working spaces in Cape Town or Johannesburg.";
                 case GIFTS_DONATIONS -> "Support local charities or buy from South African artisans.";
                 case INVESTMENTS -> "Look into JSE-listed stocks, unit trusts, or retirement annuities.";
+                case CRYPTO -> "Use South African platforms like Luno, VALR, or AltCoinTrader for crypto investments. Be aware of SARS crypto tax implications.";
                 case OTHER -> "Look for local deals and compare prices across South African retailers.";
             };
         } else if ("United States".equals(region)) {
@@ -1212,6 +1213,7 @@ public class AITipsService {
                 case BUSINESS -> "Consider co-working spaces or home office tax deductions.";
                 case GIFTS_DONATIONS -> "Shop during sales seasons and research tax-deductible donations.";
                 case INVESTMENTS -> "Look into index funds, 401k matching, or robo-advisors.";
+                case CRYPTO -> "Use established exchanges like Coinbase, Kraken, or Gemini. Be aware of IRS crypto tax reporting requirements.";
                 case OTHER -> "Use cashback credit cards and price comparison apps for better deals.";
             };
         } else if ("Europe".equals(region)) {
@@ -1229,6 +1231,7 @@ public class AITipsService {
                 case BUSINESS -> "Look into EU business grants or co-working spaces in major cities.";
                 case GIFTS_DONATIONS -> "Support local artisans or contribute to EU-wide charitable causes.";
                 case INVESTMENTS -> "Consider UCITS funds, ETFs, or government savings schemes.";
+                case CRYPTO -> "Use regulated exchanges like Bitstamp, Bitpanda, or eToro. Follow MiCA regulations for crypto investments in EU.";
                 case OTHER -> "Compare prices across EU countries when making larger purchases.";
             };
         } else if ("United Kingdom".equals(region)) {
@@ -1246,6 +1249,7 @@ public class AITipsService {
                 case BUSINESS -> "Consider business rates relief or co-working spaces in London.";
                 case GIFTS_DONATIONS -> "Shop during seasonal sales or support UK charities with Gift Aid.";
                 case INVESTMENTS -> "Look into ISAs, pension schemes, or investment platforms like Hargreaves Lansdown.";
+                case CRYPTO -> "Use FCA-regulated platforms like Coinbase Pro, Binance UK, or Crypto.com. Consider capital gains tax implications.";
                 case OTHER -> "Use comparison websites like MoneySuperMarket for better deals.";
             };
         } else {
@@ -1263,6 +1267,7 @@ public class AITipsService {
                 case BUSINESS -> "Research local business resources, grants, or networking opportunities.";
                 case GIFTS_DONATIONS -> "Shop during sales seasons and research charitable tax benefits.";
                 case INVESTMENTS -> "Research local investment options, retirement accounts, or financial advisors.";
+                case CRYPTO -> "Use reputable crypto exchanges, enable 2FA security, and research local tax regulations for cryptocurrency.";
                 case OTHER -> "Compare local options and look for seasonal deals in your area.";
             };
         }
@@ -1314,6 +1319,7 @@ public class AITipsService {
                 case BUSINESS -> "Review subscriptions and cut unnecessary business expenses.";
                 case GIFTS_DONATIONS -> "Set a strict limit and focus on meaningful rather than expensive gifts.";
                 case INVESTMENTS -> "Review your investment strategy and avoid over-investing this month.";
+                case CRYPTO -> "Pause crypto purchases temporarily and avoid FOMO trading during overspending months.";
                 case OTHER -> "Review your spending patterns and cut non-essential expenses this month.";
             };
         } else if ("United States".equals(region)) {
@@ -1331,6 +1337,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business subscriptions and cut unnecessary software/services.";
                 case GIFTS_DONATIONS -> "Set spending limits and look for meaningful, budget-friendly gifts.";
                 case INVESTMENTS -> "Don't over-invest if it impacts your emergency fund.";
+                case CRYPTO -> "Pause crypto investments and avoid emotional trading when overspending.";
                 case OTHER -> "Review subscriptions and cut non-essential spending for the rest of the month.";
             };
         } else if ("Europe".equals(region)) {
@@ -1348,6 +1355,7 @@ public class AITipsService {
                 case BUSINESS -> "Look into EU business grants and cut unnecessary subscriptions.";
                 case GIFTS_DONATIONS -> "Support local artisans with budget-conscious purchases.";
                 case INVESTMENTS -> "Review EU investment options and don't over-extend.";
+                case CRYPTO -> "Temporarily halt crypto purchases and focus on regulated EU platforms when resuming.";
                 case OTHER -> "Review your spending and focus on essential purchases only this month.";
             };
         } else if ("United Kingdom".equals(region)) {
@@ -1365,6 +1373,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses and cut unnecessary subscriptions.";
                 case GIFTS_DONATIONS -> "Shop during sales and support UK charities with Gift Aid.";
                 case INVESTMENTS -> "Use ISAs wisely and don't over-invest beyond your means.";
+                case CRYPTO -> "Pause crypto trading and stick to FCA-regulated platforms when you resume.";
                 case OTHER -> "Cut back on non-essentials and use comparison sites for better deals.";
             };
         } else {
@@ -1382,6 +1391,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses and cut unnecessary subscriptions.";
                 case GIFTS_DONATIONS -> "Set spending limits and look for meaningful, budget-friendly options.";
                 case INVESTMENTS -> "Don't over-invest if it impacts your emergency fund.";
+                case CRYPTO -> "Take a break from crypto purchases and avoid emotional trading during overspending periods.";
                 case OTHER -> "Review your spending patterns and cut non-essential expenses this month.";
             };
         }
@@ -1403,6 +1413,7 @@ public class AITipsService {
                 case BUSINESS -> "Excellent! Maybe reinvest in business growth or save for opportunities.";
                 case GIFTS_DONATIONS -> "Thoughtful budgeting! Consider long-term charitable giving strategies.";
                 case INVESTMENTS -> "Good discipline! Consider diversifying your investment portfolio.";
+                case CRYPTO -> "Good restraint! Consider using savings for dollar-cost averaging into established cryptocurrencies.";
                 case OTHER -> "Keep it up! Consider investing the difference in JSE ETFs or property funds.";
             };
         } else if ("United States".equals(region)) {
@@ -1420,6 +1431,7 @@ public class AITipsService {
                 case BUSINESS -> "Excellent! Maybe reinvest in business growth or retirement accounts.";
                 case GIFTS_DONATIONS -> "Thoughtful budgeting! Consider tax-advantaged charitable giving.";
                 case INVESTMENTS -> "Good discipline! Consider diversifying across different asset classes.";
+                case CRYPTO -> "Great discipline! Consider dollar-cost averaging into Bitcoin or Ethereum with your savings.";
                 case OTHER -> "Keep it up! Consider investing the difference in low-cost index funds or bonds.";
             };
         } else if ("Europe".equals(region)) {
@@ -1437,6 +1449,7 @@ public class AITipsService {
                 case BUSINESS -> "Excellent! Look into EU business investment opportunities.";
                 case GIFTS_DONATIONS -> "Thoughtful! Consider supporting EU-wide charitable causes.";
                 case INVESTMENTS -> "Good discipline! Consider diversifying across European markets.";
+                case CRYPTO -> "Good control! Consider investing savings in regulated EU crypto platforms with proper diversification.";
                 case OTHER -> "Keep it up! Consider investing the difference in diversified European funds.";
             };
         } else if ("United Kingdom".equals(region)) {
@@ -1454,6 +1467,7 @@ public class AITipsService {
                 case BUSINESS -> "Excellent! Maybe reinvest in business growth or pension contributions.";
                 case GIFTS_DONATIONS -> "Thoughtful! Consider Gift Aid for charitable donations.";
                 case INVESTMENTS -> "Good discipline! Consider diversifying across different UK investment options.";
+                case CRYPTO -> "Excellent discipline! Consider allocating savings to FCA-regulated crypto platforms for diversification.";
                 case OTHER -> "Keep it up! Consider investing the difference in FTSE index funds or bonds.";
             };
         } else {
@@ -1471,6 +1485,7 @@ public class AITipsService {
                 case BUSINESS -> "Excellent! Maybe reinvest in business growth or retirement savings.";
                 case GIFTS_DONATIONS -> "Thoughtful budgeting! Consider strategic charitable giving.";
                 case INVESTMENTS -> "Good discipline! Consider diversifying your investment portfolio.";
+                case CRYPTO -> "Great self-control! Consider using the savings for dollar-cost averaging into established cryptocurrencies.";
                 case OTHER -> "Keep it up! Consider investing the difference for your future financial security.";
             };
         }
@@ -1492,6 +1507,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses - cut non-essential subscriptions.";
                 case GIFTS_DONATIONS -> "Be mindful of gift spending - set strict limits.";
                 case INVESTMENTS -> "Review investment timing - don't over-invest this month.";
+                case CRYPTO -> "Monitor crypto investments carefully - avoid FOMO purchases and stick to your plan.";
                 case OTHER -> "Watch this category closely for the rest of the month.";
             };
         } else if ("United States".equals(region)) {
@@ -1509,6 +1525,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses - cut unnecessary subscriptions.";
                 case GIFTS_DONATIONS -> "Be mindful of gift spending - look for budget-friendly options.";
                 case INVESTMENTS -> "Review investment strategy - don't over-extend this month.";
+                case CRYPTO -> "Monitor crypto investments - avoid impulsive trades and stick to your DCA plan.";
                 case OTHER -> "Keep a close eye on this category to avoid going over budget.";
             };
         } else if ("Europe".equals(region)) {
@@ -1526,6 +1543,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses - look into EU grants.";
                 case GIFTS_DONATIONS -> "Be mindful of gift spending - support local artisans wisely.";
                 case INVESTMENTS -> "Review investment strategy - don't over-extend in EU markets.";
+                case CRYPTO -> "Watch crypto spending carefully - stick to regulated EU platforms and avoid impulsive trades.";
                 case OTHER -> "Watch this category carefully for the remainder of the month.";
             };
         } else if ("United Kingdom".equals(region)) {
@@ -1543,6 +1561,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses - cut unnecessary subscriptions.";
                 case GIFTS_DONATIONS -> "Be mindful of gift spending - shop during sales.";
                 case INVESTMENTS -> "Review investment strategy - use ISAs wisely this month.";
+                case CRYPTO -> "Monitor crypto investments - use FCA-regulated platforms and avoid emotional decisions.";
                 case OTHER -> "Keep an eye on this category to stay within budget.";
             };
         } else {
@@ -1560,6 +1579,7 @@ public class AITipsService {
                 case BUSINESS -> "Review business expenses - cut non-essential subscriptions.";
                 case GIFTS_DONATIONS -> "Be mindful of gift spending - set strict budgets.";
                 case INVESTMENTS -> "Review investment timing - don't over-invest this month.";
+                case CRYPTO -> "Watch crypto spending - avoid FOMO and stick to your investment plan.";
                 case OTHER -> "Monitor this category carefully to avoid going over budget.";
             };
         }
@@ -1581,6 +1601,7 @@ public class AITipsService {
                 case BUSINESS -> "Review all business subscriptions - cancel unused services and negotiate better rates.";
                 case GIFTS_DONATIONS -> "Set a strict monthly gift budget and stick to meaningful rather than expensive presents.";
                 case INVESTMENTS -> "Great! But ensure you have 3-6 months emergency fund before investing more.";
+                case CRYPTO -> "Dollar-cost average with small amounts monthly rather than large one-time purchases. Keep emergency fund intact.";
                 case OTHER -> "Review and categorize these expenses properly to identify where you can cut back and save.";
             };
         } else if ("United States".equals(region)) {
@@ -1598,6 +1619,7 @@ public class AITipsService {
                 case BUSINESS -> "Review all subscriptions monthly - cancel unused software and negotiate better rates.";
                 case GIFTS_DONATIONS -> "Set spending limits and focus on thoughtful, budget-friendly gift options.";
                 case INVESTMENTS -> "Excellent! Ensure you're maxing out employer 401k match before other investments.";
+                case CRYPTO -> "Start with dollar-cost averaging small amounts into Bitcoin/Ethereum. Don't invest more than 5-10% of portfolio.";
                 case OTHER -> "Track these expenses properly to identify patterns and potential savings opportunities.";
             };
         } else {
@@ -1615,6 +1637,7 @@ public class AITipsService {
                 case BUSINESS -> "Review all business expenses monthly and eliminate non-essential subscriptions.";
                 case GIFTS_DONATIONS -> "Set strict budgets for gifts and focus on meaningful rather than expensive options.";
                 case INVESTMENTS -> "Great habit! Ensure emergency fund is adequate before increasing investment amounts.";
+                case CRYPTO -> "Start with small amounts using dollar-cost averaging. Research projects thoroughly and never invest more than you can afford to lose.";
                 case OTHER -> "Categorize these expenses properly to identify where you can optimize and save money.";
             };
         }
@@ -1636,6 +1659,7 @@ public class AITipsService {
                 case BUSINESS -> "Efficient business spending! Reinvest savings into business growth opportunities.";
                 case GIFTS_DONATIONS -> "Thoughtful giving approach! Consider regular charitable giving strategies.";
                 case INVESTMENTS -> "Excellent investment discipline! Consider diversifying your portfolio further.";
+                case CRYPTO -> "Smart crypto budgeting! Continue dollar-cost averaging and consider researching altcoins with strong use cases.";
                 case OTHER -> "Keep this category low and redirect any savings to your financial goals.";
             };
         } else {
@@ -1653,6 +1677,7 @@ public class AITipsService {
                 case BUSINESS -> "Efficient business spending! Reinvest savings into growth opportunities.";
                 case GIFTS_DONATIONS -> "Thoughtful giving! Consider systematic charitable giving strategies.";
                 case INVESTMENTS -> "Excellent discipline! Consider diversifying your investment approach.";
+                case CRYPTO -> "Good crypto allocation! Continue with disciplined investing and consider taking some profits during bull markets.";
                 case OTHER -> "Keep this category minimal and redirect savings to your primary financial goals.";
             };
         }
@@ -1674,6 +1699,7 @@ public class AITipsService {
                 case BUSINESS -> "Cut all non-essential business subscriptions immediately.";
                 case GIFTS_DONATIONS -> "Set a strict R200 limit for gifts and donations this month.";
                 case INVESTMENTS -> "Reduce investment amounts until you're back within budget.";
+                case CRYPTO -> "Pause all crypto purchases immediately until you're back on budget. Focus on essentials first.";
                 case OTHER -> "Identify and eliminate these mystery expenses immediately.";
             };
         } else {
@@ -1691,6 +1717,7 @@ public class AITipsService {
                 case BUSINESS -> "Cut all non-essential business expenses immediately.";
                 case GIFTS_DONATIONS -> "Set strict spending limits for gifts until back on budget.";
                 case INVESTMENTS -> "Reduce investment contributions until spending is controlled.";
+                case CRYPTO -> "Stop all crypto purchases until budget is under control. Prioritize emergency fund and debt repayment.";
                 case OTHER -> "Track and eliminate these unbudgeted expenses immediately.";
             };
         }
@@ -1712,6 +1739,7 @@ public class AITipsService {
                 case BUSINESS -> String.format("Reinvest this %s %.2f in business growth or put it in high-yield investments!", currency, savings);
                 case GIFTS_DONATIONS -> String.format("Consider investing this %s %.2f to create more wealth for future giving!", currency, savings);
                 case INVESTMENTS -> String.format("Great discipline! Consider diversifying this %s %.2f across different assets!", currency, savings);
+                case CRYPTO -> String.format("Consider dollar-cost averaging this %s %.2f into Bitcoin or Ethereum via Luno/VALR - start small!", currency, savings);
                 case OTHER -> String.format("Direct this %s %.2f towards your top financial priority - emergency fund or investments!", currency, savings);
             };
         } else {
@@ -1729,6 +1757,7 @@ public class AITipsService {
                 case BUSINESS -> String.format("Reinvest this %s %.2f in business growth or diversified investments!", currency, savings);
                 case GIFTS_DONATIONS -> String.format("Consider investing this %s %.2f to create more wealth for future giving!", currency, savings);
                 case INVESTMENTS -> String.format("Excellent! Consider diversifying this %s %.2f across different asset classes!", currency, savings);
+                case CRYPTO -> String.format("Consider dollar-cost averaging this %s %.2f into established cryptocurrencies for long-term growth!", currency, savings);
                 case OTHER -> String.format("Put this %s %.2f towards your highest priority financial goal!", currency, savings);
             };
         }

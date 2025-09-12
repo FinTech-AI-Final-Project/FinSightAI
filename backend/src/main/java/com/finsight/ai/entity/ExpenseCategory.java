@@ -14,6 +14,7 @@ public enum ExpenseCategory {
     BUSINESS("Business"),
     GIFTS_DONATIONS("Gifts & Donations"),
     INVESTMENTS("Investments"),
+    CRYPTO("Crypto & Digital Assets"),
     OTHER("Other");
 
     private final String displayName;
