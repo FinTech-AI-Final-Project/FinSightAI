@@ -12,6 +12,7 @@ export const expenseCategories = {
   BUSINESS: { name: 'Business', icon: '💼', color: '#34495e' },
   GIFTS_DONATIONS: { name: 'Gifts & Donations', icon: '🎁', color: '#f1c40f' },
   INVESTMENTS: { name: 'Investments', icon: '📈', color: '#8e44ad' },
+  CRYPTO: { name: 'Crypto & Digital Assets', icon: '₿', color: '#f7931a' },
   OTHER: { name: 'Other', icon: '📝', color: '#95a5a6' },
 };
 
