@@ -209,50 +209,96 @@ const Reports = () => {
   const exportToPDF = () => {
     try {
       console.log('📄 Starting PDF export...');
-      
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
-      
-      // Title
-      pdf.setFontSize(20);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('FinSight AI - Expense Report', pageWidth / 2, 30, { align: 'center' });
-      
-      // Period
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`Period: ${period.charAt(0).toUpperCase() + period.slice(1)}`, 20, 50);
-      pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 60);
-      
-      // Summary
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Summary', 20, 80);
-      
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`Total Spent: ${formatCurrency(reportData.totalSpent, userProfile.currency)}`, 20, 95);
-      pdf.text(`Total Transactions: ${reportData.transactionCount}`, 20, 105);
-      pdf.text(`Average Transaction: ${formatCurrency(reportData.averageTransaction, userProfile.currency)}`, 20, 115);
-      
-      // Category breakdown
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Category Breakdown', 20, 135);
-      
-    let yPos = 150;
-    Object.entries(reportData.categoryTotals || {}).forEach(([category, amount]) => {
-      const categoryName = expenseCategories[category]?.name || category;
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`${categoryName}: ${formatCurrency(amount, userProfile.currency)}`, 20, yPos);
-      yPos += 10;
-    });
-    
-    const filename = `finsight-report-${period}-${new Date().toISOString().split('T')[0]}.pdf`;
-    pdf.save(filename);
-    
-    console.log('✅ PDF export completed:', filename);
+      let yPos = 20;
+
+      // Add logo (ensure logo.png is in public folder)
+      const logoImg = new window.Image();
+      logoImg.src = '/logo.png';
+      logoImg.onload = () => {
+        // Calculate logo size (max 40x40, keep aspect ratio)
+        let logoWidth = 40;
+        let logoHeight = 40;
+        if (logoImg.width > logoImg.height) {
+          logoHeight = (logoImg.height / logoImg.width) * logoWidth;
+        } else {
+          logoWidth = (logoImg.width / logoImg.height) * logoHeight;
+        }
+        pdf.addImage(logoImg, 'PNG', pageWidth / 2 - logoWidth / 2, 10, logoWidth, logoHeight);
+        yPos = 10 + logoHeight + 10;
+
+        // Title
+        pdf.setFontSize(20);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('FinSight AI - Expense Report', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 15;
+
+        // Period & Generated Date
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(`Period: ${period.charAt(0).toUpperCase() + period.slice(1)}`, 20, yPos);
+        pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, yPos + 10);
+        yPos += 20;
+
+        // Summary Section
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Summary', 20, yPos);
+        yPos += 10;
+
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(`Total Spent: ${formatCurrency(reportData.totalSpent, userProfile.currency)}`, 20, yPos);
+        pdf.text(`Total Transactions: ${reportData.transactionCount}`, 20, yPos + 10);
+        pdf.text(`Average Transaction: ${formatCurrency(reportData.averageTransaction, userProfile.currency)}`, 20, yPos + 20);
+        yPos += 30;
+
+        // Category Breakdown Section
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Category Breakdown', 20, yPos);
+        yPos += 10;
+
+        Object.entries(reportData.categoryTotals || {}).forEach(([category, amount]) => {
+          const categoryName = expenseCategories[category]?.name || category;
+          pdf.setFontSize(11);
+          pdf.setFont(undefined, 'bold');
+          pdf.text(`${categoryName}: ${formatCurrency(amount, userProfile.currency)}`, 20, yPos);
+          yPos += 7;
+
+          // List all expenses in this category with date
+          pdf.setFontSize(9);
+          pdf.setFont(undefined, 'normal');
+          expenses
+            .filter(exp => exp.category === category)
+            .forEach(exp => {
+              const expDate = new Date(exp.date);
+              const dateStr = `${expDate.getDate().toString().padStart(2, '0')}-${(expDate.getMonth()+1).toString().padStart(2, '0')}-${expDate.getFullYear()}`;
+              pdf.text(`• ${dateStr}: ${formatCurrency(exp.amount, userProfile.currency)} - ${exp.description || ''}`, 25, yPos);
+              yPos += 7;
+              if (yPos > 270) { // Add new page if needed
+                pdf.addPage();
+                yPos = 20;
+              }
+            });
+          yPos += 5;
+          if (yPos > 270) {
+            pdf.addPage();
+            yPos = 20;
+          }
+        });
+
+        // Footer
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'italic');
+        pdf.text('Generated by FinSightAI', pageWidth / 2, pdf.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+        // Save PDF
+        const filename = `finsight-report-${period}-${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(filename);
+        console.log('✅ PDF export completed:', filename);
+      };
     } catch (error) {
       console.error('❌ PDF export failed:', error);
       handleError(error);
