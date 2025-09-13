@@ -278,32 +278,52 @@ const Reports = () => {
 
         Object.entries(reportData.categoryTotals || {}).forEach(([category, amount], idx) => {
           const categoryName = expenseCategories[category]?.name || category;
-          // Colored box for each category
-          pdf.setFillColor(220, 225, 235); // Lighter blue-gray
-          pdf.rect(20, yPos, pageWidth - 40, 10, 'F');
-          pdf.setFontSize(11);
-          pdf.setTextColor(32, 70, 140); // Blue for category name
+          // Category header with blue accent
+          pdf.setFillColor(220, 230, 250); // Soft blue
+          pdf.rect(20, yPos, pageWidth - 40, 12, 'F');
+          pdf.setFontSize(12);
+          pdf.setTextColor(32, 70, 140);
           pdf.setFont(undefined, 'bold');
-          pdf.text(`${categoryName}: ${formatCurrency(amount, userProfile.currency)}`, 25, yPos + 7);
-          yPos += 12;
+          pdf.text(`${categoryName} (${formatCurrency(amount, userProfile.currency)})`, 25, yPos + 9);
+          yPos += 16;
 
-          // List all expenses in this category with date
+          // Table header
+          pdf.setFontSize(10);
+          pdf.setTextColor(30, 64, 175);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Description', 30, yPos);
+          pdf.text('Amount', pageWidth / 2, yPos);
+          pdf.text('Date', pageWidth - 50, yPos);
+          yPos += 6;
+          pdf.setDrawColor(32, 70, 140);
+          pdf.setLineWidth(0.3);
+          pdf.line(25, yPos, pageWidth - 25, yPos);
+          yPos += 2;
+
+          // Table rows
           pdf.setFontSize(9);
-          pdf.setTextColor(60, 60, 60); // Gray-black for expense details
           pdf.setFont(undefined, 'normal');
           expenses
             .filter(exp => exp.category === category)
             .forEach(exp => {
               const expDate = new Date(exp.date);
               const dateStr = `${expDate.getDate().toString().padStart(2, '0')}-${(expDate.getMonth()+1).toString().padStart(2, '0')}-${expDate.getFullYear()}`;
-              pdf.text(`• ${dateStr}: ${formatCurrency(exp.amount, userProfile.currency)} - ${exp.description || ''}`, 30, yPos);
-              yPos += 7;
-              if (yPos > 270) { // Add new page if needed
+              // Alternate row color for eye-catching effect
+              if ((yPos / 7) % 2 < 1) {
+                pdf.setFillColor(245, 248, 255); // Very light blue
+                pdf.rect(25, yPos - 2, pageWidth - 50, 7, 'F');
+              }
+              pdf.setTextColor(40, 40, 40);
+              pdf.text(exp.description || '-', 30, yPos + 4);
+              pdf.text(formatCurrency(exp.amount, userProfile.currency), pageWidth / 2, yPos + 4, { align: 'center' });
+              pdf.text(dateStr, pageWidth - 50, yPos + 4);
+              yPos += 8;
+              if (yPos > 270) {
                 pdf.addPage();
                 yPos = 20;
               }
             });
-          yPos += 5;
+          yPos += 10;
           if (yPos > 270) {
             pdf.addPage();
             yPos = 20;
