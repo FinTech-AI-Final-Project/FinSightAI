@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   LinearProgress,
   Dialog,
   DialogTitle,
@@ -446,32 +445,32 @@ const Budgets = () => {
               year: 'numeric' 
             })}
           </Typography>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 3 }, alignItems: 'center' }}>
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%', md: '0 0 25%' } }}>
               <Typography variant="body2" color="text.secondary">
                 Total Budget
               </Typography>
               <Typography variant="h5" fontWeight={600} color="primary">
                 {formatCurrency(totalBudget, userProfile.currency)}
               </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%', md: '0 0 25%' } }}>
               <Typography variant="body2" color="text.secondary">
                 Total Spent
               </Typography>
               <Typography variant="h5" fontWeight={600} color={totalSpent > totalBudget ? 'error' : 'success'}>
                 {formatCurrency(totalSpent, userProfile.currency)}
               </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%', md: '0 0 25%' } }}>
               <Typography variant="body2" color="text.secondary">
                 Remaining
               </Typography>
               <Typography variant="h5" fontWeight={600} color={totalBudget - totalSpent >= 0 ? 'success' : 'error'}>
                 {formatCurrency(totalBudget - totalSpent, userProfile.currency)}
               </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%', md: '0 0 25%' } }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Overall Progress
               </Typography>
@@ -486,8 +485,8 @@ const Budgets = () => {
                   {Math.round(overallProgress)}%
                 </Typography>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
           
           {/* Add Budget Button */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
@@ -595,24 +594,22 @@ const Budgets = () => {
               {dialogError}
             </Alert>
           )}
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={formData.category}
-                  label="Category"
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                >
-                  {Object.entries(expenseCategories).map(([key, category]) => (
-                    <MenuItem key={key} value={key}>
-                      {category.icon} {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <FormControl fullWidth required>
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={formData.category}
+                label="Category"
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              >
+                {Object.entries(expenseCategories).map(([key, category]) => (
+                  <MenuItem key={key} value={key}>
+                    {category.icon} {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
               <TextField
                 fullWidth
                 label="Monthly Limit"
@@ -623,31 +620,32 @@ const Budgets = () => {
                   startAdornment: <InputAdornment position="start">{getCurrencySymbol(userProfile.currency)}</InputAdornment>,
                 }}
                 required
+                sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}
               />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                fullWidth
-                label="Month"
-                type="number"
-                inputProps={{ min: 1, max: 12 }}
-                value={formData.month}
-                onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })}
-                required
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                fullWidth
-                label="Year"
-                type="number"
-                inputProps={{ min: 2020, max: 2030 }}
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                required
-              />
-            </Grid>
-          </Grid>
+              <Box sx={{ display: 'flex', gap: 2, flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
+                <TextField
+                  fullWidth
+                  label="Month"
+                  type="number"
+                  inputProps={{ min: 1, max: 12 }}
+                  value={formData.month}
+                  onChange={(e) => setFormData({ ...formData, month: parseInt(e.target.value) })}
+                  required
+                  sx={{ flex: '1 1 50%' }}
+                />
+                <TextField
+                  fullWidth
+                  label="Year"
+                  type="number"
+                  inputProps={{ min: 2020, max: 2030 }}
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                  required
+                  sx={{ flex: '1 1 50%' }}
+                />
+              </Box>
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialog}>Cancel</Button>

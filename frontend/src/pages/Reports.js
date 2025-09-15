@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -429,8 +428,8 @@ const Reports = () => {
         {/* Controls */}
         <Card sx={{ mb: 4 }}>
           <CardContent>
-            <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3, alignItems: 'center' }}>
+              <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto', md: '0 0 300px' } }}>
                 <FormControl fullWidth>
                   <InputLabel>Time Period</InputLabel>
                   <Select
@@ -444,9 +443,9 @@ const Reports = () => {
                     <MenuItem value="year">This Year</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={8}>
-                <Box display="flex" gap={2} flexWrap="wrap">
+              </Box>
+              <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                   <Button
                     variant="outlined"
                     startIcon={<Download />}
@@ -464,252 +463,260 @@ const Reports = () => {
                     Export PDF
                   </Button>
                 </Box>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* Summary Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
-                <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
-                  <Box 
-                    display="flex" 
-                    width="100%" 
-                    sx={{ 
-                      flexDirection: { xs: 'row', md: 'column' },
-                      alignItems: { xs: 'center', md: 'flex-start' },
-                      gap: { xs: 1, md: 1.5 }
-                    }}
-                  >
-                    <Box sx={{ 
-                      flexShrink: 0, 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      order: { xs: 2, md: 1 }
-                    }}>
-                      <DashboardIcon src="/total-spent-icon.png" alt="Total Spent" />
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 3 } }}>
+            {/* Total Spent Card */}
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
+              <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
+                  <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
+                    <Box 
+                      display="flex" 
+                      width="100%" 
+                      sx={{ 
+                        flexDirection: { xs: 'row', md: 'column' },
+                        alignItems: { xs: 'center', md: 'flex-start' },
+                        gap: { xs: 1, md: 1.5 }
+                      }}
+                    >
+                      <Box sx={{ 
+                        flexShrink: 0, 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        order: { xs: 2, md: 1 }
+                      }}>
+                        <DashboardIcon src="/total-spent-icon.png" alt="Total Spent" />
+                      </Box>
+                      <Box sx={{ 
+                        flex: '1 1 0%', 
+                        minWidth: 0,
+                        order: { xs: 1, md: 2 }
+                      }}>
+                        <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
+                          Total Spent
+                        </Typography>
+                        <Typography 
+                          variant="h5" 
+                          color="white" 
+                          fontWeight={600}
+                          sx={{ 
+                            fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
+                            fontWeight: 700,
+                            lineHeight: 1.1,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {formatCurrency(reportData.totalSpent, userProfile.currency)}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ 
-                      flex: '1 1 0%', 
-                      minWidth: 0,
-                      order: { xs: 1, md: 2 }
-                    }}>
-                      <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
-                        Total Spent
-                      </Typography>
-                      <Typography 
-                        variant="h5" 
-                        color="white" 
-                        fontWeight={600}
-                        sx={{ 
-                          fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
-                          fontWeight: 700,
-                          lineHeight: 1.1,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {formatCurrency(reportData.totalSpent, userProfile.currency)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </Grid>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Box>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
-                <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
-                  <Box 
-                    display="flex" 
-                    width="100%" 
-                    sx={{ 
-                      flexDirection: { xs: 'row', md: 'column' },
-                      alignItems: { xs: 'center', md: 'flex-start' },
-                      gap: { xs: 1, md: 1.5 }
-                    }}
-                  >
-                    <Box sx={{ 
-                      flexShrink: 0, 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      order: { xs: 2, md: 1 }
-                    }}>
-                      <DashboardIcon src="/transaction-icons.png" alt="Transactions" />
+            {/* Transactions Card */}
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
+              <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
+                  <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
+                    <Box 
+                      display="flex" 
+                      width="100%" 
+                      sx={{ 
+                        flexDirection: { xs: 'row', md: 'column' },
+                        alignItems: { xs: 'center', md: 'flex-start' },
+                        gap: { xs: 1, md: 1.5 }
+                      }}
+                    >
+                      <Box sx={{ 
+                        flexShrink: 0, 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        order: { xs: 2, md: 1 }
+                      }}>
+                        <DashboardIcon src="/transaction-icons.png" alt="Transactions" />
+                      </Box>
+                      <Box sx={{ 
+                        flex: '1 1 0%', 
+                        minWidth: 0,
+                        order: { xs: 1, md: 2 }
+                      }}>
+                        <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
+                          Transactions
+                        </Typography>
+                        <Typography 
+                          variant="h5" 
+                          color="white" 
+                          fontWeight={600}
+                          sx={{ 
+                            fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
+                            fontWeight: 700,
+                            lineHeight: 1.1,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {reportData.transactionCount}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ 
-                      flex: '1 1 0%', 
-                      minWidth: 0,
-                      order: { xs: 1, md: 2 }
-                    }}>
-                      <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
-                        Transactions
-                      </Typography>
-                      <Typography 
-                        variant="h5" 
-                        color="white" 
-                        fontWeight={600}
-                        sx={{ 
-                          fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
-                          fontWeight: 700,
-                          lineHeight: 1.1,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {reportData.transactionCount}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </Grid>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Box>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
-                <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
-                  <Box 
-                    display="flex" 
-                    width="100%" 
-                    sx={{ 
-                      flexDirection: { xs: 'row', md: 'column' },
-                      alignItems: { xs: 'center', md: 'flex-start' },
-                      gap: { xs: 1, md: 1.5 }
-                    }}
-                  >
-                    <Box sx={{ 
-                      flexShrink: 0, 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      order: { xs: 2, md: 1 }
-                    }}>
-                      <DashboardIcon src="/average-daily-icon.png" alt="Average Transaction" />
+            {/* Average Transaction Card */}
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
+              <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
+                  <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
+                    <Box 
+                      display="flex" 
+                      width="100%" 
+                      sx={{ 
+                        flexDirection: { xs: 'row', md: 'column' },
+                        alignItems: { xs: 'center', md: 'flex-start' },
+                        gap: { xs: 1, md: 1.5 }
+                      }}
+                    >
+                      <Box sx={{ 
+                        flexShrink: 0, 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        order: { xs: 2, md: 1 }
+                      }}>
+                        <DashboardIcon src="/average-daily-icon.png" alt="Average Transaction" />
+                      </Box>
+                      <Box sx={{ 
+                        flex: '1 1 0%', 
+                        minWidth: 0,
+                        order: { xs: 1, md: 2 }
+                      }}>
+                        <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
+                          Avg. Transaction
+                        </Typography>
+                        <Typography 
+                          variant="h5" 
+                          color="white" 
+                          fontWeight={600}
+                          sx={{ 
+                            fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
+                            fontWeight: 700,
+                            lineHeight: 1.1,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {formatCurrency(reportData.averageTransaction, userProfile.currency)}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ 
-                      flex: '1 1 0%', 
-                      minWidth: 0,
-                      order: { xs: 1, md: 2 }
-                    }}>
-                      <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
-                        Avg. Transaction
-                      </Typography>
-                      <Typography 
-                        variant="h5" 
-                        color="white" 
-                        fontWeight={600}
-                        sx={{ 
-                          fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
-                          fontWeight: 700,
-                          lineHeight: 1.1,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {formatCurrency(reportData.averageTransaction, userProfile.currency)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </Grid>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Box>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-              <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
-                <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
-                  <Box 
-                    display="flex" 
-                    width="100%" 
-                    sx={{ 
-                      flexDirection: { xs: 'row', md: 'column' },
-                      alignItems: { xs: 'center', md: 'flex-start' },
-                      gap: { xs: 1, md: 1.5 }
-                    }}
-                  >
-                    <Box sx={{ 
-                      flexShrink: 0, 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      order: { xs: 2, md: 1 }
-                    }}>
-                      <img
-                        src="/categories.png"
-                        alt="Categories"
-                        style={{
-                          width: 32,
-                          height: 32,
-                          // No filter applied to keep original colors
-                        }}
-                      />
+            {/* Categories Card */}
+            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
+              <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
+                  <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
+                    <Box 
+                      display="flex" 
+                      width="100%" 
+                      sx={{ 
+                        flexDirection: { xs: 'row', md: 'column' },
+                        alignItems: { xs: 'center', md: 'flex-start' },
+                        gap: { xs: 1, md: 1.5 }
+                      }}
+                    >
+                      <Box sx={{ 
+                        flexShrink: 0, 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        order: { xs: 2, md: 1 }
+                      }}>
+                        <img
+                          src="/categories.png"
+                          alt="Categories"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            // No filter applied to keep original colors
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ 
+                        flex: '1 1 0%', 
+                        minWidth: 0,
+                        order: { xs: 1, md: 2 }
+                      }}>
+                        <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
+                          Categories
+                        </Typography>
+                        <Typography 
+                          variant="h5" 
+                          color="white" 
+                          fontWeight={600}
+                          sx={{ 
+                            fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
+                            fontWeight: 700,
+                            lineHeight: 1.1,
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {Object.keys(reportData.categoryTotals || {}).length}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ 
-                      flex: '1 1 0%', 
-                      minWidth: 0,
-                      order: { xs: 1, md: 2 }
-                    }}>
-                      <Typography color="white" variant="body2" sx={{ opacity: 0.8, fontSize: { xs: '0.7rem', sm: '0.8rem' }, mb: 0.5 }}>
-                        Categories
-                      </Typography>
-                      <Typography 
-                        variant="h5" 
-                        color="white" 
-                        fontWeight={600}
-                        sx={{ 
-                          fontSize: { xs: '0.85rem', sm: '1rem', md: '1.2rem' }, 
-                          fontWeight: 700,
-                          lineHeight: 1.1,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {Object.keys(reportData.categoryTotals || {}).length}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </Grid>
-        </Grid>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Charts */}
         {expenses.length > 0 ? (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} lg={6}>
-              <Card sx={{ height: 400 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom fontWeight={600}>
-                    Spending by Category
-                  </Typography>
-                  <Box sx={{ height: 300, position: 'relative' }}>
-                    <Doughnut data={getCategoryChartData()} options={chartOptions} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: { xs: 3, lg: 3 } }}>
+              <Box sx={{ flex: { xs: '1 1 100%', lg: '1 1 50%' } }}>
+                <Card sx={{ height: 400 }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom fontWeight={600}>
+                      Spending by Category
+                    </Typography>
+                    <Box sx={{ height: 300, position: 'relative' }}>
+                      <Doughnut data={getCategoryChartData()} options={chartOptions} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
 
-            <Grid item xs={12} lg={6}>
-              <Card sx={{ height: 400 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom fontWeight={600}>
-                    Top Categories
-                  </Typography>
-                  <Box sx={{ height: 300, position: 'relative' }}>
-                    <Bar data={getTopCategoriesData()} options={lineChartOptions} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+              <Box sx={{ flex: { xs: '1 1 100%', lg: '1 1 50%' } }}>
+                <Card sx={{ height: 400 }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom fontWeight={600}>
+                      Top Categories
+                    </Typography>
+                    <Box sx={{ height: 300, position: 'relative' }}>
+                      <Bar data={getTopCategoriesData()} options={lineChartOptions} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+            </Box>
 
-            <Grid item xs={12}>
+            <Box sx={{ mt: 3 }}>
               <Card sx={{ height: 400 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom fontWeight={600}>
@@ -720,8 +727,8 @@ const Reports = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         ) : (
           <Paper sx={{ p: 6, textAlign: 'center' }}>
             <img

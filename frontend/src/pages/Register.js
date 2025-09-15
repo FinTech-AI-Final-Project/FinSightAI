@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
   CircularProgress,
-  Grid,
   useTheme,
   useMediaQuery,
   IconButton,
@@ -143,8 +142,8 @@ const Register = () => {
             <ErrorAlert error={error} />
 
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                   <TextField
                     required
                     fullWidth
@@ -155,9 +154,8 @@ const Register = () => {
                     value={formData.firstName}
                     onChange={handleChange}
                     variant="outlined"
+                    sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <TextField
                     required
                     fullWidth
@@ -168,22 +166,21 @@ const Register = () => {
                     value={formData.lastName}
                     onChange={handleChange}
                     variant="outlined"
+                    sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}
                   />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <TextField
+                  required
+                  fullWidth
+                  id="email"
+                  label="Email Address"
+                  name="email"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  variant="outlined"
+                />
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                   <TextField
                     required
                     fullWidth
@@ -195,6 +192,7 @@ const Register = () => {
                     value={formData.password}
                     onChange={handleChange}
                     variant="outlined"
+                    sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -209,8 +207,6 @@ const Register = () => {
                       ),
                     }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <TextField
                     required
                     fullWidth
@@ -221,6 +217,7 @@ const Register = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     variant="outlined"
+                    sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -235,8 +232,8 @@ const Register = () => {
                       ),
                     }}
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
 
               <Button
                 type="submit"

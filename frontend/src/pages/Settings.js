@@ -8,7 +8,6 @@ import {
   FormControlLabel,
   TextField,
   Button,
-  Grid,
   Divider,
   Alert,
   Avatar,
@@ -344,20 +343,20 @@ const Settings = () => {
                 <Typography color="text.secondary">Loading profile...</Typography>
               </Box>
             ) : (
-            <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} sm={3} sx={{ textAlign: 'center' }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3, alignItems: 'center' }}>
+              <Box sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' }, textAlign: 'center' }}>
                 <ProfilePictureUpload
                   currentPicture={profileData.profilePictureUrl}
                   onPictureChange={handleProfilePictureChange}
                   size={100}
                   editable={true}
                 />
-              </Grid>
+              </Box>
 
-              <Grid item xs={12} sm={9}>
+              <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
                 {editingProfile ? (
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                       <TextField
                         fullWidth
                         label="First Name"
@@ -366,8 +365,6 @@ const Settings = () => {
                         variant="outlined"
                         size="small"
                       />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
                         label="Last Name"
@@ -376,20 +373,18 @@ const Settings = () => {
                         variant="outlined"
                         size="small"
                       />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Email"
-                        value={profileData.email}
-                        disabled
-                        variant="outlined"
-                        size="small"
-                        helperText="Email cannot be changed"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth size="small">
+                    </Box>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      value={profileData.email}
+                      disabled
+                      variant="outlined"
+                      size="small"
+                      helperText="Email cannot be changed"
+                    />
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'center' }}>
+                      <FormControl fullWidth size="small" sx={{ flex: { xs: '1 1 100%', sm: '0 0 200px' } }}>
                         <InputLabel>Currency</InputLabel>
                         <Select
                           value={profileData.currency}
@@ -405,14 +400,13 @@ const Settings = () => {
                           <MenuItem value="AUD">Australian Dollar (AUD)</MenuItem>
                         </Select>
                       </FormControl>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Box display="flex" gap={2}>
+                      <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
                         <Button
                           variant="contained"
                           startIcon={<Save />}
                           onClick={handleSaveProfile}
                           disabled={loading}
+                          size="small"
                         >
                           Save Changes
                         </Button>
@@ -420,12 +414,13 @@ const Settings = () => {
                           variant="outlined"
                           startIcon={<Cancel />}
                           onClick={() => setEditingProfile(false)}
+                          size="small"
                         >
                           Cancel
                         </Button>
                       </Box>
-                    </Grid>
-                  </Grid>
+                    </Box>
+                  </Box>
                 ) : (
                   <Box>
                     <Typography variant="h6" gutterBottom>
@@ -439,8 +434,8 @@ const Settings = () => {
                     </Typography>
                   </Box>
                 )}
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
             )}
           </CardContent>
         </Card>
