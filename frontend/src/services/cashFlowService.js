@@ -185,6 +185,12 @@ class CashFlowForecastingService {
       tips.push(`🗓️ Historical data shows higher spending in ${highestSeason.month}. Plan and budget extra for seasonal variations.`);
     }
 
+    // Add region-specific cash flow advice based on currency
+    const regionTip = this.getRegionSpecificCashFlowTip(userCurrency, avgMonthlySpending);
+    if (regionTip) {
+      tips.push(regionTip);
+    }
+
     // General cash flow management tips
     const generalTips = [
       `💰 Emergency fund tip: Aim for 3-6 months of expenses (${formatCurrency(avgMonthlySpending * 3, userCurrency)} - ${formatCurrency(avgMonthlySpending * 6, userCurrency)}).`,
@@ -200,6 +206,53 @@ class CashFlowForecastingService {
     }
 
     return tips;
+  }
+  
+  // Region-specific cash flow tips based on currency
+  static getRegionSpecificCashFlowTip(currency, avgMonthlySpending) {
+    const regionTips = {
+      'ZAR': [
+        `🇿🇦 South African savers: Consider a tax-free savings account with a 36,000 ZAR annual limit and lifetime limit of 500,000 ZAR.`,
+        `🇿🇦 South African banks like Capitec, TymeBank, and Discovery offer high-interest savings accounts - compare rates monthly.`,
+        `🇿🇦 Consider unit trusts from providers like Allan Gray or Coronation for cash flow growth in South Africa.`
+      ],
+      'USD': [
+        `🇺🇸 US savers: High-yield savings accounts currently offer 4-5% APY, substantially better than traditional bank rates.`,
+        `🇺🇸 Consider I-Bonds for emergency funds in the US - they adjust with inflation to protect your cash reserves.`,
+        `🇺🇸 US cash flow tip: Use Roth IRA contributions strategically - they can be withdrawn penalty-free if needed.`
+      ],
+      'EUR': [
+        `🇪🇺 European savers can use multi-currency accounts from Wise or Revolut for more flexible cash management.`,
+        `🇪🇺 Consider European money market funds for temporary cash parking with better returns than savings accounts.`,
+        `🇪🇺 European cash flow tip: SEPA instant transfers enable fast, free money movement across eurozone countries.`
+      ],
+      'GBP': [
+        `🇬🇧 UK savers: Premium Bonds offer tax-free prizes up to £1 million while preserving your capital.`,
+        `🇬🇧 UK cash flow tip: Consider Cash ISAs for tax-free interest on emergency and short-term savings.`,
+        `🇬🇧 Compare UK regular savings accounts which can offer higher rates (3-5%) for monthly deposits.`
+      ],
+      'AUD': [
+        `🇦🇺 Australian savers: Compare high-interest savings accounts which can offer 4%+ with bonus conditions.`,
+        `🇦🇺 Consider Australian micro-investing apps like Raiz for automated roundups to boost your cash flow.`,
+        `🇦🇺 Australian cash flow tip: Look into offset accounts to reduce mortgage interest while maintaining liquidity.`
+      ],
+      'CAD': [
+        `🇨🇦 Canadian savers: Tax-Free Savings Accounts (TFSAs) offer tax-free growth for emergency and short-term funds.`,
+        `🇨🇦 Compare high-interest savings accounts from online banks like EQ Bank or Tangerine for better rates.`,
+        `🇨🇦 Canadian cash flow tip: Consider a TFSA for your emergency fund to grow tax-free while remaining accessible.`
+      ],
+      'JPY': [
+        `🇯🇵 Japanese savers: Consider J-REITs for higher yield than traditional bank deposits while maintaining liquidity.`,
+        `🇯🇵 Look into "NISA" accounts for tax-advantaged investing to improve long-term cash flow in Japan.`,
+        `🇯🇵 Japanese cash flow tip: Money Reserve Funds (MRFs) can offer slightly better returns than bank deposits.`
+      ]
+    };
+    
+    if (regionTips[currency]) {
+      return regionTips[currency][Math.floor(Math.random() * regionTips[currency].length)];
+    }
+    
+    return null;
   }
 
   // Helper method to get a single cash flow tip
@@ -223,7 +276,32 @@ class CashFlowForecastingService {
       const forecasts = this.generateForecast(analysisData, userCurrency, 2);
       const tips = this.generateCashFlowTips(analysisData, forecasts, userCurrency);
       
-      return tips.length > 0 ? tips.slice(0, 2) : [this.getFallbackCashFlowTip(userCurrency)];
+      // If we have tips and no region-specific tip is included, add one
+      if (tips.length > 0) {
+        // Check if we already have a region-specific tip (look for country flag emoji)
+        const hasRegionTip = tips.some(tip => tip.includes(`🇿🇦`) || tip.includes(`🇺🇸`) || 
+                                             tip.includes(`🇬🇧`) || tip.includes(`🇪🇺`) ||
+                                             tip.includes(`🇦🇺`) || tip.includes(`🇨🇦`) || 
+                                             tip.includes(`🇯🇵`));
+        
+        // If no region tip exists, add one
+        if (!hasRegionTip) {
+          const regionTip = this.getRegionSpecificCashFlowTip(userCurrency, analysisData.avgMonthlySpending);
+          if (regionTip) {
+            tips.push(regionTip);
+          }
+        }
+        
+        // Include a prediction tip if we have forecast data
+        if (forecasts && forecasts.length > 0 && !tips.some(tip => tip.includes('🔮') || tip.includes('forecast'))) {
+          const nextMonth = forecasts[0];
+          tips.push(`🔮 Cash flow prediction: Your ${nextMonth.period} spending is estimated at ${nextMonth.formattedAmount} based on current patterns.`);
+        }
+        
+        return tips.slice(0, 3); // Return up to 3 tips
+      }
+      
+      return [this.getFallbackCashFlowTip(userCurrency)];
     } catch (error) {
       console.error('Error generating multiple cash flow tips:', error);
       return [this.getFallbackCashFlowTip(userCurrency)];
@@ -232,7 +310,8 @@ class CashFlowForecastingService {
 
   // Fallback cash flow tip when analysis fails
   static getFallbackCashFlowTip(userCurrency = 'USD') {
-    const fallbackTips = [
+    // General cash flow tips for all regions
+    const generalTips = [
       `💡 Start building your emergency fund with ${formatCurrency(500, userCurrency)} to improve your cash flow security.`,
       `📊 Track your expenses for 30 days to understand your cash flow patterns and identify savings opportunities.`,
       `🎯 Use the 50/30/20 rule: 50% needs, 30% wants, 20% savings to optimize your cash flow management.`,
@@ -240,7 +319,53 @@ class CashFlowForecastingService {
       `📈 Review your spending weekly to stay ahead of cash flow issues and build better financial habits.`
     ];
     
-    return fallbackTips[Math.floor(Math.random() * fallbackTips.length)];
+    // Currency/region-specific cash flow tips
+    const currencySpecificTips = {
+      'ZAR': [
+        `🇿🇦 South African tip: Build an emergency fund of 3-6 months of expenses (about R50,000-R100,000 for the average household).`,
+        `🇿🇦 Consider South African tax-free savings accounts with R36,000 annual contribution limits for flexible cash reserves.`,
+        `🇿🇦 South African banks like TymeBank and Capitec offer competitive interest rates for emergency funds and short-term savings.`
+      ],
+      'USD': [
+        `🇺🇸 US tip: High-yield savings accounts currently offer 4-5% APY for emergency funds - much better than traditional banks.`,
+        `🇺🇸 US savers should consider I-Bonds which adjust with inflation, currently offering better rates than savings accounts.`,
+        `🇺🇸 Money market funds from Vanguard or Fidelity offer competitive yields for short-term cash needs in the US.`
+      ],
+      'EUR': [
+        `🇪🇺 Euro tip: Build an emergency fund of 3-6 months expenses in a flexible savings account before longer-term investing.`,
+        `🇪🇺 Consider multi-currency accounts from Wise or Revolut for flexible cash management across Europe.`,
+        `🇪🇺 European money market funds can offer better returns than savings accounts for short-term cash needs.`
+      ],
+      'GBP': [
+        `🇬🇧 UK tip: Consider Premium Bonds for emergency savings - they offer tax-free prize draws while preserving capital.`,
+        `🇬🇧 Cash ISAs protect your emergency fund interest from tax while maintaining accessibility for UK savers.`,
+        `🇬🇧 Compare UK regular savings accounts which can offer higher rates (3-5%) for monthly deposits.`
+      ],
+      'AUD': [
+        `🇦🇺 Australian tip: High-interest savings accounts can offer 4%+ with bonus conditions for emergency funds.`,
+        `🇦🇺 Consider offset accounts linked to your mortgage to effectively earn your mortgage interest rate on cash savings.`,
+        `🇦🇺 Australian micro-investing apps like Raiz can help automate saving small amounts to build your emergency fund.`
+      ],
+      'CAD': [
+        `🇨🇦 Canadian tip: Keep 3-6 months of expenses in a Tax-Free Savings Account (TFSA) for tax-efficient emergency savings.`,
+        `🇨🇦 Online banks like EQ Bank offer significantly higher interest rates than traditional Canadian banks.`,
+        `🇨🇦 Canadian cashback credit cards can return 1-4% on everyday purchases to boost your cash flow when paid in full monthly.`
+      ],
+      'JPY': [
+        `🇯🇵 Japanese tip: Consider "NISA" accounts for tax-advantaged investing to improve long-term cash flow.`,
+        `🇯🇵 Money Reserve Funds (MRFs) can offer slightly better returns than traditional Japanese bank deposits.`,
+        `🇯🇵 Japanese J-REITs can provide higher yield than bank deposits while maintaining relative liquidity for cash needs.`
+      ]
+    };
+    
+    // Combine general and region-specific tips
+    let combinedTips = [...generalTips];
+    
+    if (currencySpecificTips[userCurrency]) {
+      combinedTips = combinedTips.concat(currencySpecificTips[userCurrency]);
+    }
+    
+    return combinedTips[Math.floor(Math.random() * combinedTips.length)];
   }
 
   // Helper methods
