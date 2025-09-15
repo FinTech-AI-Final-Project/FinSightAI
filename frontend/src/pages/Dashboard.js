@@ -11,12 +11,8 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
-  IconButton,
 } from '@mui/material';
-import {
-  ChevronLeft,
-  ChevronRight,
-} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Doughnut, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -79,21 +75,10 @@ const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth.month);
   const [selectedYear, setSelectedYear] = useState(currentMonth.year);
 
-  const handlePreviousMonth = () => {
-    if (selectedMonth === 1) {
-      setSelectedMonth(12);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (selectedMonth === 12) {
-      setSelectedMonth(1);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
+  const handleDateChange = (newDate) => {
+    if (newDate) {
+      setSelectedMonth(newDate.getMonth() + 1);
+      setSelectedYear(newDate.getFullYear());
     }
   };
 
@@ -289,21 +274,21 @@ const Dashboard = () => {
             Dashboard
           </Typography>
           
-          {/* Month Navigation */}
-          <Box display="flex" alignItems="center" gap={1}>
-            <IconButton onClick={handlePreviousMonth} size={isMobile ? "small" : "medium"}>
-              <ChevronLeft />
-            </IconButton>
-            <Typography variant={isMobile ? "body1" : "h6"} sx={{ minWidth: isMobile ? 120 : 160, textAlign: 'center' }}>
-              {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
-                month: 'long', 
-                year: 'numeric' 
-              })}
-            </Typography>
-            <IconButton onClick={handleNextMonth} size={isMobile ? "small" : "medium"}>
-              <ChevronRight />
-            </IconButton>
-          </Box>
+          <DatePicker
+            views={['year', 'month']}
+            label="Budget Month"
+            value={new Date(selectedYear, selectedMonth - 1)}
+            onChange={handleDateChange}
+            defaultCalendarMonth={new Date(selectedYear, selectedMonth - 1)}
+            openTo="month"
+            sx={{ minWidth: 200 }}
+            slotProps={{
+              textField: {
+                size: "small",
+                fullWidth: true
+              }
+            }}
+          />
         </Box>
 
         <ErrorAlert error={error} />

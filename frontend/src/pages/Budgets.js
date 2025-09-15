@@ -25,6 +25,7 @@ import {
   useMediaQuery,
   InputAdornment,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import {
   Add,
   MoreVert,
@@ -33,8 +34,6 @@ import {
   TrendingUp,
   TrendingDown,
   Warning,
-  ChevronLeft,
-  ChevronRight,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as ApiService from '../services/api';
@@ -85,6 +84,13 @@ const Budgets = () => {
   const currentMonth = getCurrentMonth();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth.month);
   const [selectedYear, setSelectedYear] = useState(currentMonth.year);
+
+  const handleDateChange = (newDate) => {
+    if (newDate) {
+      setSelectedMonth(newDate.getMonth() + 1);
+      setSelectedYear(newDate.getFullYear());
+    }
+  };
   
   const [formData, setFormData] = useState({
     category: '',
@@ -202,23 +208,6 @@ const Budgets = () => {
     setSelectedBudget(null);
   };
 
-  const handlePreviousMonth = () => {
-    if (selectedMonth === 1) {
-      setSelectedMonth(12);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (selectedMonth === 12) {
-      setSelectedMonth(1);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
-  };
 
   const getBudgetStatus = (spent, limit) => {
     const percentage = (spent / limit) * 100;
@@ -424,21 +413,21 @@ const Budgets = () => {
         </Typography>
         
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          {/* Month Navigation */}
-          <Box display="flex" alignItems="center" gap={1}>
-            <IconButton onClick={handlePreviousMonth}>
-              <ChevronLeft />
-            </IconButton>
-            <Typography variant="h6" sx={{ minWidth: 160, textAlign: 'center' }}>
-              {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
-                month: 'long', 
-                year: 'numeric' 
-              })}
-            </Typography>
-            <IconButton onClick={handleNextMonth}>
-              <ChevronRight />
-            </IconButton>
-          </Box>
+          <DatePicker
+            views={['year', 'month']}
+            label="Budget Month"
+            value={new Date(selectedYear, selectedMonth - 1)}
+            onChange={handleDateChange}
+            defaultCalendarMonth={new Date(selectedYear, selectedMonth - 1)}
+            openTo="month"
+            sx={{ minWidth: 200 }}
+            slotProps={{
+              textField: {
+                size: "small",
+                fullWidth: true
+              }
+            }}
+          />
         </Box>
       </Box>
 
