@@ -68,6 +68,7 @@ const Navbar = () => {
         borderBottom: 1,
         borderColor: 'rgba(255, 255, 255, 0.12)',
         zIndex: theme.zIndex.drawer + 1,
+        backgroundColor: '#000000',
       }}
     >
       <Toolbar sx={{ minHeight: { xs: 56, md: 64 }, px: { xs: 1, md: 2 } }}>
@@ -85,7 +86,7 @@ const Navbar = () => {
                 e.target.style.display = 'none';
               }}
               style={{ 
-                height: isMobile ? 40 : 56, 
+                height: isMobile ? 28 : 40, 
                 width: 'auto',
                 marginRight: isMobile ? 8 : 12
               }} 
