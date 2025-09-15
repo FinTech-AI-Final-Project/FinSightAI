@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Grid,
   Card,
   CardContent,
   Typography,
@@ -297,8 +296,9 @@ const Dashboard = () => {
         <AITipsPanel expenses={expenses} budgets={budgets} />
 
         {/* Summary Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 3 } }}>
+          <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
               <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
@@ -346,9 +346,9 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
               <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
@@ -396,9 +396,9 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
               <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
@@ -446,9 +446,9 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%' } }}>
             <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
               <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', minHeight: { xs: 120, sm: 140 } }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: '100%', display: 'flex', alignItems: 'center' }}>
@@ -496,43 +496,45 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Charts */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={6}>
-            <Card sx={{ height: 400 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Spending by Category
-                </Typography>
-                <Box sx={{ height: 300, position: 'relative' }}>
-                  {expenses.length > 0 ? (
-                    <Doughnut data={getCategoryData()} options={chartOptions} />
-                  ) : (
-                    <Box display="flex" alignItems="center" justifyContent="center" height="100%">
-                      <Typography color="text.secondary">No expenses recorded yet</Typography>
-                    </Box>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+            <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+              <Card sx={{ height: 400 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom fontWeight={600}>
+                    Spending by Category
+                  </Typography>
+                  <Box sx={{ height: 300, position: 'relative' }}>
+                    {expenses.length > 0 ? (
+                      <Doughnut data={getCategoryData()} options={chartOptions} />
+                    ) : (
+                      <Box display="flex" alignItems="center" justifyContent="center" height="100%">
+                        <Typography color="text.secondary">No expenses recorded yet</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
 
-          <Grid item xs={12} md={6}>
-            <Card sx={{ height: 400 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Daily Spending Trend
-                </Typography>
-                <Box sx={{ height: 300, position: 'relative' }}>
-                  <Line data={getDailyChartData()} options={lineChartOptions} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+            <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
+              <Card sx={{ height: 400 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom fontWeight={600}>
+                    Daily Spending Trend
+                  </Typography>
+                  <Box sx={{ height: 300, position: 'relative' }}>
+                    <Line data={getDailyChartData()} options={lineChartOptions} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Budget Progress */}
         <Card>
@@ -541,14 +543,14 @@ const Dashboard = () => {
               Budget Overview
             </Typography>
             {budgets.length > 0 ? (
-              <Grid container spacing={2}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row', md: 'row' }, flexWrap: 'wrap', gap: 2 }}>
                 {budgets.slice(0, 6).map((budget, index) => {
                   const progress = (budget.currentSpent / budget.monthlyLimit) * 100;
                   const isOverBudget = progress > 100;
                   const isWarning = progress > 80;
                   
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={budget.id}>
+                    <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)', md: '1 1 calc(33.333% - 11px)' }, minWidth: 0 }} key={budget.id}>
                       <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                           <Typography variant="body2" fontWeight={500}>
@@ -570,10 +572,10 @@ const Dashboard = () => {
                           sx={{ height: 8, borderRadius: 4 }}
                         />
                       </Box>
-                    </Grid>
+                    </Box>
                   );
                 })}
-              </Grid>
+              </Box>
             ) : (
               <Alert severity="info">
                 No budgets set up yet. Create budgets to track your spending goals!
@@ -581,6 +583,7 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+        </Box>
       </motion.div>
     </Box>
   );

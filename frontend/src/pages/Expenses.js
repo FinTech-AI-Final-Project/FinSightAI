@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Chip,
   IconButton,
   Menu,
@@ -518,43 +517,40 @@ const Expenses = () => {
       {/* Search and Filter */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
-          <Grid container spacing={3}>
-            <Grid container item spacing={3} xs={12}>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  placeholder="Search expenses..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search />
-                      </InputAdornment>
-                    ),
-                  }}
-                  variant="outlined"
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Filter by Category</InputLabel>
-                  <Select
-                    value={filterCategory}
-                    label="Filter by Category"
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                  >
-                    <MenuItem value="">All Categories</MenuItem>
-                    {Object.entries(expenseCategories).map(([key, category]) => (
-                      <MenuItem key={key} value={key}>
-                        {category.icon} {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+              <TextField
+                fullWidth
+                placeholder="Search expenses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                variant="outlined"
+                size="small"
+                sx={{ flex: { xs: '1 1 100%', sm: '1 1 33.333%' } }}
+              />
+              <FormControl fullWidth size="small" sx={{ flex: { xs: '1 1 100%', sm: '1 1 33.333%' } }}>
+                <InputLabel>Filter by Category</InputLabel>
+                <Select
+                  value={filterCategory}
+                  label="Filter by Category"
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                >
+                  <MenuItem value="">All Categories</MenuItem>
+                  {Object.entries(expenseCategories).map(([key, category]) => (
+                    <MenuItem key={key} value={key}>
+                      {category.icon} {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 33.333%' } }}>
                 <DatePicker
                   value={filterDate}
                   onChange={(newDate) => setFilterDate(newDate)}
@@ -566,30 +562,29 @@ const Expenses = () => {
                     }
                   }}
                 />
-              </Grid>
-            </Grid>
-            <Grid item xs={12} sx={{ mt: { xs: 1, sm: 2 } }}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => handleOpenDialog()}
-                sx={{
-                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-                  },
-                  borderRadius: 2,
-                  py: 1.5,
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  fontWeight: 600,
-                  height: '40px', // Match the height of other form elements
-                }}
-              >
-                {isMobile ? 'Add Expense' : 'Add New Expense'}
-              </Button>
-            </Grid>
-          </Grid>
+              </Box>
+            </Box>
+            <Button
+              fullWidth
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+              sx={{
+                background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                },
+                borderRadius: 2,
+                py: 1.5,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 600,
+                height: '40px', // Match the height of other form elements
+                mt: { xs: 1, sm: 2 }
+              }}
+            >
+              {isMobile ? 'Add Expense' : 'Add New Expense'}
+            </Button>
+          </Box>
         </CardContent>
       </Card>
 
@@ -666,28 +661,26 @@ const Expenses = () => {
               {dialogError}
             </Alert>
           )}
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <Box display="flex" gap={1} alignItems="end">
-                <TextField
-                  fullWidth
-                  label="Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                />
-                <Button
-                  variant="outlined"
-                  startIcon={isScanning ? <CircularProgress size={20} /> : <Receipt />}
-                  onClick={() => handleScanReceipt()}
-                  disabled={isScanning}
-                  sx={{ minWidth: 120, height: 56 }}
-                >
-                  {isScanning ? `Scanning... ${ocrProgress}%` : 'Scan Receipt'}
-                </Button>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+              <TextField
+                fullWidth
+                label="Description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                required
+              />
+              <Button
+                variant="outlined"
+                startIcon={isScanning ? <CircularProgress size={20} /> : <Receipt />}
+                onClick={() => handleScanReceipt()}
+                disabled={isScanning}
+                sx={{ minWidth: 120, height: 56, flexShrink: 0 }}
+              >
+                {isScanning ? `Scanning... ${ocrProgress}%` : 'Scan Receipt'}
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
               <TextField
                 fullWidth
                 label="Amount"
@@ -698,10 +691,9 @@ const Expenses = () => {
                   startAdornment: <InputAdornment position="start">{getCurrencySymbol(userProfile.currency)}</InputAdornment>,
                 }}
                 required
+                sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth required sx={{ flex: { xs: '1 1 100%', sm: '1 1 50%' } }}>
                 <InputLabel>Category</InputLabel>
                 <Select
                   value={formData.category}
@@ -715,39 +707,35 @@ const Expenses = () => {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Date"
-                  value={formData.date}
-                  onChange={(date) => setFormData({ ...formData, date })}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                    }
-                  }}
-                />
-              </LocalizationProvider>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Notes (Optional)"
-                multiline
-                rows={2}
-                value={formData.notes}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Truncate at 1000 characters
-                  const truncatedValue = value.length > 1000 ? value.substring(0, 1000) : value;
-                  setFormData({ ...formData, notes: truncatedValue });
+            </Box>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Date"
+                value={formData.date}
+                onChange={(date) => setFormData({ ...formData, date })}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  }
                 }}
-                helperText={`${formData.notes.length}/1000 characters${formData.notes.length > 900 ? ' (approaching limit)' : ''}`}
-                error={formData.notes.length >= 1000}
               />
-            </Grid>
-          </Grid>
+            </LocalizationProvider>
+            <TextField
+              fullWidth
+              label="Notes (Optional)"
+              multiline
+              rows={2}
+              value={formData.notes}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Truncate at 1000 characters
+                const truncatedValue = value.length > 1000 ? value.substring(0, 1000) : value;
+                setFormData({ ...formData, notes: truncatedValue });
+              }}
+              helperText={`${formData.notes.length}/1000 characters${formData.notes.length > 900 ? ' (approaching limit)' : ''}`}
+              error={formData.notes.length >= 1000}
+            />
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialog}>Cancel</Button>
