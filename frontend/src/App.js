@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { UserProvider } from './contexts/UserContext';
 import { CustomThemeProvider } from './contexts/ThemeContext';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -16,29 +18,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
   return (
-    <CustomThemeProvider>
-      <AuthProvider>
-        <UserProvider>
-          <Router>
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="expenses" element={<Expenses />} />
-                  <Route path="budgets" element={<Budgets />} />
-                  <Route path="reports" element={<Reports />} />
-                  <Route path="settings" element={<Settings />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </AnimatePresence>
-          </Router>
-        </UserProvider>
-      </AuthProvider>
-    </CustomThemeProvider>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <CustomThemeProvider>
+        <AuthProvider>
+          <UserProvider>
+            <Router>
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="expenses" element={<Expenses />} />
+                    <Route path="budgets" element={<Budgets />} />
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="settings" element={<Settings />} />
+                  </Route>
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </AnimatePresence>
+            </Router>
+          </UserProvider>
+        </AuthProvider>
+      </CustomThemeProvider>
+    </LocalizationProvider>
   );
 }
 
