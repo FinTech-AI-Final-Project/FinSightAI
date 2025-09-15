@@ -51,6 +51,7 @@ const Expenses = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterDate, setFilterDate] = useState(new Date());
   const [error, setError] = useState('');
   const [dialogError, setDialogError] = useState(''); // Error specific to dialog operations
   const [ocrProgress, setOcrProgress] = useState(0);
@@ -331,7 +332,11 @@ const Expenses = () => {
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !filterCategory || expense.category === filterCategory;
-    return matchesSearch && matchesCategory;
+    const expenseDate = new Date(expense.date);
+    const matchesDate = !filterDate || 
+      (expenseDate.getMonth() === filterDate.getMonth() && 
+       expenseDate.getFullYear() === filterDate.getFullYear());
+    return matchesSearch && matchesCategory && matchesDate;
   });
 
   const ExpenseCard = ({ expense }) => {
@@ -512,43 +517,58 @@ const Expenses = () => {
 
       {/* Search and Filter */}
       <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 2 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                placeholder="Search expenses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
-                }}
-                variant="outlined"
-                size="small"
-              />
+        <CardContent sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={3}>
+            <Grid container item spacing={3} xs={12}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  placeholder="Search expenses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search />
+                      </InputAdornment>
+                    ),
+                  }}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Filter by Category</InputLabel>
+                  <Select
+                    value={filterCategory}
+                    label="Filter by Category"
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                  >
+                    <MenuItem value="">All Categories</MenuItem>
+                    {Object.entries(expenseCategories).map(([key, category]) => (
+                      <MenuItem key={key} value={key}>
+                        {category.icon} {category.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <DatePicker
+                  value={filterDate}
+                  onChange={(newDate) => setFilterDate(newDate)}
+                  views={['month', 'year']}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                    }
+                  }}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Filter by Category</InputLabel>
-                <Select
-                  value={filterCategory}
-                  label="Filter by Category"
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                >
-                  <MenuItem value="">All Categories</MenuItem>
-                  {Object.entries(expenseCategories).map(([key, category]) => (
-                    <MenuItem key={key} value={key}>
-                      {category.icon} {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sx={{ mt: { xs: 1, sm: 2 } }}>
               <Button
                 fullWidth
                 variant="contained"
