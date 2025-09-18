@@ -280,15 +280,9 @@ public class AITipsService {
             .replaceAll("^:+\\s*", "")          // Remove leading colons
             .trim();
         
-        // Enforce length limit - keep only first sentence if too long
-        if (cleanedResponse.length() > 200) {
-            String[] sentences = cleanedResponse.split("[.!?]");
-            if (sentences.length > 0 && sentences[0].trim().length() > 20) {
-                cleanedResponse = sentences[0].trim();
-            } else {
-                // If even first sentence is too long, truncate it
-                cleanedResponse = cleanedResponse.substring(0, 180).trim() + "...";
-            }
+        // Enforce length limit - only truncate if extremely long (over 400 chars)
+        if (cleanedResponse.length() > 400) {
+            cleanedResponse = cleanedResponse.substring(0, 390).trim() + "...";
         }
         
         // Reject if still too short or contains formatting issues

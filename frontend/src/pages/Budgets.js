@@ -438,7 +438,7 @@ const Budgets = () => {
 
       {/* Overall Summary */}
       <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
           <Typography variant="h6" gutterBottom fontWeight={600}>
             Monthly Overview - {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('en-US', { 
               month: 'long', 
@@ -470,24 +470,8 @@ const Budgets = () => {
                 {formatCurrency(totalBudget - totalSpent, userProfile.currency)}
               </Typography>
             </Box>
-            <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 25%', md: '0 0 25%' } }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Overall Progress
-              </Typography>
-              <Box display="flex" alignItems="center">
-                <LinearProgress
-                  variant="determinate"
-                  value={Math.min(overallProgress, 100)}
-                  color={overallProgress > 100 ? 'error' : overallProgress > 80 ? 'warning' : 'success'}
-                  sx={{ flexGrow: 1, height: 8, borderRadius: 4, mr: 1 }}
-                />
-                <Typography variant="body2" fontWeight={500}>
-                  {Math.round(overallProgress)}%
-                </Typography>
-              </Box>
-            </Box>
           </Box>
-          
+
           {/* Add Budget Button */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
@@ -508,6 +492,24 @@ const Budgets = () => {
             >
               {isMobile ? 'Add Budget' : 'Add New Budget'}
             </Button>
+          </Box>
+
+          {/* Overall Progress at the bottom */}
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Overall Progress
+            </Typography>
+            <Box display="flex" alignItems="center">
+              <LinearProgress
+                variant="determinate"
+                value={Math.min(overallProgress, 100)}
+                color={overallProgress > 100 ? 'error' : overallProgress > 80 ? 'warning' : 'success'}
+                sx={{ flexGrow: 1, height: 8, borderRadius: 4, mr: 1 }}
+              />
+              <Typography variant="body2" fontWeight={500}>
+                {Math.round(overallProgress)}%
+              </Typography>
+            </Box>
           </Box>
         </CardContent>
       </Card>

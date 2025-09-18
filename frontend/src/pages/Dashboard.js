@@ -292,8 +292,8 @@ const Dashboard = () => {
 
         <ErrorAlert error={error} />
 
-        {/* AI Tips Panel */}
-        <AITipsPanel expenses={expenses} budgets={budgets} />
+  {/* AI Tips Panel (desktop only) */}
+  {!(isMobile) && <AITipsPanel expenses={expenses} budgets={budgets} />}
 
         {/* Summary Cards */}
         <Box sx={{ mb: 4 }}>
@@ -499,8 +499,8 @@ const Dashboard = () => {
           </Box>
         </Box>
 
-        {/* Charts */}
-        <Box sx={{ mb: 4 }}>
+  {/* Charts */}
+  <Box sx={{ mb: 4, mt: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
             <Box sx={{ flex: { xs: '1 1 100%', md: '1 1 50%' } }}>
               <Card sx={{ height: 400 }}>

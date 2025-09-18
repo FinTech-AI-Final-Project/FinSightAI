@@ -32,8 +32,9 @@ import * as ApiService from '../services/api';
 import * as CryptoService from '../services/cryptoService';
 import CashFlowForecastingService from '../services/cashFlowService';
 import { useUser } from '../contexts/UserContext';
+import { formatCurrency } from '../utils/helpers';
 
-const AITipsPanel = ({ expenses = [], budgets = [] }) => {
+const AITipsPanel = ({ expenses: propExpenses = [], budgets: propBudgets = [] }) => {
   const [tips, setTips] = useState([]);
   const [cryptoTips, setCryptoTips] = useState([]);
   const [cashFlowTips, setCashFlowTips] = useState([]);
@@ -45,6 +46,9 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
   const [currentCryptoTipIndex, setCurrentCryptoTipIndex] = useState(0);
   const [currentCashFlowTipIndex, setCurrentCashFlowTipIndex] = useState(0);
   const [isAiEnhanced, setIsAiEnhanced] = useState(false);
+  const [expenses, setExpenses] = useState(propExpenses);
+  const [budgets, setBudgets] = useState(propBudgets);
+  const [dataLoading, setDataLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { userProfile } = useUser();
@@ -79,12 +83,53 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
     }
   }, [expanded, cashFlowTips.length]);
 
-  // Force collapsed view on mobile
-  useEffect(() => {
-    if (isMobile && expanded) {
-      setExpanded(false);
+  // Fetch expenses and budgets data if not provided as props
+  const fetchExpensesAndBudgets = useCallback(async () => {
+    // If we already have data from props, don't fetch
+    if (propExpenses.length > 0 || propBudgets.length > 0) {
+      setExpenses(propExpenses);
+      setBudgets(propBudgets);
+      return;
     }
-  }, [isMobile, expanded]);
+
+    // If no props provided, fetch current month's data
+    if (!userProfile) return;
+
+    try {
+      setDataLoading(true);
+      console.log('📊 Fetching expenses and budgets data for tips...');
+
+      const currentMonth = new Date();
+      const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+
+      // Fetch current month's expenses
+      const expensesResponse = await ApiService.getExpenses({
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+      });
+
+      // Fetch current month's budgets
+      const budgetsResponse = await ApiService.getBudgets({
+        month: currentMonth.getMonth() + 1,
+        year: currentMonth.getFullYear(),
+      });
+
+      console.log('✅ Tips data fetched:', {
+        expenses: expensesResponse?.length || 0,
+        budgets: budgetsResponse?.length || 0
+      });
+
+      setExpenses(expensesResponse || []);
+      setBudgets(budgetsResponse || []);
+    } catch (error) {
+      console.warn('⚠️ Failed to fetch tips data:', error.message);
+      setExpenses([]);
+      setBudgets([]);
+    } finally {
+      setDataLoading(false);
+    }
+  }, [propExpenses, propBudgets, userProfile]);
 
   // Generate smart fallback tips based on user data
   const generateSmartFallbackTips = useCallback(() => {
@@ -96,7 +141,7 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
       const avgExpense = totalSpent / expenses.length;
       
       fallbackTips.push(
-        `💰 Hey ${userName}! You've spent ${userProfile.currency} ${totalSpent.toFixed(2)} this month across ${expenses.length} transactions. Your average expense is ${userProfile.currency} ${avgExpense.toFixed(2)}.`
+        `💰 Hey ${userName}! You've spent ${formatCurrency(totalSpent, userProfile.currency)} this month across ${expenses.length} transactions. Your average expense is ${formatCurrency(avgExpense, userProfile.currency)}.`
       );
       
       // Analyze spending patterns
@@ -108,7 +153,7 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
       const topCategory = Object.entries(categories).sort((a, b) => b[1] - a[1])[0];
       if (topCategory) {
         fallbackTips.push(
-          `📊 ${userName}, your largest spending category is ${topCategory[0]} at ${userProfile.currency} ${topCategory[1].toFixed(2)}. Consider setting a budget for this category!`
+          `📊 ${userName}, your largest spending category is ${topCategory[0]} at ${formatCurrency(topCategory[1], userProfile.currency)}. Consider setting a budget for this category!`
         );
       }
     }
@@ -227,17 +272,17 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
   // Fetch cash flow forecasting tips
   const fetchCashFlowTips = useCallback(async () => {
     if (cashFlowLoading) return;
-    
+
     setCashFlowLoading(true);
-    
+
     try {
       console.log('📊 Generating cash flow forecasting tips...');
       const cashFlowTipsData = CashFlowForecastingService.getMultipleCashFlowTips(
-        expenses, 
-        budgets, 
+        expenses,
+        budgets,
         userProfile?.currency || 'USD'
       );
-      
+
       if (cashFlowTipsData && cashFlowTipsData.length > 0) {
         console.log('✅ Cash flow tips generated:', cashFlowTipsData.length);
         setCashFlowTips(cashFlowTipsData);
@@ -258,13 +303,21 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
     }
   }, [cashFlowLoading, expenses, budgets, userProfile?.currency]);
 
-  // Load tips on component mount
+  // Fetch data when component mounts or when props change
   useEffect(() => {
-    fetchAITips();
-    fetchCryptoTips();
-    fetchCashFlowTips();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+    if (userProfile) {
+      fetchExpensesAndBudgets();
+    }
+  }, [fetchExpensesAndBudgets, userProfile]);
+
+  // Load tips when data is available
+  useEffect(() => {
+    if (userProfile && !dataLoading) {
+      fetchAITips();
+      fetchCryptoTips();
+      fetchCashFlowTips();
+    }
+  }, [userProfile, dataLoading]); // Depend on userProfile and dataLoading
 
   // Manual refresh function
   const handleRefresh = useCallback(async () => {
@@ -322,8 +375,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         p: 0,
         mt: 4, // Increased top margin to ensure proper spacing from navbar
         mb: 3,
-        backgroundColor: '#000000',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
         borderRadius: 2,
         overflow: 'hidden',
         position: 'relative', // Ensure it's in normal document flow
@@ -335,11 +388,11 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isAiEnhanced ? (
-              <AutoAwesome sx={{ color: '#ffffff' }} />
+              <AutoAwesome sx={{ color: theme.palette.primary.main }} />
             ) : (
-              <Lightbulb sx={{ color: '#ffffff' }} />
+              <Lightbulb sx={{ color: theme.palette.primary.main }} />
             )}
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
               Smart Tips
             </Typography>
           </Box>
@@ -350,12 +403,12 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
               disabled={isLoading}
               size="small"
               sx={{ 
-                color: '#ffffff',
-                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                color: theme.palette.text.primary,
+                '&:hover': { backgroundColor: theme.palette.action.hover }
               }}
             >
               {isLoading ? (
-                <CircularProgress size={20} sx={{ color: '#ffffff' }} />
+                <CircularProgress size={20} sx={{ color: theme.palette.primary.main }} />
               ) : (
                 <Refresh />
               )}
@@ -366,10 +419,10 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                 onClick={() => setExpanded(!expanded)}
                 size="small"
                 sx={{ 
-                  color: '#ffffff',
+                  color: theme.palette.text.primary,
                   transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
                   transition: 'transform 0.3s',
-                  '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
+                  '&:hover': { backgroundColor: theme.palette.action.hover }
                 }}
               >
                 <ExpandMore />
@@ -391,15 +444,15 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
               severity={getTipSeverity(currentTip)}
               icon={getTipIcon(currentTip)}
               sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                color: '#ffffff',
-                '& .MuiAlert-icon': { alignItems: 'center', color: '#ffffff' },
-                '& .MuiAlert-message': { color: '#ffffff' }
+                backgroundColor: theme.palette.background.default,
+                border: `1px solid ${theme.palette.divider}`,
+                color: theme.palette.text.primary,
+                '& .MuiAlert-icon': { alignItems: 'center', color: theme.palette.text.primary },
+                '& .MuiAlert-message': { color: theme.palette.text.primary }
               }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
+                <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: theme.palette.text.primary }}>
                   {currentTip}
                 </Typography>
                 <Chip
@@ -410,8 +463,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                     ml: 1, 
                     fontSize: '0.65rem', 
                     height: 20,
-                    color: '#ffffff',
-                    borderColor: 'rgba(255, 255, 255, 0.3)'
+                    color: theme.palette.text.primary,
+                    borderColor: theme.palette.divider
                   }}
                 />
               </Box>
@@ -449,8 +502,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         {/* Crypto Tips Section */}
         {!expanded && currentCryptoTip && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CurrencyBitcoin sx={{ fontSize: 18 }} />
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: theme.palette.text.primary, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CurrencyBitcoin sx={{ fontSize: 18, color: theme.palette.warning.main }} />
               Crypto Investment Tips
             </Typography>
             <motion.div
@@ -464,15 +517,15 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                 severity="info"
                 icon={<CurrencyBitcoin />}
                 sx={{
-                  backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                  border: '1px solid rgba(255, 193, 7, 0.3)',
-                  color: '#ffffff',
-                  '& .MuiAlert-icon': { alignItems: 'center', color: '#FFB74D' },
-                  '& .MuiAlert-message': { color: '#ffffff' }
+                  backgroundColor: theme.palette.background.default,
+                  border: `1px solid ${theme.palette.warning.main}40`,
+                  color: theme.palette.text.primary,
+                  '& .MuiAlert-icon': { alignItems: 'center', color: theme.palette.warning.main },
+                  '& .MuiAlert-message': { color: theme.palette.text.primary }
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
+                  <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: theme.palette.text.primary }}>
                     {currentCryptoTip}
                   </Typography>
                   <Chip
@@ -483,8 +536,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                       ml: 1, 
                       fontSize: '0.65rem', 
                       height: 20,
-                      color: '#FFB74D',
-                      borderColor: 'rgba(255, 183, 77, 0.5)'
+                      color: theme.palette.warning.main,
+                      borderColor: `${theme.palette.warning.main}80`
                     }}
                   />
                 </Box>
@@ -523,8 +576,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         {/* Cash Flow Tips Section */}
         {!expanded && currentCashFlowTip && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Timeline sx={{ fontSize: 18 }} />
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: theme.palette.text.primary, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Timeline sx={{ fontSize: 18, color: theme.palette.info.main }} />
               Cash Flow Forecasting
             </Typography>
             <motion.div
@@ -538,15 +591,15 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                 severity="info"
                 icon={<Timeline />}
                 sx={{
-                  backgroundColor: 'rgba(79, 195, 247, 0.1)',
-                  border: '1px solid rgba(79, 195, 247, 0.3)',
-                  color: '#ffffff',
-                  '& .MuiAlert-icon': { alignItems: 'center', color: '#4FC3F7' },
-                  '& .MuiAlert-message': { color: '#ffffff' }
+                  backgroundColor: theme.palette.background.default,
+                  border: `1px solid ${theme.palette.info.main}40`,
+                  color: theme.palette.text.primary,
+                  '& .MuiAlert-icon': { alignItems: 'center', color: theme.palette.info.main },
+                  '& .MuiAlert-message': { color: theme.palette.text.primary }
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
+                  <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: theme.palette.text.primary }}>
                     {currentCashFlowTip}
                   </Typography>
                   <Chip
@@ -557,8 +610,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                       ml: 1, 
                       fontSize: '0.65rem', 
                       height: 20,
-                      color: '#4FC3F7',
-                      borderColor: 'rgba(79, 195, 247, 0.5)'
+                      color: theme.palette.info.main,
+                      borderColor: `${theme.palette.info.main}80`
                     }}
                   />
                 </Box>
@@ -597,11 +650,11 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
         {/* Expanded View - Hidden on mobile */}
         <Collapse in={expanded && !isMobile}>
           <Box sx={{ mt: 2 }}>
-            <Divider sx={{ mb: 2, borderColor: 'rgba(255, 255, 255, 0.12)' }} />
+            <Divider sx={{ mb: 2, borderColor: theme.palette.divider }} />
             
             {/* AI Tips Section */}
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 1 }}>
-              {isAiEnhanced ? <AutoAwesome /> : <Lightbulb />}
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {isAiEnhanced ? <AutoAwesome sx={{ color: theme.palette.primary.main }} /> : <Lightbulb sx={{ color: theme.palette.primary.main }} />}
               AI Financial Tips ({tips.length})
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
@@ -618,15 +671,15 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                       severity={getTipSeverity(tip)}
                       icon={getTipIcon(tip)}
                       sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
-                        color: '#ffffff',
-                        '& .MuiAlert-icon': { color: '#ffffff' },
-                        '& .MuiAlert-message': { color: '#ffffff' }
+                        backgroundColor: theme.palette.background.default,
+                        border: `1px solid ${theme.palette.divider}`,
+                        color: theme.palette.text.primary,
+                        '& .MuiAlert-icon': { color: theme.palette.text.primary },
+                        '& .MuiAlert-message': { color: theme.palette.text.primary }
                       }}
                     >
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
+                        <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: theme.palette.text.primary }}>
                           {tip}
                         </Typography>
                         <Chip
@@ -637,8 +690,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                             ml: 1, 
                             fontSize: '0.65rem', 
                             height: 20,
-                            color: '#ffffff',
-                            borderColor: 'rgba(255, 255, 255, 0.3)'
+                            color: theme.palette.text.primary,
+                            borderColor: theme.palette.divider
                           }}
                         />
                       </Box>
@@ -651,9 +704,9 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
             {/* Crypto Tips Section */}
             {cryptoTips.length > 0 && (
               <>
-                <Divider sx={{ mb: 2, borderColor: 'rgba(255, 255, 255, 0.12)' }} />
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CurrencyBitcoin />
+                <Divider sx={{ mb: 2, borderColor: theme.palette.divider }} />
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CurrencyBitcoin sx={{ color: theme.palette.warning.main }} />
                   Crypto Investment Tips ({cryptoTips.length})
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -670,15 +723,15 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                           severity="info"
                           icon={<CurrencyBitcoin />}
                           sx={{
-                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
-                            border: '1px solid rgba(255, 193, 7, 0.3)',
-                            color: '#ffffff',
-                            '& .MuiAlert-icon': { color: '#FFB74D' },
-                            '& .MuiAlert-message': { color: '#ffffff' }
+                            backgroundColor: theme.palette.background.default,
+                            border: `1px solid ${theme.palette.warning.main}40`,
+                            color: theme.palette.text.primary,
+                            '& .MuiAlert-icon': { color: theme.palette.warning.main },
+                            '& .MuiAlert-message': { color: theme.palette.text.primary }
                           }}
                         >
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
+                            <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: theme.palette.text.primary }}>
                               {tip}
                             </Typography>
                             <Chip
@@ -689,8 +742,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                                 ml: 1, 
                                 fontSize: '0.65rem', 
                                 height: 20,
-                                color: '#FFB74D',
-                                borderColor: 'rgba(255, 183, 77, 0.5)'
+                                color: theme.palette.warning.main,
+                                borderColor: `${theme.palette.warning.main}80`
                               }}
                             />
                           </Box>
@@ -705,9 +758,9 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
             {/* Cash Flow Tips Section */}
             {cashFlowTips.length > 0 && (
               <>
-                <Divider sx={{ mb: 2, borderColor: 'rgba(255, 255, 255, 0.12)' }} />
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: '#ffffff', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Timeline />
+                <Divider sx={{ mb: 2, borderColor: theme.palette.divider }} />
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Timeline sx={{ color: theme.palette.info.main }} />
                   Cash Flow Forecasting ({cashFlowTips.length})
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -724,15 +777,15 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                           severity="info"
                           icon={<Timeline />}
                           sx={{
-                            backgroundColor: 'rgba(79, 195, 247, 0.1)',
-                            border: '1px solid rgba(79, 195, 247, 0.3)',
-                            color: '#ffffff',
-                            '& .MuiAlert-icon': { color: '#4FC3F7' },
-                            '& .MuiAlert-message': { color: '#ffffff' }
+                            backgroundColor: theme.palette.background.default,
+                            border: `1px solid ${theme.palette.info.main}40`,
+                            color: theme.palette.text.primary,
+                            '& .MuiAlert-icon': { color: theme.palette.info.main },
+                            '& .MuiAlert-message': { color: theme.palette.text.primary }
                           }}
                         >
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: '#ffffff' }}>
+                            <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.5, color: theme.palette.text.primary }}>
                               {tip}
                             </Typography>
                             <Chip
@@ -743,8 +796,8 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
                                 ml: 1, 
                                 fontSize: '0.65rem', 
                                 height: 20,
-                                color: '#4FC3F7',
-                                borderColor: 'rgba(79, 195, 247, 0.5)'
+                                color: theme.palette.info.main,
+                                borderColor: `${theme.palette.info.main}80`
                               }}
                             />
                           </Box>
@@ -783,3 +836,5 @@ const AITipsPanel = ({ expenses = [], budgets = [] }) => {
 };
 
 export default AITipsPanel;
+
+

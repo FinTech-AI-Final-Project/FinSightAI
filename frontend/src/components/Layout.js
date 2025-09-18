@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, useMediaQuery, useTheme } from '@mui/material';
 import Navbar from './Navbar';
-import BottomNavigation from './BottomNavigation';
 import Sidebar from './Sidebar';
 import Chatbot from './Chatbot';
 import { motion } from 'framer-motion';
@@ -22,13 +21,13 @@ const Layout = () => {
           sx={{
             flexGrow: 1,
             pt: { xs: 10, md: 12 }, // Increased padding for better spacing from navbar
-            pb: { xs: 8, md: 2 },
+            pb: 0, // Remove all bottom padding to eliminate any bottom bar
             px: { xs: 1, sm: 2, md: 3 },
             backgroundColor: 'background.default',
             ml: { md: '280px' }, // Account for sidebar width
             overflow: 'auto', // Enable scrolling
-            height: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, // Proper height calculation
-            maxHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, // Ensure it doesn't exceed viewport
+            height: '100vh', // Use full viewport height to eliminate any bottom spacing
+            maxHeight: '100vh', // Ensure it doesn't exceed viewport
             position: 'relative', // Ensure proper stacking context
             zIndex: 1, // Below navbar but above other elements
           }}
@@ -42,7 +41,7 @@ const Layout = () => {
           </motion.div>
         </Box>
       </Box>
-      {isMobile && <BottomNavigation />}
+  {/* BottomNavigation removed for all devices */}
       <Chatbot />
     </Box>
   );
