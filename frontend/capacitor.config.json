@@ -14,7 +14,8 @@
       "spinnerColor": "#ffffff"
     },
     "StatusBar": {
-      "style": "dark"
+      "style": "default",
+      "backgroundColor": "#ffffff"
     },
     "Keyboard": {
       "resize": "body",

@@ -12,6 +12,7 @@ import {
   Divider,
 } from '@mui/material';
 import { motion } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 
 // Custom Icon Component for navigation icons
 const NavIcon = ({ src, alt, selected }) => (
@@ -32,7 +33,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
+  const baseMenuItems = [
     {
       text: 'Dashboard',
       iconSrc: '/dashboard.png',
@@ -59,6 +60,28 @@ const Sidebar = () => {
       path: '/settings',
     },
   ];
+
+  const arMenuItem = {
+    text: 'AR Budget Scanner',
+    iconSrc: '/scan.png',
+    path: '/ar-budget',
+  };
+  const canIAffordMenuItem = {
+    text: 'Can I afford this?',
+    iconSrc: '/total-budget-icon.png',
+    path: '/can-i-afford',
+  };
+
+  // Check if we're on mobile platform (native app or mobile browser)
+  const isMobile = Capacitor.isNativePlatform() || 
+    (navigator.userAgent.indexOf('Mobile') !== -1) ||
+    (navigator.userAgent.indexOf('Android') !== -1) ||
+    (navigator.userAgent.indexOf('iPhone') !== -1);
+
+  // Only show AR feature on mobile platforms
+  const menuItems = isMobile 
+    ? [...baseMenuItems.slice(0, 4), arMenuItem, canIAffordMenuItem, baseMenuItems[4]] 
+    : [...baseMenuItems];
 
   const handleItemClick = (path) => {
     navigate(path);

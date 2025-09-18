@@ -18,9 +18,37 @@ code {
 }
 
 html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+/* Ensure no bottom bar on mobile */
+@media (max-width: 768px) {
+  html, body, #root {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Remove any safe area padding that might create black bars */
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
+  }
+  
+  /* Ensure app container takes full height */
+  #root {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 }
 
 /* Scrollbar styling - show on desktop, hide on mobile */
@@ -113,43 +141,36 @@ html, body, #root {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Mobile-first responsive design */
-@media (max-width: 600px) {
-  .mobile-hidden {
-    display: none !important;
+/* Prevent any black bars or safe area issues on mobile */
+@media (max-width: 768px) {
+  /* Remove any browser UI that might create black bars */
+  html {
+    background-color: #ffffff !important;
   }
   
-  /* Prevent horizontal scrolling on mobile */
-  html, body {
-    overflow-x: hidden !important;
-    max-width: 100vw;
+  body {
+    background-color: #ffffff !important;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
   
-  /* Ensure all content stays within viewport */
+  #root {
+    background-color: #ffffff !important;
+  }
+  
+  /* Ensure no bottom safe area creates black space */
+  .app-container {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  /* Override any Capacitor or Cordova styling that might add black bars */
   * {
-    max-width: 100%;
-  }
-  
-  /* Fix for inputs and forms */
-  input, textarea, select {
-    max-width: 100% !important;
-  }
-  
-  /* Enhanced touch scrolling */
-  * {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-  
-  /* Smaller navbar for mobile */
-  .MuiAppBar-root {
-    min-height: 56px !important;
-  }
-  
-  .MuiToolbar-root {
-    min-height: 56px !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

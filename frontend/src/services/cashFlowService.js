@@ -1,8 +1,28 @@
 import { formatCurrency } from '../utils/helpers';
+import { expenseCategories } from '../utils/helpers';
 
 // Cash flow forecasting service that analyzes spending patterns and predicts future financial trends
 class CashFlowForecastingService {
-  
+
+  // Helper function to get formatted category name
+  static getFormattedCategoryName(categoryKey) {
+    return expenseCategories[categoryKey]?.name || categoryKey.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  // Helper function to get regional context based on currency
+  static getRegionalContext(currency) {
+    const regions = {
+      'ZAR': { flag: '🇿🇦', name: 'South African', symbol: 'R' },
+      'USD': { flag: '🇺🇸', name: 'US', symbol: '$' },
+      'EUR': { flag: '🇪🇺', name: 'European', symbol: '€' },
+      'GBP': { flag: '🇬🇧', name: 'UK', symbol: '£' },
+      'AUD': { flag: '🇦🇺', name: 'Australian', symbol: 'A$' },
+      'CAD': { flag: '🇨🇦', name: 'Canadian', symbol: 'C$' },
+      'JPY': { flag: '🇯🇵', name: 'Japanese', symbol: '¥' }
+    };
+    return regions[currency] || regions['ZAR'];
+  }
+
   // Analyze spending patterns from expenses data
   static analyzeSpendingPatterns(expenses = [], budgets = []) {
     if (!expenses || expenses.length === 0) {
@@ -13,7 +33,9 @@ class CashFlowForecastingService {
         topCategories: [],
         seasonalPatterns: [],
         totalBudget: 0,
-        budgetUtilization: 0
+        budgetUtilization: 0,
+        totalSpent: 0,
+        expensesCount: 0
       };
     }
 
@@ -43,7 +65,8 @@ class CashFlowForecastingService {
       seasonalPatterns,
       totalBudget,
       budgetUtilization,
-      totalSpent
+      totalSpent,
+      expensesCount: expenses.length
     };
   }
 
@@ -53,7 +76,7 @@ class CashFlowForecastingService {
 
     // Sort expenses by date
     const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date) - new Date(b.date));
-    
+
     // Split into two halves and compare
     const midPoint = Math.floor(sortedExpenses.length / 2);
     const firstHalf = sortedExpenses.slice(0, midPoint);
@@ -75,7 +98,7 @@ class CashFlowForecastingService {
   // Get top spending categories
   static getTopSpendingCategories(expenses) {
     const categoryTotals = {};
-    
+
     expenses.forEach(expense => {
       const category = expense.category || 'Other';
       categoryTotals[category] = (categoryTotals[category] || 0) + parseFloat(expense.amount);
@@ -92,14 +115,14 @@ class CashFlowForecastingService {
     if (expenses.length < 12) return [];
 
     const monthlySpending = {};
-    
+
     expenses.forEach(expense => {
       const month = new Date(expense.date).getMonth();
       monthlySpending[month] = (monthlySpending[month] || 0) + parseFloat(expense.amount);
     });
 
     const avgSpending = Object.values(monthlySpending).reduce((sum, amount) => sum + amount, 0) / Object.keys(monthlySpending).length;
-    
+
     return Object.entries(monthlySpending)
       .filter(([_, amount]) => amount > avgSpending * 1.2)
       .map(([month, amount]) => ({
@@ -116,7 +139,7 @@ class CashFlowForecastingService {
 
     for (let i = 1; i <= periods; i++) {
       let forecastAmount = avgMonthlySpending;
-      
+
       // Adjust based on trend
       if (spendingTrend === 'increasing') {
         forecastAmount *= (1 + (0.05 * i)); // 5% increase per period
@@ -126,7 +149,7 @@ class CashFlowForecastingService {
 
       const period = this.getNextPeriodName(i);
       const budgetStatus = totalBudget > 0 ? (forecastAmount / totalBudget) * 100 : null;
-      
+
       forecasts.push({
         period,
         forecastAmount: Math.round(forecastAmount),
@@ -139,75 +162,68 @@ class CashFlowForecastingService {
     return forecasts;
   }
 
-  // Generate cash flow insights and tips
+  // Generate cash flow insights and tips - focused on forecasting only
   static generateCashFlowTips(analysisData, forecasts, userCurrency = 'USD') {
     const tips = [];
-    const { avgMonthlySpending, spendingTrend, budgetUtilization, topCategories } = analysisData;
+    const { avgMonthlySpending, spendingTrend, topCategories, totalSpent, seasonalPatterns } = analysisData;
+    const regionalContext = this.getRegionalContext(userCurrency);
 
-    // Trend-based tips
-    if (spendingTrend === 'increasing') {
-      tips.push(`📈 Your spending is trending upward. Consider reviewing your ${topCategories[0]?.category || 'top'} expenses to identify savings opportunities.`);
-    } else if (spendingTrend === 'decreasing') {
-      tips.push(`📉 Great job reducing spending! You're saving an average of ${formatCurrency(avgMonthlySpending * 0.1, userCurrency)} monthly.`);
-    } else {
-      tips.push(`📊 Your spending is stable. Consider setting up automatic savings to build wealth consistently.`);
-    }
+    // Focus ONLY on forecasting and predictions based on spending patterns
+    if (totalSpent > 0) {
+      // Current spending pattern summary (context for forecasting)
+      const expensesCount = analysisData.expensesCount || 0;
+      const spendingSummary = `${regionalContext.flag} Current pattern: ${formatCurrency(avgMonthlySpending, userCurrency)} monthly average across ${expensesCount} transactions.`;
+      tips.push(spendingSummary);
 
-    // Budget utilization tips
-    if (budgetUtilization > 90) {
-      tips.push(`⚠️ You're using ${Math.round(budgetUtilization)}% of your budget. Focus on reducing ${topCategories[0]?.category || 'top category'} expenses.`);
-    } else if (budgetUtilization < 70) {
-      tips.push(`🎉 You're only using ${Math.round(budgetUtilization)}% of your budget! Consider investing the surplus for long-term growth.`);
-    }
-
-    // Forecast-based tips
-    if (forecasts && forecasts.length > 0) {
-      const nextMonth = forecasts[0];
-      if (nextMonth.budgetUtilization && nextMonth.budgetUtilization > 100) {
-        tips.push(`🚨 Forecast Alert: Next period spending may exceed budget by ${nextMonth.budgetUtilization - 100}%. Plan accordingly.`);
+      // Trend-based forecasting with regional context
+      if (spendingTrend === 'increasing') {
+        const projectedIncrease = avgMonthlySpending * 1.05; // 5% increase
+        tips.push(`${regionalContext.flag} Trend forecast: ${regionalContext.name} spending increasing by ~5%. Next month projected: ${formatCurrency(projectedIncrease, userCurrency)}.`);
+      } else if (spendingTrend === 'decreasing') {
+        const projectedDecrease = avgMonthlySpending * 0.97; // 3% decrease
+        tips.push(`${regionalContext.flag} Trend forecast: ${regionalContext.name} spending decreasing by ~3%. Next month projected: ${formatCurrency(projectedDecrease, userCurrency)}.`);
       } else {
-        tips.push(`🔮 Forecast: Next period estimated spending is ${nextMonth.formattedAmount}. Stay on track with your goals!`);
+        tips.push(`${regionalContext.flag} Trend forecast: ${regionalContext.name} spending stable. Next month projected: ${formatCurrency(avgMonthlySpending, userCurrency)}.`);
       }
-    }
 
-    // Category-specific tips
-    if (topCategories.length > 0) {
-      const topCategory = topCategories[0];
-      const categoryPercent = (topCategory.amount / analysisData.totalSpent) * 100;
-      if (categoryPercent > 40) {
-        tips.push(`💡 ${topCategory.category} represents ${Math.round(categoryPercent)}% of spending. Small reductions here can yield big savings.`);
+      // Category-based forecasting with proper formatting
+      if (topCategories.length > 0) {
+        const topCategory = topCategories[0];
+        const categoryPercent = (topCategory.amount / totalSpent) * 100;
+        const projectedCategorySpending = (avgMonthlySpending * categoryPercent) / 100;
+        const formattedCategoryName = this.getFormattedCategoryName(topCategory.category);
+        tips.push(`${regionalContext.flag} Category forecast: ${formattedCategoryName} projected at ${formatCurrency(projectedCategorySpending, userCurrency)} (${categoryPercent.toFixed(1)}% of total).`);
       }
+
+      // Specific forecast predictions with regional context
+      if (forecasts && forecasts.length > 0) {
+        const nextMonth = forecasts[0];
+        tips.push(`${regionalContext.flag} Cash flow prediction: ${nextMonth.period} estimated spending: ${nextMonth.formattedAmount} based on current ${regionalContext.name.toLowerCase()} patterns.`);
+
+        if (forecasts.length > 1) {
+          const followingMonth = forecasts[1];
+          tips.push(`${regionalContext.flag} ${followingMonth.period} forecast: ${followingMonth.formattedAmount} (${followingMonth.trend} trend applied).`);
+        }
+      }
+
+      // Seasonal forecasting (if applicable) with regional context
+      if (seasonalPatterns && seasonalPatterns.length > 0) {
+        const highestSeason = seasonalPatterns[0];
+        const seasonalIncrease = (highestSeason.percentAboveAvg / 100) * avgMonthlySpending;
+        const projectedSeasonal = avgMonthlySpending + seasonalIncrease;
+        tips.push(`${regionalContext.flag} Seasonal forecast: ${highestSeason.month} typically ${highestSeason.percentAboveAvg.toFixed(1)}% higher. Projected: ${formatCurrency(projectedSeasonal, userCurrency)}.`);
+      }
+
+    } else {
+      // No spending data - focus on encouraging data collection for forecasting
+      tips.push(`${regionalContext.flag} Start tracking expenses to generate accurate cash flow forecasts based on your ${regionalContext.name.toLowerCase()} spending patterns.`);
+      tips.push(`${regionalContext.flag} Cash flow forecasting analyzes your spending trends to predict future expenses and optimize your ${regionalContext.name.toLowerCase()} financial planning.`);
     }
 
-    // Seasonal tips (if applicable)
-    if (analysisData.seasonalPatterns.length > 0) {
-      const highestSeason = analysisData.seasonalPatterns[0];
-      tips.push(`🗓️ Historical data shows higher spending in ${highestSeason.month}. Plan and budget extra for seasonal variations.`);
-    }
-
-    // Add region-specific cash flow advice based on currency
-    const regionTip = this.getRegionSpecificCashFlowTip(userCurrency, avgMonthlySpending);
-    if (regionTip) {
-      tips.push(regionTip);
-    }
-
-    // General cash flow management tips
-    const generalTips = [
-      `💰 Emergency fund tip: Aim for 3-6 months of expenses (${formatCurrency(avgMonthlySpending * 3, userCurrency)} - ${formatCurrency(avgMonthlySpending * 6, userCurrency)}).`,
-      `📱 Use the 24-hour rule: Wait a day before purchases over ${formatCurrency(100, userCurrency)} to avoid impulse spending.`,
-      `🎯 Automate savings: Set up automatic transfers of 10-20% of income to build wealth effortlessly.`,
-      `📊 Track daily expenses for better cash flow awareness and control over your financial future.`
-    ];
-
-    // Add a random general tip if we don't have enough specific tips
-    if (tips.length < 2) {
-      const randomTip = generalTips[Math.floor(Math.random() * generalTips.length)];
-      tips.push(randomTip);
-    }
-
-    return tips;
+    // Remove general financial advice - keep only forecasting
+    return tips.slice(0, 3);
   }
-  
+
   // Region-specific cash flow tips based on currency
   static getRegionSpecificCashFlowTip(currency, avgMonthlySpending) {
     const regionTips = {
@@ -227,7 +243,7 @@ class CashFlowForecastingService {
         `🇪🇺 European cash flow tip: SEPA instant transfers enable fast, free money movement across eurozone countries.`
       ],
       'GBP': [
-        `🇬🇧 UK savers: Premium Bonds offer tax-free prizes up to £1 million while preserving your capital.`,
+        `🇬🇧 UK savers: Premium Bonds offer tax-free prizes up to 1 million while preserving your capital.`,
         `🇬🇧 UK cash flow tip: Consider Cash ISAs for tax-free interest on emergency and short-term savings.`,
         `🇬🇧 Compare UK regular savings accounts which can offer higher rates (3-5%) for monthly deposits.`
       ],
@@ -243,15 +259,15 @@ class CashFlowForecastingService {
       ],
       'JPY': [
         `🇯🇵 Japanese savers: Consider J-REITs for higher yield than traditional bank deposits while maintaining liquidity.`,
-        `🇯🇵 Look into "NISA" accounts for tax-advantaged investing to improve long-term cash flow in Japan.`,
+        `🇯🇵 Look into 'NISA' accounts for tax-advantaged investing to improve long-term cash flow in Japan.`,
         `🇯🇵 Japanese cash flow tip: Money Reserve Funds (MRFs) can offer slightly better returns than bank deposits.`
       ]
     };
-    
+
     if (regionTips[currency]) {
       return regionTips[currency][Math.floor(Math.random() * regionTips[currency].length)];
     }
-    
+
     return null;
   }
 
@@ -261,7 +277,7 @@ class CashFlowForecastingService {
       const analysisData = this.analyzeSpendingPatterns(expenses, budgets);
       const forecasts = this.generateForecast(analysisData, userCurrency, 1);
       const tips = this.generateCashFlowTips(analysisData, forecasts, userCurrency);
-      
+
       return tips.length > 0 ? tips[0] : this.getFallbackCashFlowTip(userCurrency);
     } catch (error) {
       console.error('Error generating cash flow tip:', error);
@@ -275,15 +291,16 @@ class CashFlowForecastingService {
       const analysisData = this.analyzeSpendingPatterns(expenses, budgets);
       const forecasts = this.generateForecast(analysisData, userCurrency, 2);
       const tips = this.generateCashFlowTips(analysisData, forecasts, userCurrency);
-      
+      const regionalContext = this.getRegionalContext(userCurrency);
+
       // If we have tips and no region-specific tip is included, add one
       if (tips.length > 0) {
         // Check if we already have a region-specific tip (look for country flag emoji)
-        const hasRegionTip = tips.some(tip => tip.includes(`🇿🇦`) || tip.includes(`🇺🇸`) || 
-                                             tip.includes(`🇬🇧`) || tip.includes(`🇪🇺`) ||
-                                             tip.includes(`🇦🇺`) || tip.includes(`🇨🇦`) || 
-                                             tip.includes(`🇯🇵`));
-        
+        const hasRegionTip = tips.some(tip => tip.includes('🇿🇦') || tip.includes('🇺🇸') ||
+                                             tip.includes('🇪🇺') || tip.includes('🇬🇧') ||
+                                             tip.includes('🇦🇺') || tip.includes('🇨🇦') ||
+                                             tip.includes('🇯🇵'));
+
         // If no region tip exists, add one
         if (!hasRegionTip) {
           const regionTip = this.getRegionSpecificCashFlowTip(userCurrency, analysisData.avgMonthlySpending);
@@ -291,16 +308,16 @@ class CashFlowForecastingService {
             tips.push(regionTip);
           }
         }
-        
+
         // Include a prediction tip if we have forecast data
-        if (forecasts && forecasts.length > 0 && !tips.some(tip => tip.includes('🔮') || tip.includes('forecast'))) {
+        if (forecasts && forecasts.length > 0 && !tips.some(tip => tip.includes('prediction') || tip.includes('forecast'))) {
           const nextMonth = forecasts[0];
-          tips.push(`🔮 Cash flow prediction: Your ${nextMonth.period} spending is estimated at ${nextMonth.formattedAmount} based on current patterns.`);
+          tips.push(`${regionalContext.flag} Cash flow prediction: Your ${nextMonth.period} spending is estimated at ${nextMonth.formattedAmount} based on current ${regionalContext.name.toLowerCase()} patterns.`);
         }
-        
+
         return tips.slice(0, 3); // Return up to 3 tips
       }
-      
+
       return [this.getFallbackCashFlowTip(userCurrency)];
     } catch (error) {
       console.error('Error generating multiple cash flow tips:', error);
@@ -310,15 +327,17 @@ class CashFlowForecastingService {
 
   // Fallback cash flow tip when analysis fails
   static getFallbackCashFlowTip(userCurrency = 'USD') {
-    // General cash flow tips for all regions
+    const regionalContext = this.getRegionalContext(userCurrency);
+
+    // General cash flow tips for all regions with regional context
     const generalTips = [
-      `💡 Start building your emergency fund with ${formatCurrency(500, userCurrency)} to improve your cash flow security.`,
-      `📊 Track your expenses for 30 days to understand your cash flow patterns and identify savings opportunities.`,
-      `🎯 Use the 50/30/20 rule: 50% needs, 30% wants, 20% savings to optimize your cash flow management.`,
-      `💰 Automate bill payments to avoid late fees and improve your monthly cash flow predictability.`,
-      `📈 Review your spending weekly to stay ahead of cash flow issues and build better financial habits.`
+      `${regionalContext.flag} Start building your emergency fund with ${formatCurrency(1000, userCurrency)} to improve your ${regionalContext.name.toLowerCase()} cash flow security.`,
+      `${regionalContext.flag} Track your expenses for 30 days to understand your ${regionalContext.name.toLowerCase()} cash flow patterns and identify savings opportunities.`,
+      `${regionalContext.flag} Use the 50/30/20 rule: 50% needs, 30% wants, 20% for savings to optimize your ${regionalContext.name.toLowerCase()} cash flow management.`,
+      `${regionalContext.flag} Automate bill payments to avoid late fees and improve your monthly ${regionalContext.name.toLowerCase()} cash flow predictability.`,
+      `${regionalContext.flag} Review your spending weekly to stay ahead of cash flow issues and build better ${regionalContext.name.toLowerCase()} financial habits.`
     ];
-    
+
     // Currency/region-specific cash flow tips
     const currencySpecificTips = {
       'ZAR': [
@@ -352,40 +371,40 @@ class CashFlowForecastingService {
         `🇨🇦 Canadian cashback credit cards can return 1-4% on everyday purchases to boost your cash flow when paid in full monthly.`
       ],
       'JPY': [
-        `🇯🇵 Japanese tip: Consider "NISA" accounts for tax-advantaged investing to improve long-term cash flow.`,
+        `🇯🇵 Japanese tip: Consider 'NISA' accounts for tax-advantaged investing to improve long-term cash flow.`,
         `🇯🇵 Money Reserve Funds (MRFs) can offer slightly better returns than traditional Japanese bank deposits.`,
         `🇯🇵 Japanese J-REITs can provide higher yield than bank deposits while maintaining relative liquidity for cash needs.`
       ]
     };
-    
+
     // Combine general and region-specific tips
     let combinedTips = [...generalTips];
-    
+
     if (currencySpecificTips[userCurrency]) {
       combinedTips = combinedTips.concat(currencySpecificTips[userCurrency]);
     }
-    
+
     return combinedTips[Math.floor(Math.random() * combinedTips.length)];
   }
 
   // Helper methods
   static getDaysInPeriod(expenses) {
     if (!expenses || expenses.length === 0) return 1;
-    
+
     const dates = expenses.map(exp => new Date(exp.date));
     const earliest = new Date(Math.min(...dates));
     const latest = new Date(Math.max(...dates));
-    
+
     return Math.max(1, Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24)));
   }
 
   static getMonthsInPeriod(expenses) {
     if (!expenses || expenses.length === 0) return 1;
-    
+
     const dates = expenses.map(exp => new Date(exp.date));
     const earliest = new Date(Math.min(...dates));
     const latest = new Date(Math.max(...dates));
-    
+
     return Math.max(1, Math.ceil((latest - earliest) / (1000 * 60 * 60 * 24 * 30)));
   }
 

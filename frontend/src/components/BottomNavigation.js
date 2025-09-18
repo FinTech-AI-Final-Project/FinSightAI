@@ -28,16 +28,10 @@ const BottomNavigation = () => {
 
   const getValue = () => {
     switch (location.pathname) {
-      case '/dashboard':
+      case '/home':
         return 0;
-      case '/expenses':
-        return 1;
-      case '/budgets':
-        return 2;
-      case '/reports':
-        return 3;
       case '/settings':
-        return 4;
+        return 1;
       default:
         return 0;
     }
@@ -46,18 +40,9 @@ const BottomNavigation = () => {
   const handleChange = (event, newValue) => {
     switch (newValue) {
       case 0:
-        navigate('/dashboard');
+        navigate('/home');
         break;
       case 1:
-        navigate('/expenses');
-        break;
-      case 2:
-        navigate('/budgets');
-        break;
-      case 3:
-        navigate('/reports');
-        break;
-      case 4:
         navigate('/settings');
         break;
       default:
@@ -108,24 +93,12 @@ const BottomNavigation = () => {
           }}
         >
           <BottomNavigationAction
-            label="Dashboard"
-            icon={<MobileNavIcon src="/mobile-dashboard.png" alt="Dashboard" selected={getValue() === 0} />}
-          />
-          <BottomNavigationAction
-            label="Expenses"
-            icon={<MobileNavIcon src="/mobile-expenses.png" alt="Expenses" selected={getValue() === 1} />}
-          />
-          <BottomNavigationAction
-            label="Budgets"
-            icon={<MobileNavIcon src="/mobile-budget.png" alt="Budgets" selected={getValue() === 2} />}
-          />
-          <BottomNavigationAction
-            label="Reports"
-            icon={<MobileNavIcon src="/mobile-reports.png" alt="Reports" selected={getValue() === 3} />}
+            label="Home"
+            icon={<MobileNavIcon src="/mobile-dashboard.png" alt="Home" selected={getValue() === 0} />}
           />
           <BottomNavigationAction
             label="Settings"
-            icon={<MobileNavIcon src="/mobile-settings.png" alt="Settings" selected={getValue() === 4} />}
+            icon={<MobileNavIcon src="/mobile-settings.png" alt="Settings" selected={getValue() === 1} />}
           />
         </MuiBottomNavigation>
       </motion.div>

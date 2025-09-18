@@ -14,7 +14,10 @@ import Expenses from './pages/Expenses';
 import Budgets from './pages/Budgets';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
-import { motion, AnimatePresence } from 'framer-motion';
+
+import CanIAffordThis from './pages/CanIAffordThis';
+import Home from './pages/Home';
+import { AnimatePresence } from 'framer-motion';
 
 function App() {
   return (
@@ -28,14 +31,16 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route index element={<Navigate to="/home" replace />} />
+                    <Route path="home" element={<Home />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="expenses" element={<Expenses />} />
                     <Route path="budgets" element={<Budgets />} />
                     <Route path="reports" element={<Reports />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="can-i-afford-this" element={<CanIAffordThis />} />
                   </Route>
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="*" element={<Navigate to="/home" replace />} />
                 </Routes>
               </AnimatePresence>
             </Router>

@@ -123,7 +123,7 @@ const Chatbot = () => {
       <Fab
         sx={{
           position: 'fixed',
-          bottom: isMobile ? 90 : 24, // Higher on mobile to avoid bottom nav
+          bottom: isMobile ? 16 : 24, // Adjusted for mobile without bottom nav
           right: isMobile ? 16 : 24,
           zIndex: 1200, // Lower than navbar/modals but higher than content
           background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
@@ -152,12 +152,12 @@ const Chatbot = () => {
             transition={{ duration: 0.3, ease: "easeOut" }}
             style={{
               position: 'fixed',
-              bottom: isMobile ? 90 : 90, // Position above the FAB
+              bottom: isMobile ? 16 : 90, // Adjusted for mobile without bottom nav
               right: isMobile ? 8 : 24,
               width: isMobile ? 'calc(100vw - 16px)' : 350, // Smaller on desktop
               maxWidth: 'calc(100vw - 16px)',
-              height: isMobile ? 'calc(100vh - 170px)' : 450, // Smaller heights to avoid navbar
-              maxHeight: isMobile ? 'calc(100vh - 170px)' : 450, // Ensure it doesn't touch navbar
+              height: isMobile ? 'calc(100vh - 120px)' : 450, // Adjusted for mobile without bottom nav
+              maxHeight: isMobile ? 'calc(100vh - 120px)' : 450, // Adjusted for mobile without bottom nav
               top: isMobile ? 'auto' : 'auto', // Let it position naturally from bottom
               zIndex: 1200,
             }}
