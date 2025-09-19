@@ -64,7 +64,7 @@ export const getCurrentMonth = () => {
   };
 };
 
-export const getDateRange = (period) => {
+export const getDateRange = (period, customDate = null) => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
@@ -93,6 +93,25 @@ export const getDateRange = (period) => {
         startDate: new Date(now.getFullYear(), 0, 1),
         endDate: new Date(now.getFullYear(), 11, 31),
       };
+    case 'lastYear':
+      return {
+        startDate: new Date(now.getFullYear() - 1, 0, 1),
+        endDate: new Date(now.getFullYear() - 1, 11, 31),
+      };
+    case 'lastMonth':
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return {
+        startDate: lastMonth,
+        endDate: new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0),
+      };
+    case 'custom':
+      if (customDate && customDate.startDate && customDate.endDate) {
+        return {
+          startDate: new Date(customDate.startDate),
+          endDate: new Date(customDate.endDate),
+        };
+      }
+      return getCurrentMonth();
     default:
       return getCurrentMonth();
   }
