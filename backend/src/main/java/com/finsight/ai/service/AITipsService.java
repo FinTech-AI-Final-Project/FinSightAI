@@ -1911,23 +1911,27 @@ public class AITipsService {
             .replaceAll("^[\"'`]|[\"'`]$", "")  // Remove surrounding quotes/backticks
             .trim();
         
-        // Ensure reasonable length
-        if (cleanedResponse.length() > 400) {
-            // Find a good breaking point
-            String[] sentences = cleanedResponse.split("[.!?]");
+        // Only truncate if response is extremely long (over 500 chars)
+        if (cleanedResponse.length() > 500) {
+            // Find a good breaking point at sentence boundaries
+            String[] sentences = cleanedResponse.split("(?<=[.!?])\\s+");
             StringBuilder result = new StringBuilder();
             for (String sentence : sentences) {
-                if (result.length() + sentence.length() + 1 <= 350) {
-                    if (result.length() > 0) result.append(". ");
+                if (result.length() + sentence.length() + 1 <= 450) {
+                    if (result.length() > 0) result.append(" ");
                     result.append(sentence.trim());
                 } else {
                     break;
                 }
             }
             if (result.length() > 0) {
-                cleanedResponse = result.toString() + ".";
+                cleanedResponse = result.toString();
+                // Ensure proper ending
+                if (!cleanedResponse.endsWith(".") && !cleanedResponse.endsWith("!") && !cleanedResponse.endsWith("?")) {
+                    cleanedResponse += ".";
+                }
             } else {
-                cleanedResponse = cleanedResponse.substring(0, 350).trim() + "...";
+                cleanedResponse = cleanedResponse.substring(0, 450).trim() + "...";
             }
         }
         

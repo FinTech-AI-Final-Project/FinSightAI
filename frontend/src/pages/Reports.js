@@ -37,6 +37,8 @@ import {
 } from 'chart.js';
 import { motion } from 'framer-motion';
 import jsPDF from 'jspdf';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import * as ApiService from '../services/api';
 import { formatCurrency, getDateRange, expenseCategories, chartColors, exportToCSV } from '../utils/helpers';
 import { useUser } from '../contexts/UserContext';
@@ -229,7 +231,7 @@ const Reports = () => {
     };
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     try {
       console.log('📄 Starting PDF export...');
       const pdf = new jsPDF();
@@ -239,7 +241,7 @@ const Reports = () => {
       // Add logo (ensure logo.png is in public folder)
       const logoImg = new window.Image();
       logoImg.src = '/logo.png';
-      logoImg.onload = () => {
+      logoImg.onload = async () => {
         // Calculate logo size (max 40x40, keep aspect ratio)
         let logoWidth = 40;
         let logoHeight = 40;
@@ -382,11 +384,35 @@ const Reports = () => {
           }
           return period;
         };
-        
+
         const filename = `finsight-report-${getFilenameDatePart()}.pdf`;
-        pdf.save(filename);
-        console.log('✅ PDF export completed:', filename);
-      };
+
+        // Check if we're on mobile (Capacitor)
+        if (Capacitor.isNativePlatform()) {
+          // Mobile: Use Capacitor Filesystem
+          try {
+            const pdfData = pdf.output('datauristring').split(',')[1]; // Get base64 data
+
+            await Filesystem.writeFile({
+              path: filename,
+              data: pdfData,
+              directory: Directory.Documents,
+              encoding: Encoding.UTF8,
+            });
+
+            alert(`✅ PDF exported successfully to Documents/${filename}`);
+            console.log('✅ Mobile PDF export completed:', filename);
+          } catch (fsError) {
+            console.error('❌ Mobile filesystem write failed:', fsError);
+            // Fallback to browser method
+            pdf.save(filename);
+          }
+        } else {
+          // Desktop: Use browser download
+          pdf.save(filename);
+          console.log('✅ Desktop PDF export completed:', filename);
+        }
+      }; // Close logoImg.onload function
     } catch (error) {
       console.error('❌ PDF export failed:', error);
       handleError(error);

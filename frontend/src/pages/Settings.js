@@ -278,12 +278,23 @@ const Settings = () => {
     
     // Schedule/cancel notifications based on preference
     if (newNotifications[key]) {
+      const userCurrency = userProfile?.currency || profileData?.currency || 'ZAR';
       switch (key) {
         case 'weeklyReports':
-          NotificationService.scheduleWeeklyReport();
+          NotificationService.scheduleWeeklyReport(userCurrency);
+          console.log(`📅 Scheduled weekly report notifications for ${userCurrency}`);
           break;
         case 'expenseReminders':
-          NotificationService.scheduleExpenseReminder();
+          NotificationService.scheduleExpenseReminder(userCurrency);
+          console.log(`📊 Scheduled expense reminder notifications for ${userCurrency}`);
+          break;
+        case 'aiTips':
+          // Schedule daily AI tips
+          scheduleAITipNotifications();
+          console.log(`💡 Scheduled AI tip notifications for ${userCurrency}`);
+          break;
+        case 'budgetAlerts':
+          console.log(`🚨 Budget alerts will be triggered when budgets are exceeded (${userCurrency})`);
           break;
         default:
           break;
@@ -291,18 +302,33 @@ const Settings = () => {
     }
   };
 
-  const handleTestNotification = async () => {
+  const scheduleAITipNotifications = async () => {
     try {
-      const success = await NotificationService.testNotification();
-      if (success) {
-        setSuccess('Test notification sent! Check your notifications.');
-      } else {
-        handleError(new Error('Failed to send test notification. Please check your notification permissions.'));
+      const userCurrency = userProfile?.currency || profileData?.currency || 'ZAR';
+
+      // Get multiple AI tips and schedule them for the next week
+      const tips = [];
+      for (let i = 0; i < 7; i++) {
+        try {
+          const response = await ApiService.getDailyTip(userCurrency);
+          if (response && response.tip) {
+            tips.push(response.tip);
+          }
+        } catch (error) {
+          console.warn(`Failed to get AI tip ${i + 1}:`, error);
+        }
+      }
+
+      if (tips.length > 0) {
+        await NotificationService.scheduleWeeklyAITips(tips, userCurrency);
+        console.log(`💡 ${tips.length} AI tip notifications scheduled for the next week (${userCurrency})`);
       }
     } catch (error) {
-      handleError(error);
+      console.error('Failed to schedule AI tip notifications:', error);
     }
   };
+
+
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto' }}>
@@ -474,29 +500,19 @@ const Settings = () => {
               <Typography variant="h6" fontWeight={600}>
                 Notifications
               </Typography>
-              <Box display="flex" gap={1}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleTestNotification}
-                  disabled={notificationStatus === 'unavailable'}
-                >
-                  Test
-                </Button>
-                <Typography 
-                  variant="caption" 
-                  color={
-                    notificationStatus === 'available' ? 'success.main' : 
-                    notificationStatus === 'web-only' ? 'warning.main' : 
-                    'error.main'
-                  }
-                  sx={{ fontSize: '0.75rem' }}
-                >
-                  {notificationStatus === 'available' ? '✅ Available' : 
-                   notificationStatus === 'web-only' ? '⚠️ Web Only' : 
-                   '❌ Unavailable'}
-                </Typography>
-              </Box>
+              <Typography
+                variant="caption"
+                color={
+                  notificationStatus === 'available' ? 'success.main' :
+                  notificationStatus === 'web-only' ? 'warning.main' :
+                  'error.main'
+                }
+                sx={{ fontSize: '0.75rem' }}
+              >
+                {notificationStatus === 'available' ? '✅ Available' :
+                 notificationStatus === 'web-only' ? '⚠️ Web Only' :
+                 '❌ Unavailable'}
+              </Typography>
             </Box>
             
             {notificationStatus === 'unavailable' && (

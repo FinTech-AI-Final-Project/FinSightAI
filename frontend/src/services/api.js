@@ -4,14 +4,16 @@ import { Capacitor } from '@capacitor/core';
 const getApiUrl = () => {
   const isNative = Capacitor.isNativePlatform();
   console.log('📱 Platform check - isNative:', isNative);
-  
+
   if (isNative) {
-    // Use HTTP for mobile (with cleartext traffic allowed)
-    const mobileUrl = 'http://192.168.106.25:8081/api';
+    // For mobile, use environment variable or fallback to production URL
+    const mobileUrl = process.env.REACT_APP_API_URL_MOBILE ||
+                     process.env.REACT_APP_API_URL ||
+                     'https://your-production-api.com/api';
     console.log('📱 Using mobile API URL:', mobileUrl);
     return mobileUrl;
   } else {
-    const webUrl = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+    const webUrl = process.env.REACT_APP_API_URL || 'https://your-production-api.com/api';
     console.log('💻 Using web API URL:', webUrl);
     return webUrl;
   }

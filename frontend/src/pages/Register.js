@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import {
   Container,
   Paper,
@@ -83,7 +84,13 @@ const Register = () => {
     try {
       // Create Firebase user and register in backend (handled in AuthContext)
       await signup(formData.email, formData.password, formData.firstName, formData.lastName);
-      navigate('/dashboard');
+      // Smart routing: mobile/native goes to home, desktop goes to dashboard
+      const isNative = Capacitor.isNativePlatform();
+      if (isMobile || isNative) {
+        navigate('/home');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       handleError(error);
