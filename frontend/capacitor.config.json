@@ -28,6 +28,9 @@
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "BarcodeScanner": {
+      "cameraDirection": "back"
     }
   }
 }

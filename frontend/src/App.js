@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useMediaQuery, useTheme } from '@mui/material';
+import { Capacitor } from '@capacitor/core';
 import { AuthProvider } from './contexts/AuthContext';
 import { UserProvider } from './contexts/UserContext';
 import { CustomThemeProvider } from './contexts/ThemeContext';
@@ -19,6 +21,19 @@ import CanIAffordThis from './pages/CanIAffordThis';
 import Home from './pages/Home';
 import { AnimatePresence } from 'framer-motion';
 
+// Component to handle smart routing based on device type
+const SmartDefaultRoute = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isNative = Capacitor.isNativePlatform();
+
+  // Mobile (native app or small screen) goes to Home
+  // Desktop goes to Dashboard
+  const defaultRoute = (isMobile || isNative) ? '/home' : '/dashboard';
+
+  return <Navigate to={defaultRoute} replace />;
+};
+
 function App() {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -31,7 +46,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                    <Route index element={<Navigate to="/home" replace />} />
+                    <Route index element={<SmartDefaultRoute />} />
                     <Route path="home" element={<Home />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="expenses" element={<Expenses />} />
@@ -40,7 +55,7 @@ function App() {
                     <Route path="settings" element={<Settings />} />
                     <Route path="can-i-afford-this" element={<CanIAffordThis />} />
                   </Route>
-                  <Route path="*" element={<Navigate to="/home" replace />} />
+                  <Route path="*" element={<SmartDefaultRoute />} />
                 </Routes>
               </AnimatePresence>
             </Router>

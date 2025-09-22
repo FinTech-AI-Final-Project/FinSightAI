@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import {
   Container,
   Paper,
@@ -39,7 +40,13 @@ const Login = () => {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/dashboard');
+      // Smart routing: mobile/native goes to home, desktop goes to dashboard
+      const isNative = Capacitor.isNativePlatform();
+      if (isMobile || isNative) {
+        navigate('/home');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       handleError(error);
     } finally {
@@ -72,7 +79,13 @@ const Login = () => {
 
     try {
       await login(email, password);
-      navigate('/dashboard');
+      // Smart routing: mobile/native goes to home, desktop goes to dashboard
+      const isNative = Capacitor.isNativePlatform();
+      if (isMobile || isNative) {
+        navigate('/home');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       handleError(error);

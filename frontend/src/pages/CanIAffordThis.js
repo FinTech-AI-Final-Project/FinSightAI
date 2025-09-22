@@ -5,9 +5,12 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, TextField, CircularProgress, Alert, Paper, MenuItem, FormControl, InputLabel, Select, Snackbar } from '@mui/material';
 import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import * as ApiService from '../services/api';
 import { expenseCategories, formatCurrency } from '../utils/helpers';
 import { useUser } from '../contexts/UserContext';
+import fastBarcodeDetectorService from '../services/fastBarcodeDetector';
+import BudgetMonitor from '../services/budgetMonitor';
 
 
 const CanIAffordThis = () => {
@@ -28,6 +31,83 @@ const CanIAffordThis = () => {
   const [adding, setAdding] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
   const [addError, setAddError] = useState('');
+  const [processingImage, setProcessingImage] = useState(false);
+
+  // Alternative camera-based barcode scanning with automatic detection
+  const handleCameraScan = async () => {
+    setError('');
+    setScanning(true);
+    console.log('[CAMERA] Starting camera-based barcode scan');
+
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) {
+        setError('Camera scanning is only available on mobile devices.');
+        setScanning(false);
+        return;
+      }
+
+      console.log('[CAMERA] Taking photo...');
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera
+      });
+
+      if (!image.dataUrl) {
+        setError('Failed to capture image. Please try again.');
+        setScanning(false);
+        return;
+      }
+
+      console.log('[CAMERA] Photo captured, detecting barcode...');
+      setProcessingImage(true);
+      setError('Processing image... This should take 5-10 seconds.');
+
+      // Add timeout to prevent infinite processing
+      const detectionPromise = fastBarcodeDetectorService.detectBarcodeFromImage(image.dataUrl);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Processing timeout')), 15000)
+      );
+
+      const detectionResult = await Promise.race([detectionPromise, timeoutPromise]);
+
+      setProcessingImage(false);
+
+      if (detectionResult.success && detectionResult.barcode) {
+        console.log('[CAMERA] Barcode detected:', detectionResult.barcode);
+        setBarcode(detectionResult.barcode);
+        fetchProductInfo(detectionResult.barcode);
+        setError(''); // Clear processing message
+      } else {
+        console.log('[CAMERA] No barcode detected:', detectionResult.error);
+        if (detectionResult.error && detectionResult.error.includes('timeout')) {
+          setError('Processing timed out. Please try again with a clearer, well-lit photo of the barcode.');
+        } else {
+          setError(`No barcode detected. ${detectionResult.error || 'Please try again with a clearer photo or enter the barcode manually.'}`);
+        }
+      }
+
+    } catch (e) {
+      console.error('[CAMERA] Camera scan error:', e);
+      if (e.message && e.message.includes('cancelled')) {
+        setError('Photo cancelled.');
+      } else if (e.message && e.message.includes('permission')) {
+        setError('Camera permission required. Please enable camera access in settings.');
+      } else if (e.message && e.message.includes('timeout')) {
+        setError('Processing timed out. Please try again with a clearer photo.');
+      } else {
+        setError(`Camera scan failed: ${e.message}. Please enter barcode manually.`);
+      }
+    } finally {
+      setScanning(false);
+      setProcessingImage(false);
+    }
+  };
+
+
+
   // Add as expense handler
   const handleAddExpense = async () => {
     setAdding(true);
@@ -47,6 +127,10 @@ const CanIAffordThis = () => {
         notes: product?.brands ? `Brand: ${product.brands}` : '',
       };
       await ApiService.createExpense(expenseData);
+
+      // Check budgets after expense is added
+      await BudgetMonitor.checkBudgetsAfterExpense(expenseData, userProfile?.currency || 'ZAR');
+
       setAddSuccess(true);
       // Optionally, reset form
       setBarcode('');
@@ -129,25 +213,20 @@ const CanIAffordThis = () => {
     }
   }, [category, budgets]);
 
-  // Scan barcode using device camera
-  const handleScan = async () => {
-    setError('');
-    setScanning(true);
-    try {
-      await BarcodeScanner.checkPermission({ force: true });
-      const result = await BarcodeScanner.startScan();
-      if (result.hasContent) {
-        setBarcode(result.content);
-        fetchProductInfo(result.content);
-      } else {
-        setError('No barcode detected.');
+
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup barcode scanner on unmount
+      try {
+        BarcodeScanner.showBackground().catch(console.warn);
+        BarcodeScanner.stopScan().catch(console.warn);
+      } catch (error) {
+        console.warn('Cleanup error:', error);
       }
-    } catch (e) {
-      setError('Barcode scan failed.');
-    } finally {
-      setScanning(false);
-    }
-  };
+    };
+  }, []);
 
   // Fetch product info from OpenFoodFacts
   const fetchProductInfo = async (barcodeValue) => {
@@ -238,9 +317,16 @@ const CanIAffordThis = () => {
     <Box p={2}>
       <Typography variant="h5" mb={2} fontWeight={600}>Can I afford this?</Typography>
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Button variant="contained" onClick={handleScan} disabled={scanning} sx={{ mb: 2, width: '100%' }}>
-          {scanning ? <CircularProgress size={20} /> : 'Scan Barcode'}
-        </Button>
+        {!processingImage ? (
+          <Button variant="contained" onClick={handleCameraScan} sx={{ mb: 2, width: '100%' }}>
+            📷 Scan Barcode
+          </Button>
+        ) : (
+          <Button variant="contained" disabled sx={{ mb: 2, width: '100%' }}>
+            <CircularProgress size={20} sx={{ mr: 1 }} />
+            Processing Image...
+          </Button>
+        )}
         <Typography variant="body2" mb={1}>or enter barcode manually:</Typography>
         <Box display="flex" gap={1} mb={2}>
           <TextField
@@ -335,6 +421,7 @@ const CanIAffordThis = () => {
           </Box>
         )}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+
       </Paper>
     </Box>
   );

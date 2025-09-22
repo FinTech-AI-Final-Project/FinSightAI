@@ -107,37 +107,74 @@ class NotificationService {
   }
 
   // Schedule expense reminder
-  async scheduleExpenseReminder() {
+  async scheduleExpenseReminder(userCurrency = 'ZAR') {
+    const regionFlag = this.getRegionFlag(userCurrency);
+    const region = this.getRegionFromCurrency(userCurrency);
+
     return this.scheduleLocalNotification({
-      title: 'Don\'t forget to log your expenses! 📊',
-      body: 'Keep track of your spending to stay on budget',
+      title: `Don't forget to log your expenses! ${regionFlag}`,
+      body: `Keep track of your ${region} spending to stay on budget`,
       schedule: { at: new Date(Date.now() + 24 * 60 * 60 * 1000) }, // 24 hours from now
-      extra: { type: 'expense_reminder' }
+      extra: { type: 'expense_reminder', currency: userCurrency, region }
     });
   }
 
   // Schedule weekly report notification
-  async scheduleWeeklyReport() {
+  async scheduleWeeklyReport(userCurrency = 'ZAR') {
     const now = new Date();
     const nextSunday = new Date(now);
     nextSunday.setDate(now.getDate() + (7 - now.getDay()));
     nextSunday.setHours(9, 0, 0, 0); // 9 AM on Sunday
 
+    const regionFlag = this.getRegionFlag(userCurrency);
+    const region = this.getRegionFromCurrency(userCurrency);
+
     return this.scheduleLocalNotification({
-      title: 'Your Weekly Financial Report is Ready! 📈',
-      body: 'See how you did this week and get insights for next week',
+      title: `Your Weekly Financial Report is Ready! ${regionFlag}`,
+      body: `See how you did this week in ${region} and get insights for next week`,
       schedule: { at: nextSunday },
-      extra: { type: 'weekly_report' }
+      extra: { type: 'weekly_report', currency: userCurrency, region }
     });
   }
 
   // Schedule AI tip notification
-  async scheduleAITipNotification(tip) {
+  async scheduleAITipNotification(tip, userCurrency = 'ZAR') {
+    // Schedule for tomorrow at 10 AM
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(10, 0, 0, 0);
+
+    const regionFlag = this.getRegionFlag(userCurrency);
+    const region = this.getRegionFromCurrency(userCurrency);
+
     return this.scheduleLocalNotification({
-      title: 'AI Financial Tip 💡',
+      title: `AI Financial Tip ${regionFlag} 💡`,
       body: tip.substring(0, 100) + (tip.length > 100 ? '...' : ''),
-      extra: { type: 'ai_tip', fullTip: tip }
+      schedule: { at: tomorrow },
+      extra: { type: 'ai_tip', fullTip: tip, currency: userCurrency, region }
     });
+  }
+
+  // Schedule multiple AI tip notifications (for the next 7 days)
+  async scheduleWeeklyAITips(tips, userCurrency = 'ZAR') {
+    const results = [];
+    const regionFlag = this.getRegionFlag(userCurrency);
+    const region = this.getRegionFromCurrency(userCurrency);
+
+    for (let i = 0; i < Math.min(tips.length, 7); i++) {
+      const scheduleDate = new Date();
+      scheduleDate.setDate(scheduleDate.getDate() + i + 1);
+      scheduleDate.setHours(10, 0, 0, 0);
+
+      const result = await this.scheduleLocalNotification({
+        title: `AI Financial Tip ${regionFlag} 💡`,
+        body: tips[i].substring(0, 100) + (tips[i].length > 100 ? '...' : ''),
+        schedule: { at: scheduleDate },
+        extra: { type: 'ai_tip', fullTip: tips[i], day: i + 1, currency: userCurrency, region }
+      });
+      results.push(result);
+    }
+    return results;
   }
 
   // Test notification
@@ -209,6 +246,52 @@ class NotificationService {
     } else {
       return this.showWebNotification(title, body, options);
     }
+  }
+
+  /**
+   * Get region from currency code
+   */
+  getRegionFromCurrency(currency) {
+    const regions = {
+      'ZAR': 'South Africa',
+      'USD': 'United States',
+      'EUR': 'Europe',
+      'GBP': 'United Kingdom',
+      'JPY': 'Japan',
+      'CAD': 'Canada',
+      'AUD': 'Australia',
+      'CHF': 'Switzerland',
+      'CNY': 'China',
+      'INR': 'India',
+      'NGN': 'Nigeria',
+      'KES': 'Kenya',
+      'BWP': 'Botswana',
+      'NAD': 'Namibia'
+    };
+    return regions[currency] || 'International';
+  }
+
+  /**
+   * Get flag emoji for currency/region
+   */
+  getRegionFlag(currency) {
+    const flags = {
+      'ZAR': '🇿🇦',
+      'USD': '🇺🇸',
+      'EUR': '🇪🇺',
+      'GBP': '🇬🇧',
+      'JPY': '🇯🇵',
+      'CAD': '🇨🇦',
+      'AUD': '🇦🇺',
+      'CHF': '🇨🇭',
+      'CNY': '🇨🇳',
+      'INR': '🇮🇳',
+      'NGN': '🇳🇬',
+      'KES': '🇰🇪',
+      'BWP': '🇧🇼',
+      'NAD': '🇳🇦'
+    };
+    return flags[currency] || '🌍';
   }
 }
 

@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '../contexts/UserContext';
+import { sendChatMessage } from '../services/api';
 
 const Chatbot = () => {
   const [open, setOpen] = useState(false);
@@ -46,52 +47,34 @@ const Chatbot = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    
+
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const userMessage = { sender: 'user', text: input, timestamp };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
 
     try {
-      // Get auth token
-      const token = await currentUser.getIdToken();
-      
-      // Use proper API base URL - same as other API calls
-      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
-      
-      const response = await fetch(`${API_BASE_URL}/ai-chatbot`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: input,
-          currency: userProfile?.currency || 'ZAR',
-          region: getRegionFromCurrency(userProfile?.currency || 'ZAR'),
-          userContext: {
-            firstName: userProfile?.firstName || currentUser?.displayName?.split(' ')[0] || 'there',
-            currency: userProfile?.currency || 'ZAR'
-          }
-        })
-      });
+      // Use the centralized API service (same as AI tips)
+      const userContext = {
+        firstName: userProfile?.firstName || currentUser?.displayName?.split(' ')[0] || 'there',
+        currency: userProfile?.currency || 'ZAR',
+        region: getRegionFromCurrency(userProfile?.currency || 'ZAR')
+      };
 
-      if (!response.ok) {
-        throw new Error('Failed to get response from AI');
-      }
+      console.log('🤖 Sending chat message via API service:', input);
+      const data = await sendChatMessage(input, userContext);
 
-      const data = await response.json();
-      const botMessage = { 
-        sender: 'bot', 
+      const botMessage = {
+        sender: 'bot',
         text: data.reply || 'I\'m having difficulty processing your request. Please try rephrasing your question.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      
+
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Chatbot error:', error);
-      const errorMessage = { 
-        sender: 'bot', 
+      console.error('🚨 Chatbot error:', error);
+      const errorMessage = {
+        sender: 'bot',
         text: 'I\'m currently experiencing technical difficulties. Please try again in a moment.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };

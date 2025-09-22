@@ -40,6 +40,7 @@ import * as ApiService from '../services/api';
 import { formatCurrency, formatDate, expenseCategories, getCurrencySymbol } from '../utils/helpers';
 import { useUser } from '../contexts/UserContext';
 import receiptScanner from '../services/receiptScanner';
+import BudgetMonitor from '../services/budgetMonitor';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -166,6 +167,10 @@ const Expenses = () => {
         window.dispatchEvent(new CustomEvent('expenseUpdated'));
       } else {
         await ApiService.createExpense(expenseData);
+
+        // Check budgets after expense is added (only for new expenses)
+        await BudgetMonitor.checkBudgetsAfterExpense(expenseData, userProfile?.currency || 'ZAR');
+
         // Dispatch create event
         window.dispatchEvent(new CustomEvent('expenseAdded'));
       }

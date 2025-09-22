@@ -1,7 +1,7 @@
 import { formatCurrency } from '../utils/helpers';
 
 // Blockchair API configuration
-const BLOCKCHAIR_API_KEY = 'G___T015qT4KXWjyDqr8lxHpyXSrOzzD';
+const BLOCKCHAIR_API_KEY = process.env.REACT_APP_BLOCKCHAIR_API_KEY || '';
 const BLOCKCHAIR_BASE_URL = 'https://api.blockchair.com';
 
 // CoinGecko API (no API key needed for basic endpoints)

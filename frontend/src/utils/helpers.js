@@ -1,3 +1,8 @@
+// Utility functions for the FinSight AI application
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subDays, subMonths, subYears } from 'date-fns';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+
 export const expenseCategories = {
   FOOD_DINING: { name: 'Food & Dining', icon: '🍽️', color: '#ff6b6b' },
   TRANSPORTATION: { name: 'Transportation', icon: '🚗', color: '#4ecdc4' },
@@ -130,35 +135,60 @@ export const getBudgetStatus = (spent, limit) => {
   return 'good';
 };
 
-export const exportToCSV = (data, filename) => {
+export const exportToCSV = async (data, filename) => {
   try {
     if (!data || data.length === 0) {
       alert('No data to export');
       return;
     }
-    
+
     console.log('📊 Exporting CSV with', data.length, 'rows');
-    
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + Object.keys(data[0]).join(",") + "\n"
-      + data.map(row => Object.values(row).map(val => 
+
+    const csvContent = Object.keys(data[0]).join(",") + "\n"
+      + data.map(row => Object.values(row).map(val =>
           typeof val === 'string' && val.includes(',') ? `"${val}"` : val
         ).join(",")).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('✅ CSV export triggered for file:', filename);
+
+    // Check if we're on mobile (Capacitor)
+    if (Capacitor.isNativePlatform()) {
+      // Mobile: Use Capacitor Filesystem
+      try {
+        await Filesystem.writeFile({
+          path: filename,
+          data: csvContent,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+        });
+
+        alert(`✅ CSV exported successfully to Documents/${filename}`);
+        console.log('✅ Mobile CSV export completed:', filename);
+      } catch (fsError) {
+        console.error('❌ Mobile filesystem write failed:', fsError);
+        // Fallback to browser method
+        downloadViaBrowser(csvContent, filename);
+      }
+    } else {
+      // Desktop: Use browser download
+      downloadViaBrowser(csvContent, filename);
+    }
+
   } catch (error) {
     console.error('❌ CSV export failed:', error);
     alert('Failed to export CSV: ' + error.message);
   }
+};
+
+// Helper function for browser-based download
+const downloadViaBrowser = (content, filename) => {
+  const encodedUri = encodeURI("data:text/csv;charset=utf-8," + content);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", filename);
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  console.log('✅ Browser CSV export triggered for file:', filename);
 };
 
 export const chartColors = [
