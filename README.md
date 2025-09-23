@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="original_logo-transparent.png" alt="FinSightAI Logo">
+
+  <img src="Pictures/original_logo-transparent.png" alt="FinSightAI Logo">
 
 </p>
 
@@ -10,25 +11,25 @@
 
 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin: 40px 0;">
   <div style="text-align: center; width: 250px;">
-    <img src="Sands pic.jpeg" alt="Team Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <img src="Pictures/Sands pic.jpeg" alt="Team Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
     <h3 style="margin: 10px 0; color: #333;">Sandile Dhlamini</h3>
     <p style="color: #666; font-weight: bold;">👑 Team Lead</p>
   </div>
   
   <div style="text-align: center; width: 250px;">
-    <img src="Chloe pic.jpg" alt="Vice Team Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <img src="Pictures/Chloe pic.jpg" alt="Vice Team Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
     <h3 style="margin: 10px 0; color: #333;">Chloe Phetla</h3>
     <p style="color: #666; font-weight: bold;">✨ Vice Team Lead</p>
   </div>
   
   <div style="text-align: center; width: 250px;">
-    <img src="Batse pic.jpg" alt="DevOps Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <img src="Pictures/Batse pic.jpg" alt="DevOps Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
     <h3 style="margin: 10px 0; color: #333;">Motubatse Maloma</h3>
     <p style="color: #666; font-weight: bold;">🚀 DevOps Lead</p>
   </div>
   
   <div style="text-align: center; width: 250px;">
-    <img src="Jerome pic.jpg" alt="Quality Assurance Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <img src="Pictures/Jerome pic.jpg" alt="Quality Assurance Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
     <h3 style="margin: 10px 0; color: #333;">Siyabonga Mahlangu</h3>
     <p style="color: #666; font-weight: bold;">🎯 Quality Assurance Lead</p>
   </div>
@@ -612,7 +613,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Chart.js** for data visualization
 - **Gradient AI** for intelligent insights
 
----
 
 **Made with ❤️ by the FinSight AI Team**
 
