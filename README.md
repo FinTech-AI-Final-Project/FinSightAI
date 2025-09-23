@@ -1,6 +1,9 @@
 <p align="center">
   <img src="original_logo-transparent.png" alt="FinSightAI Logo">
+  An AI-powered personal finance management application with intelligent insights, expense tracking, budget management, and cross-platform mobile support.
 </p>
+
+
 
 ## 👥 Our Team
 
@@ -29,8 +32,6 @@
     <p style="color: #666; font-weight: bold;">🎯 Quality Assurance Lead</p>
   </div>
 </div>
-
-An AI-powered personal finance management application with intelligent insights, expense tracking, budget management, and cross-platform mobile support.
 
 ## 🌟 Features
 
