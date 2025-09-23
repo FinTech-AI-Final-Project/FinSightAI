@@ -159,19 +159,19 @@ In summary, FinSightAI aims to democratize financial wellness by transforming co
 
 <strong>Class diagram:</strong>
 
- <img src="Class Diagram.png" alt="Class diagram">
+ <img src="Pictures/Class Diagram.png" alt="Class diagram">
 
 <b>Use Case diagram:</b>
 
-<img src="Use Case Diagram-1.png" alt="Use-Case diagram">
+<img src="Pictures/Use Case Diagram-1.png" alt="Use-Case diagram">
 
 <strong>Sequence diagram (User login):</strong>
 
-<img src="Sequence Diagram (User login)-1.png" alt="Sequence Diagram (User login)">
+<img src="Pictures/Sequence Diagram (User login)-1.png" alt="Sequence Diagram (User login)">
 
 <strong>Sequence diagram (Budget Creation):</strong>
 
-<img src="Sequence Diagram (Budget Creation).png" alt="Sequence Diagram (Budget Creation)">
+<img src="Pictures/Sequence Diagram (Budget Creation).png" alt="Sequence Diagram (Budget Creation)">
 
 
 # 🚀 FinSight AI - Complete Deployment Guide
