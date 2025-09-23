@@ -76,7 +76,7 @@ FinSightAI/
 ```
 
 
-Problem Statement
+<strong>Problem Statement</strong>
 
 Individuals today, particularly millennials and Gen Z entering the workforce, face
 significant challenges in achieving financial stability and growth. The modern financial landscape is complex and fragmented. People struggle with:
@@ -86,7 +86,7 @@ significant challenges in achieving financial stability and growth. The modern f
 - Information Overload & Paralysis: While abundant financial advice exists online, it is often generic, contradictory, or not tailored to an individual's specific situation and risk tolerance. This leads to analysis paralysis, where users are so overwhelmed they take no action.
 - Lack of Accessible Guidance: Traditional financial advisors are often expensive and inaccessible to the average person, especially those who are just starting their financial journey or have limited capital to invest.
 
-Impact of the Problem
+<strong>Impact of the Problem</strong>
 
 This lack of clarity, control, and personalized guidance has serious consequences:
 
@@ -95,7 +95,7 @@ This lack of clarity, control, and personalized guidance has serious consequence
 - Suboptimal Financial Decisions: Without clear insights, individuals miss opportunities to save on fees, pay down high-interest debt faster, or make informed investment choices.
 - Wealth Gap Persistence: Those without financial literacy or access to tools fall further behind, perpetuating a cycle of financial insecurity.
 
-User Stories
+<strong>User Stories</strong>
 
 As a user, I want to:
 
@@ -125,7 +125,7 @@ As a user, I want to:
      - Generate expense reports by category
      - Export expense data for tax purposes
 
-Proposed Solution : FinSight Web Application
+<strong>Proposed Solution:</strong> FinSight Web Application
 
 We propose to develop FinSightAI, a comprehensive and intuitive web application that serves as a single dashboard for an individual's entire financial life. FinSightAI will solve these problems by offering:
 
@@ -137,7 +137,7 @@ We propose to develop FinSightAI, a comprehensive and intuitive web application 
 - Investment Education & Suggestions: e.g., “Based on your goal to retire in 2050 and ‘moderate’ risk tolerance, consider allocating 5% of your income to a low-cost S&P 500 index fund.”
 - Simulated Learning Environment: To combat analysis paralysis, FinSightAI will include a “sandbox” mode where users can practice investment strategies with virtual money, building confidence before committing real capital.
 
-Target Audience
+<strong>Target Audience</strong>
 
 - Primary: Tech-savvy young professionals (25-40 years old) who are earning but
 struggling to manage their money effectively, save consistently, and start investing.
@@ -145,7 +145,7 @@ struggling to manage their money effectively, save consistently, and start inves
 
 - Tertiary: Anyone feeling overwhelmed by their finances and seeking a simple, all-in-one tool to gain control and receive personalized advice.
 
-Key Goals & Success Metrics
+<strong>Key Goals & Success Metrics:</strong>
 
 - User Adoption: Acquire 5000 active monthly users within the first year.
 - Financial Improvement: Demonstrate that active users increase their savings rate by an average of 15% within 6 months of using the app.
@@ -154,22 +154,28 @@ Key Goals & Success Metrics
 
 In summary, FinSightAI aims to democratize financial wellness by transforming complex, scattered data into a clear, actionable plan, empowering users to not just manage their money, but to grow it with confidence.
 
-UML Diagrams
+</strong>UML Diagrams</strong>
 
-Class diagram:
+<strong>Class diagram:</strong>
+
  <img src="Class Diagram.png" alt="Class diagram">
-Use Case diagram:
-<img src="Use case diagram.png" alt="Use-Case diagram">
 
-Sequence diagram:
+<b>Use Case diagram:</b>
+
+<img src="Use Case Diagram-1.png" alt="Use-Case diagram">
+
+<strong>Sequence diagram (User login):</strong>
 
 <img src="Sequence Diagram (User login)-1.png" alt="Sequence Diagram (User login)">
+
+<strong>Sequence diagram (Budget Creation):</strong>
+
 <img src="Sequence Diagram (Budget Creation).png" alt="Sequence Diagram (Budget Creation)">
 
-User Stories
+<strong>User Stories</strong>
 
 
-Acceptance Criteria:
+<strong>Acceptance Criteria:</strong>
 
 - Given I have set a monthly grocery budget of R4,500, when I make a purchase at Checkers or Woolworths, then the transaction must be automatically categorized as "Groceries".
 
