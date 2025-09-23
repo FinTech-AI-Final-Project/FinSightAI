@@ -19,6 +19,7 @@ import Settings from './pages/Settings';
 
 import CanIAffordThis from './pages/CanIAffordThis';
 import Home from './pages/Home';
+import FinSightLanding from './pages/Landing page';
 import { AnimatePresence } from 'framer-motion';
 
 // Component to handle smart routing based on device type
@@ -29,7 +30,7 @@ const SmartDefaultRoute = () => {
 
   // Mobile (native app or small screen) goes to Home
   // Desktop goes to Dashboard
-  const defaultRoute = (isMobile || isNative) ? '/home' : '/dashboard';
+  const defaultRoute = (isMobile || isNative) ? '/app/home' : '/app/dashboard';
 
   return <Navigate to={defaultRoute} replace />;
 };
@@ -43,9 +44,10 @@ function App() {
             <Router>
               <AnimatePresence mode="wait">
                 <Routes>
+                  <Route path="/" element={<FinSightLanding />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
-                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                     <Route index element={<SmartDefaultRoute />} />
                     <Route path="home" element={<Home />} />
                     <Route path="dashboard" element={<Dashboard />} />
