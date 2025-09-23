@@ -1,9 +1,10 @@
 <p align="center">
   <img src="original_logo-transparent.png" alt="FinSightAI Logo">
-  An AI-powered personal finance management application with intelligent insights, expense tracking, budget management, and cross-platform mobile support.
+
 </p>
 
-
+<p align = "center">An enterprise-grade AI-powered personal finance management application that combines machine learning insights with comprehensive expense tracking, intelligent budget management, and seamless cross-platform mobile support. Built with modern full-stack architecture, featuring Spring Boot microservices, React frontend, and native mobile apps.
+</p>
 
 ## 👥 Our Team
 
