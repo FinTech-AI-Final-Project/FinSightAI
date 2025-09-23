@@ -1,3 +1,35 @@
+<p align="center">
+  <img src="original_logo-transparent.png" alt="FinSightAI Logo">
+</p>
+
+## 👥 Our Team
+
+<div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin: 40px 0;">
+  <div style="text-align: center; width: 250px;">
+    <img src="Sands pic.jpeg" alt="Team Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <h3 style="margin: 10px 0; color: #333;">Sandile Dhlamini</h3>
+    <p style="color: #666; font-weight: bold;">👑 Team Lead</p>
+  </div>
+  
+  <div style="text-align: center; width: 250px;">
+    <img src="Chloe pic.jpg" alt="Vice Team Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <h3 style="margin: 10px 0; color: #333;">Chloe Phetla</h3>
+    <p style="color: #666; font-weight: bold;">✨ Vice Team Lead</p>
+  </div>
+  
+  <div style="text-align: center; width: 250px;">
+    <img src="Batse pic.jpg" alt="DevOps Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <h3 style="margin: 10px 0; color: #333;">Motubatse Maloma</h3>
+    <p style="color: #666; font-weight: bold;">🚀 DevOps Lead</p>
+  </div>
+  
+  <div style="text-align: center; width: 250px;">
+    <img src="Jerome pic.jpg" alt="Quality Assurance Lead" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid #0066cc;">
+    <h3 style="margin: 10px 0; color: #333;">Siyabonga Mahlangu</h3>
+    <p style="color: #666; font-weight: bold;">🎯 Quality Assurance Lead</p>
+  </div>
+</div>
+
 Problem Statement
 
 Individuals today, particularly millennials and Gen Z entering the workforce, face
@@ -16,6 +48,37 @@ This lack of clarity, control, and personalized guidance has serious consequence
 - Missed Financial Goals: Goals like buying a home, saving for a child's education, or building a retirement nest egg seem distant and unachievable, leading to inaction.
 - Suboptimal Financial Decisions: Without clear insights, individuals miss opportunities to save on fees, pay down high-interest debt faster, or make informed investment choices.
 - Wealth Gap Persistence: Those without financial literacy or access to tools fall further behind, perpetuating a cycle of financial insecurity.
+
+User Stories
+
+As a user, I want to:
+
+1. **Create and Track Monthly Budgets**
+   - Priority: High
+   - Acceptance Criteria:
+     - Set budget amounts for different spending categories
+     - Receive notifications when approaching budget limits
+     - View budget vs. actual spending in real-time
+     - Adjust budgets as needed based on spending patterns
+
+2. **Get AI-Powered Financial Insights**
+   - Priority: High
+   - Acceptance Criteria:
+     - Receive personalized spending analysis
+     - Get actionable tips for saving money
+     - View patterns in my spending behavior
+     - Receive alerts for unusual transactions
+     - Get recommendations for budget adjustments
+
+3. **Track and Categorize Expenses**
+   - Priority: High
+   - Acceptance Criteria:
+     - Add expenses manually or through receipt scanning
+     - Categorize expenses automatically
+     - View expense history and trends
+     - Generate expense reports by category
+     - Export expense data for tax purposes
+
 Proposed Solution : FinSight Web Application
 
 We propose to develop FinSightAI, a comprehensive and intuitive web application that serves as a single dashboard for an individual's entire financial life. FinSightAI will solve these problems by offering:
@@ -47,12 +110,28 @@ In summary, FinSightAI aims to democratize financial wellness by transforming co
 
 UML Diagrams
 
-Use case diagram:
-
-
 Class diagram:
+ <img src="Class Diagram.png" alt="Class diagram">
+Use Case diagram:
+<img src="Use case diagram.png" alt="Use-Case diagram">
 
-Component diagram:
+Sequence diagram:
+
+<img src="Sequence Diagram (User login)-1.png" alt="Sequence Diagram (User login)">
+<img src="Sequence Diagram (Budget Creation).png" alt="Sequence Diagram (Budget Creation)">
+
+User Stories
+
+
+Acceptance Criteria:
+
+- Given I have set a monthly grocery budget of R4,500, when I make a purchase at Checkers or Woolworths, then the transaction must be automatically categorized as "Groceries".
+
+- Given I have spent R3,000 on groceries by the 15th of the month, then the AI should generate an insight notification stating: "You've spent 67% of your grocery budget with half the month remaining. Your current spending pace will put you R1,500 over budget."
+
+- Given the alert is generated, then I should be presented with a one-tap option to see a breakdown of my grocery spending.
+
+
 
 
 # 🚀 FinSight AI - Complete Deployment Guide
