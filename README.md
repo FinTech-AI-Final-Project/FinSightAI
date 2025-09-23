@@ -172,19 +172,6 @@ In summary, FinSightAI aims to democratize financial wellness by transforming co
 
 <img src="Sequence Diagram (Budget Creation).png" alt="Sequence Diagram (Budget Creation)">
 
-<strong>User Stories</strong>
-
-
-<strong>Acceptance Criteria:</strong>
-
-- Given I have set a monthly grocery budget of R4,500, when I make a purchase at Checkers or Woolworths, then the transaction must be automatically categorized as "Groceries".
-
-- Given I have spent R3,000 on groceries by the 15th of the month, then the AI should generate an insight notification stating: "You've spent 67% of your grocery budget with half the month remaining. Your current spending pace will put you R1,500 over budget."
-
-- Given the alert is generated, then I should be presented with a one-tap option to see a breakdown of my grocery spending.
-
-
-
 
 # 🚀 FinSight AI - Complete Deployment Guide
 
