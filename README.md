@@ -1,3 +1,60 @@
+Problem Statement
+
+Individuals today, particularly millennials and Gen Z entering the workforce, face
+significant challenges in achieving financial stability and growth. The modern financial landscape is complex and fragmented. People struggle with:
+
+- Financial Blindness: Money is scattered across multiple accounts (checking, savings, credit cards, investment brokers, retirement funds), making it nearly impossible to get a unified, real-time view of their net worth and cash flow.
+- Reactive Financial Management: Most people manage their finances reactively (e.g., checking a bank balance after a large purchase) rather than proactively with a clear budget and goals. This leads to living paycheck-to-paycheck, unnecessary debt accumulation, and financial stress.
+- Information Overload & Paralysis: While abundant financial advice exists online, it is often generic, contradictory, or not tailored to an individual's specific situation and risk tolerance. This leads to analysis paralysis, where users are so overwhelmed they take no action.
+- Lack of Accessible Guidance: Traditional financial advisors are often expensive and inaccessible to the average person, especially those who are just starting their financial journey or have limited capital to invest.
+
+Impact of the Problem
+
+This lack of clarity, control, and personalized guidance has serious consequences:
+
+- Increased Financial Stress & Anxiety: Constant worry about money negatively impacts mental health, relationships, and overall well-being.
+- Missed Financial Goals: Goals like buying a home, saving for a child's education, or building a retirement nest egg seem distant and unachievable, leading to inaction.
+- Suboptimal Financial Decisions: Without clear insights, individuals miss opportunities to save on fees, pay down high-interest debt faster, or make informed investment choices.
+- Wealth Gap Persistence: Those without financial literacy or access to tools fall further behind, perpetuating a cycle of financial insecurity.
+Proposed Solution : FinSight Web Application
+
+We propose to develop FinSightAI, a comprehensive and intuitive web application that serves as a single dashboard for an individual's entire financial life. FinSightAI will solve these problems by offering:
+
+- Unified Financial Dashboard: Securely connect all financial accounts to automatically track income, expenses, net worth, and cash flow in one place. Users will finally have a clear, real-time picture of their finances.
+- Intelligent Budgeting & Goal Tracking: Move beyond basic budgeting. FinSight will use AI-driven insights to create personalized budgets, identify spending leaks, and provide tools to set and track progress toward specific financial goals (e.g. “Save R8 000 for a down payment in 18 months”).
+- Personalized, Actionable Tips: The platform will analyze a user's unique financial data to generate hyper-relevant, actionable tips.
+- Saving Tips: e.g. “You spend R150 monthly on subscription services. Canceling two could save you R380/year.”
+- Debt Reduction Strategies: e.g., “By making an extra R450 payment on your credit card(7% APR), you could pay it off 4 months earlier and save R120 in interest.”
+- Investment Education & Suggestions: e.g., “Based on your goal to retire in 2050 and ‘moderate’ risk tolerance, consider allocating 5% of your income to a low-cost S&P 500 index fund.”
+- Simulated Learning Environment: To combat analysis paralysis, FinSightAI will include a “sandbox” mode where users can practice investment strategies with virtual money, building confidence before committing real capital.
+
+Target Audience
+
+- Primary: Tech-savvy young professionals (25-40 years old) who are earning but
+struggling to manage their money effectively, save consistently, and start investing.
+- Secondary: Students and recent graduates looking to build strong financial habits early.
+
+- Tertiary: Anyone feeling overwhelmed by their finances and seeking a simple, all-in-one tool to gain control and receive personalized advice.
+
+Key Goals & Success Metrics
+
+- User Adoption: Acquire 5000 active monthly users within the first year.
+- Financial Improvement: Demonstrate that active users increase their savings rate by an average of 15% within 6 months of using the app.
+- User Engagement: Achieve a weekly active user rate of over 40%.
+- Customer Satisfaction: Maintain a Net Promoter Score (NPS) of +50.
+
+In summary, FinSightAI aims to democratize financial wellness by transforming complex, scattered data into a clear, actionable plan, empowering users to not just manage their money, but to grow it with confidence.
+
+UML Diagrams
+
+Use case diagram:
+
+
+Class diagram:
+
+Component diagram:
+
+
 # 🚀 FinSight AI - Complete Deployment Guide
 
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://adoptium.net/)
@@ -483,4 +540,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the FinSight AI Team**
 
-For support, create an issue or contact us at support@finsight.ai
+For support, create an issue or contact us at finsightai1@gmail.com
