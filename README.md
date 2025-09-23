@@ -30,6 +30,50 @@
   </div>
 </div>
 
+An AI-powered personal finance management application with intelligent insights, expense tracking, budget management, and cross-platform mobile support.
+
+## 🌟 Features
+
+### 💰 Core Financial Management
+- **Expense Tracking**: Log and categorize expenses with receipt scanning
+- **Budget Management**: Set monthly budgets with progress tracking
+- **Financial Reports**: Generate PDF/CSV reports with analytics
+- **Multi-Currency Support**: Handle multiple currencies with real-time conversion
+
+### 🤖 AI-Powered Insights
+- **Smart Tips**: AI-generated financial advice (Default, Crypto, Cash Flow)
+- **Intelligent Chatbot**: Context-aware financial assistant
+- **Market Analysis**: Real-time cryptocurrency data integration
+- **Personalized Recommendations**: Based on spending patterns
+
+### 📱 Cross-Platform Experience
+- **Web Application**: Responsive React interface
+- **Mobile Apps**: Native iOS/Android via Capacitor
+- **Progressive Web App**: Installable with offline capabilities
+- **Smart Routing**: Desktop users see dashboard, mobile users see home screen
+
+### 🔐 Security & Authentication
+- **Firebase Authentication**: Secure user management
+- **Data Encryption**: Protected financial information
+- **Role-Based Access**: User-specific data isolation
+
+## 🏗️ Architecture
+
+```
+FinSightAI/
+├── backend/                 # Spring Boot API Server
+│   ├── src/main/java/      # Java source code
+│   ├── src/main/resources/ # Configuration files
+│   └── pom.xml            # Maven dependencies
+├── frontend/               # React Web Application
+│   ├── src/               # React source code
+│   ├── android/           # Android Capacitor project
+│   ├── ios/              # iOS Capacitor project
+│   └── package.json      # Node.js dependencies
+└── scripts/              # Deployment automation scripts
+```
+
+
 Problem Statement
 
 Individuals today, particularly millennials and Gen Z entering the workforce, face
@@ -143,48 +187,6 @@ Acceptance Criteria:
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-10.7.1-orange)](https://firebase.google.com/)
 
-An AI-powered personal finance management application with intelligent insights, expense tracking, budget management, and cross-platform mobile support.
-
-## 🌟 Features
-
-### 💰 Core Financial Management
-- **Expense Tracking**: Log and categorize expenses with receipt scanning
-- **Budget Management**: Set monthly budgets with progress tracking
-- **Financial Reports**: Generate PDF/CSV reports with analytics
-- **Multi-Currency Support**: Handle multiple currencies with real-time conversion
-
-### 🤖 AI-Powered Insights
-- **Smart Tips**: AI-generated financial advice (Default, Crypto, Cash Flow)
-- **Intelligent Chatbot**: Context-aware financial assistant
-- **Market Analysis**: Real-time cryptocurrency data integration
-- **Personalized Recommendations**: Based on spending patterns
-
-### 📱 Cross-Platform Experience
-- **Web Application**: Responsive React interface
-- **Mobile Apps**: Native iOS/Android via Capacitor
-- **Progressive Web App**: Installable with offline capabilities
-- **Smart Routing**: Desktop users see dashboard, mobile users see home screen
-
-### 🔐 Security & Authentication
-- **Firebase Authentication**: Secure user management
-- **Data Encryption**: Protected financial information
-- **Role-Based Access**: User-specific data isolation
-
-## 🏗️ Architecture
-
-```
-FinSightAI/
-├── backend/                 # Spring Boot API Server
-│   ├── src/main/java/      # Java source code
-│   ├── src/main/resources/ # Configuration files
-│   └── pom.xml            # Maven dependencies
-├── frontend/               # React Web Application
-│   ├── src/               # React source code
-│   ├── android/           # Android Capacitor project
-│   ├── ios/              # iOS Capacitor project
-│   └── package.json      # Node.js dependencies
-└── scripts/              # Deployment automation scripts
-```
 
 ## 🚀 Quick Start (Automated)
 
