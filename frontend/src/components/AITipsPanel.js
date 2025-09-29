@@ -12,6 +12,7 @@ import {
   useTheme,
   useMediaQuery,
   Collapse,
+  Tooltip,
 } from '@mui/material';
 import {
   Lightbulb,
@@ -26,6 +27,8 @@ import {
   AutoAwesome,
   CurrencyBitcoin,
   Timeline,
+  Pause,
+  PlayArrow,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as ApiService from '../services/api';
@@ -49,19 +52,20 @@ const AITipsPanel = ({ expenses: propExpenses = [], budgets: propBudgets = [] })
   const [expenses, setExpenses] = useState(propExpenses);
   const [budgets, setBudgets] = useState(propBudgets);
   const [dataLoading, setDataLoading] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { userProfile } = useUser();
 
   // Auto-rotate tips every 8 seconds when collapsed
   useEffect(() => {
-    if (!expanded && tips.length > 1) {
+    if (!expanded && tips.length > 1 && autoRotate) {
       const interval = setInterval(() => {
         setCurrentTipIndex((prevIndex) => (prevIndex + 1) % tips.length);
       }, 8000);
       return () => clearInterval(interval);
     }
-  }, [expanded, tips.length]);
+  }, [expanded, tips.length, autoRotate]);
 
   // Auto-rotate crypto tips every 10 seconds when collapsed
   useEffect(() => {
@@ -395,6 +399,20 @@ const AITipsPanel = ({ expenses: propExpenses = [], budgets: propBudgets = [] })
             <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
               Smart Tips
             </Typography>
+            {!expanded && tips.length > 1 && (
+              <Chip 
+                label={`${currentTipIndex + 1}/${tips.length}`}
+                size="small"
+                variant="outlined"
+                sx={{ 
+                  ml: 1,
+                  fontSize: '0.7rem',
+                  height: 20,
+                  color: theme.palette.primary.main,
+                  borderColor: theme.palette.primary.main
+                }}
+              />
+            )}
           </Box>
           
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -472,9 +490,26 @@ const AITipsPanel = ({ expenses: propExpenses = [], budgets: propBudgets = [] })
           </motion.div>
         )}
 
-        {/* AI Tips Counter */}
+        {/* AI Tips Navigation */}
         {!expanded && tips.length > 1 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, mb: 1 }}>
+            {/* Left Arrow */}
+            <Tooltip title="Previous tip">
+              <IconButton
+                onClick={() => setCurrentTipIndex((prevIndex) => 
+                  prevIndex === 0 ? tips.length - 1 : prevIndex - 1
+                )}
+                size="small"
+                sx={{ 
+                  color: theme.palette.text.primary,
+                  '&:hover': { backgroundColor: theme.palette.action.hover }
+                }}
+              >
+                <ExpandMore sx={{ transform: 'rotate(90deg)' }} />
+              </IconButton>
+            </Tooltip>
+            
+            {/* Dots Counter */}
             <Box sx={{ display: 'flex', gap: 0.5 }}>
               {tips.map((_, index) => (
                 <Box
@@ -496,6 +531,36 @@ const AITipsPanel = ({ expenses: propExpenses = [], budgets: propBudgets = [] })
                 />
               ))}
             </Box>
+            
+            {/* Right Arrow */}
+            <Tooltip title="Next tip">
+              <IconButton
+                onClick={() => setCurrentTipIndex((prevIndex) => 
+                  prevIndex === tips.length - 1 ? 0 : prevIndex + 1
+                )}
+                size="small"
+                sx={{ 
+                  color: theme.palette.text.primary,
+                  '&:hover': { backgroundColor: theme.palette.action.hover }
+                }}
+              >
+                <ExpandMore sx={{ transform: 'rotate(-90deg)' }} />
+              </IconButton>
+            </Tooltip>
+            
+            {/* Pause/Play Button */}
+            <Tooltip title={autoRotate ? "Pause auto-rotation" : "Resume auto-rotation"}>
+              <IconButton
+                onClick={() => setAutoRotate(!autoRotate)}
+                size="small"
+                sx={{ 
+                  color: theme.palette.text.primary,
+                  '&:hover': { backgroundColor: theme.palette.action.hover }
+                }}
+              >
+                {autoRotate ? <Pause /> : <PlayArrow />}
+              </IconButton>
+            </Tooltip>
           </Box>
         )}
 

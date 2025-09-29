@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -88,8 +88,24 @@ const Reports = () => {
   const { userProfile } = useUser();
 
   useEffect(() => {
-    fetchReportData();
-  }, [period, customDate.startDate, customDate.endDate, userProfile.currency]); // Re-fetch when period, custom dates, or currency changes
+    // Only fetch immediately for non-custom periods
+    if (period !== 'custom') {
+      fetchReportData();
+      return;
+    }
+    
+    // For custom period, only fetch when both dates are complete
+    if (period === 'custom' && customDate.startDate && customDate.endDate) {
+      fetchReportData();
+    }
+  }, [period, userProfile.currency]); // Remove date dependencies to prevent premature loading
+
+  // Function to manually trigger fetch when both dates are selected
+  const handleDateSelectionComplete = useCallback(() => {
+    if (period === 'custom' && customDate.startDate && customDate.endDate) {
+      fetchReportData();
+    }
+  }, [period, customDate.startDate, customDate.endDate]);
 
   useEffect(() => {
     // Listen for data changes from other components
@@ -135,9 +151,18 @@ const Reports = () => {
         return;
       }
 
-      const dateRange = period === 'custom' 
-        ? { startDate: customDate.startDate, endDate: customDate.endDate }
-        : getDateRange(period);
+      let dateRange;
+      if (period === 'all') {
+        // For 'all' period, use user's account creation date or a very early date
+        dateRange = {
+          startDate: userProfile.createdAt ? new Date(userProfile.createdAt) : new Date('2000-01-01'),
+          endDate: customDate.endDate || new Date()
+        };
+      } else if (period === 'custom') {
+        dateRange = { startDate: customDate.startDate, endDate: customDate.endDate };
+      } else {
+        dateRange = getDateRange(period);
+      }
       
       const expensesResponse = await ApiService.getExpenses({
         startDate: dateRange.startDate.toISOString().split('T')[0],
@@ -272,12 +297,20 @@ const Reports = () => {
           });
         };
 
-        const dateRange = period === 'custom' 
-          ? { startDate: customDate.startDate, endDate: customDate.endDate }
-          : getDateRange(period);
+        let dateRange;
+        if (period === 'all') {
+          dateRange = {
+            startDate: userProfile.createdAt ? new Date(userProfile.createdAt) : new Date('2000-01-01'),
+            endDate: new Date()
+          };
+        } else if (period === 'custom') {
+          dateRange = { startDate: customDate.startDate, endDate: customDate.endDate };
+        } else {
+          dateRange = getDateRange(period);
+        }
 
         let periodText = '';
-        if (period === 'custom') {
+        if (period === 'custom' || period === 'all') {
           periodText = `Period: ${formatDate(dateRange.startDate)} to ${formatDate(dateRange.endDate)}`;
         } else {
           periodText = `Period: ${period.charAt(0).toUpperCase() + period.slice(1)} (${formatDate(dateRange.startDate)} to ${formatDate(dateRange.endDate)})`;
@@ -381,6 +414,8 @@ const Reports = () => {
             const start = customDate.startDate.toISOString().split('T')[0];
             const end = customDate.endDate.toISOString().split('T')[0];
             return `${start}_to_${end}`;
+          } else if (period === 'all') {
+            return 'all-time';
           }
           return period;
         };
@@ -501,12 +536,12 @@ const Reports = () => {
         {/* Controls */}
         <Card sx={{ mb: 4 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: { xs: 'column', sm: 'row' }, 
                 gap: 2,
-                flex: { xs: '1 1 100%', sm: '1 1 auto', md: period === 'custom' ? '1 1 auto' : '0 0 300px' }
+                alignItems: { xs: 'stretch', sm: 'flex-start' }
               }}>
                 <FormControl fullWidth>
                   <InputLabel>Time Period</InputLabel>
@@ -527,93 +562,16 @@ const Reports = () => {
                     <MenuItem value="year">This Year</MenuItem>
                     <MenuItem value="lastYear">Last Year</MenuItem>
                     <MenuItem value="custom">Custom Date Range</MenuItem>
+                    <MenuItem value="all">All Time</MenuItem>
                   </Select>
                 </FormControl>
-
-                {period === 'custom' && (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2, 
-                    flex: '1 1 auto',
-                    flexDirection: { xs: 'column', sm: 'row' }
-                  }}>
-                    <DatePicker
-                      label="Start Date"
-                      value={customDate.startDate}
-                      onChange={(newValue) => {
-                        setCustomDate(prev => ({ ...prev, startDate: newValue }));
-                      }}
-                      format="dd/MM/yyyy"
-                      views={['year', 'month', 'day']}
-                      openTo="year"
-                      slotProps={{
-                        textField: { 
-                          fullWidth: true,
-                          placeholder: "Select year/month/date"
-                        },
-                        actionBar: { 
-                          actions: ['clear']
-                        },
-                        layout: { 
-                          sx: { width: '320px' }
-                        },
-                        popper: {
-                          sx: { 
-                            '& .MuiPickersCalendarHeader-root': { order: 3 },
-                            '& .MuiYearCalendar-root': { order: 1 },
-                            '& .MuiMonthCalendar-root': { order: 2 },
-                            '& .MuiDayCalendar-root': { order: 4 }
-                          }
-                        },
-                        field: {
-                          readOnly: false
-                        }
-                      }}
-                    />
-                    <DatePicker
-                      label="End Date"
-                      value={customDate.endDate}
-                      onChange={(newValue) => {
-                        setCustomDate(prev => ({ ...prev, endDate: newValue }));
-                      }}
-                      format="dd/MM/yyyy"
-                      views={['year', 'month', 'day']}
-                      openTo="year"
-                      minDate={customDate.startDate || null}
-                      slotProps={{
-                        textField: { 
-                          fullWidth: true,
-                          placeholder: "Select year/month/date"
-                        },
-                        actionBar: { 
-                          actions: ['clear']
-                        },
-                        layout: { 
-                          sx: { width: '320px' }
-                        },
-                        popper: {
-                          sx: { 
-                            '& .MuiPickersCalendarHeader-root': { order: 3 },
-                            '& .MuiYearCalendar-root': { order: 1 },
-                            '& .MuiMonthCalendar-root': { order: 2 },
-                            '& .MuiDayCalendar-root': { order: 4 }
-                          }
-                        },
-                        field: {
-                          readOnly: false
-                        }
-                      }}
-                    />
-                  </Box>
-                )}
-              </Box>
-              <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' } }}>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: { xs: 'stretch', sm: 'flex-start' } }}>
                   <Button
                     variant="outlined"
                     startIcon={<Download />}
                     onClick={exportToCSVReport}
-                    size={isMobile ? "small" : "medium"}
+                    size="small"
+                    sx={{ flex: { xs: '1 1 auto', sm: '0 0 auto' } }}
                   >
                     Export CSV
                   </Button>
@@ -621,12 +579,112 @@ const Reports = () => {
                     variant="outlined"
                     startIcon={<PictureAsPdf />}
                     onClick={exportToPDF}
-                    size={isMobile ? "small" : "medium"}
+                    size="small"
+                    sx={{ flex: { xs: '1 1 auto', sm: '0 0 auto' } }}
                   >
                     Export PDF
                   </Button>
                 </Box>
               </Box>
+              {period === 'custom' && (
+                <Box>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'stretch', sm: 'flex-end' }
+                  }}>
+                  <DatePicker
+                    label="Start Date"
+                    value={customDate.startDate}
+                    onChange={(newValue) => {
+                      setCustomDate(prev => ({ ...prev, startDate: newValue }));
+                    }}
+                    format="dd/MM/yyyy"
+                    views={['year', 'month', 'day']}
+                    openTo="year"
+                    maxDate={new Date()} // Prevent selection of future dates
+                    slotProps={{
+                      textField: { 
+                        fullWidth: true,
+                        placeholder: "Select year/month/date",
+                        sx: { '& .MuiInputBase-input': { fontSize: '1.1rem' } }
+                      },
+                      actionBar: { 
+                        actions: ['clear']
+                      },
+                      layout: { 
+                        sx: { width: '320px' }
+                      },
+                      popper: {
+                        sx: { 
+                          '& .MuiPickersCalendarHeader-root': { order: 3 },
+                          '& .MuiYearCalendar-root': { order: 1 },
+                          '& .MuiMonthCalendar-root': { order: 2 },
+                          '& .MuiDayCalendar-root': { order: 4 }
+                        }
+                      },
+                      field: {
+                        readOnly: false
+                      }
+                    }}
+                  />
+                  <DatePicker
+                    label="End Date"
+                    value={customDate.endDate}
+                    onChange={(newValue) => {
+                      setCustomDate(prev => ({ ...prev, endDate: newValue }));
+                    }}
+                    format="dd/MM/yyyy"
+                    views={['year', 'month', 'day']}
+                    openTo="year"
+                    minDate={customDate.startDate || null}
+                    maxDate={new Date()} // Prevent selection of future dates
+                    slotProps={{
+                      textField: { 
+                        fullWidth: true,
+                        placeholder: "Select year/month/date",
+                        sx: { '& .MuiInputBase-input': { fontSize: '1.1rem' } }
+                      },
+                      actionBar: { 
+                        actions: ['clear']
+                      },
+                      layout: { 
+                        sx: { width: '320px' }
+                      },
+                      popper: {
+                        sx: { 
+                          '& .MuiPickersCalendarHeader-root': { order: 3 },
+                          '& .MuiYearCalendar-root': { order: 1 },
+                          '& .MuiMonthCalendar-root': { order: 2 },
+                          '& .MuiDayCalendar-root': { order: 4 }
+                        }
+                      },
+                      field: {
+                        readOnly: false
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleDateSelectionComplete}
+                    disabled={!customDate.startDate || !customDate.endDate}
+                    sx={{ 
+                      alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                      height: '56px', // Match DatePicker height
+                      minWidth: '120px'
+                    }}
+                  >
+                    Apply
+                  </Button>
+                  </Box>
+                  {customDate.startDate && customDate.endDate && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
+                      Selected: {customDate.startDate.toLocaleDateString()} to {customDate.endDate.toLocaleDateString()}
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Box>
           </CardContent>
         </Card>

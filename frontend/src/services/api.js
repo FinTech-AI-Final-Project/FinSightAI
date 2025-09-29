@@ -22,14 +22,30 @@ const getApiUrl = () => {
 const API_BASE_URL = getApiUrl();
 console.log('🔗 Final API_BASE_URL:', API_BASE_URL);
 
+// 🔄 Helper function to refresh Firebase token
+const refreshAuthToken = async (authInstance) => {
+  try {
+    if (authInstance && authInstance.currentUser) {
+      const newToken = await authInstance.currentUser.getIdToken(true); // Force refresh
+      localStorage.setItem('authToken', newToken);
+      console.log('🔄 Token refreshed successfully');
+      return newToken;
+    }
+    return null;
+  } catch (error) {
+    console.error('🚨 Error refreshing token:', error);
+    return null;
+  }
+};
+
 // 🛠️ Helper function to make API requests with comprehensive logging
-const apiRequest = async (endpoint, options = {}) => {
+const apiRequest = async (endpoint, options = {}, authInstance = null) => {
   const url = `${API_BASE_URL}${endpoint}`;
   console.log(`🚀 Making API request to: ${url}`);
   console.log('📊 Request options:', options);
   
   // Get auth token from localStorage
-  const authToken = localStorage.getItem('authToken');
+  let authToken = localStorage.getItem('authToken');
   console.log('🔐 Auth token available:', !!authToken);
   
   const config = {
@@ -46,6 +62,40 @@ const apiRequest = async (endpoint, options = {}) => {
   try {
     const response = await fetch(url, config);
     console.log(`✅ Response status: ${response.status} ${response.statusText}`);
+    
+    // If we get a 401/403, try to refresh the token and retry once
+    if ((response.status === 401 || response.status === 403) && authToken && authInstance) {
+      console.log('🔄 Token expired, attempting to refresh...');
+      const newToken = await refreshAuthToken(authInstance);
+      
+      if (newToken) {
+        // Retry the request with the new token
+        const retryConfig = {
+          ...config,
+          headers: {
+            ...config.headers,
+            'Authorization': `Bearer ${newToken}`
+          }
+        };
+        
+        console.log('🔄 Retrying request with refreshed token...');
+        const retryResponse = await fetch(url, retryConfig);
+        console.log(`✅ Retry response status: ${retryResponse.status} ${retryResponse.statusText}`);
+        
+        if (!retryResponse.ok) {
+          console.error(`❌ API Error after token refresh: ${retryResponse.status} - ${retryResponse.statusText}`);
+          throw new Error(`HTTP error! status: ${retryResponse.status}`);
+        }
+        
+        // Parse and return the retry response
+        const retryData = await retryResponse.json();
+        console.log('✅ Retry response data:', retryData);
+        return retryData;
+      } else {
+        console.error('❌ Failed to refresh token');
+        throw new Error('Authentication failed - unable to refresh token');
+      }
+    }
     
     if (!response.ok) {
       console.error(`❌ API Error: ${response.status} - ${response.statusText}`);
@@ -309,7 +359,7 @@ export const getMultipleTips = async () => {
 };
 
 // 🤖 AI Chatbot function
-export const sendChatMessage = async (message, userContext = {}) => {
+export const sendChatMessage = async (message, userContext = {}, authInstance = null) => {
   try {
     console.log('🤖 Sending chat message:', message);
     const response = await apiRequest('/ai-chatbot', {
@@ -320,7 +370,7 @@ export const sendChatMessage = async (message, userContext = {}) => {
         region: userContext.region || 'ZA',
         userContext
       })
-    });
+    }, authInstance);
     
     if (response && response.reply) {
       console.log('✅ Got chatbot reply:', response.reply);

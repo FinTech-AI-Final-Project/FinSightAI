@@ -384,8 +384,60 @@ public class AITipsService {
             allTips.add(String.format("📊 %s, review your expenses weekly to spot spending patterns and save more money!", firstName));
         }
         
-        // Return up to 5 randomly selected tips
-        return allTips.subList(0, Math.min(allTips.size(), 5));
+        // Return up to 5 diverse tips (randomized but balanced)
+        return selectDiverseTips(allTips, 5);
+    }
+    
+    // Select diverse tips to ensure variety across categories and urgency levels
+    private List<String> selectDiverseTips(List<String> allTips, int maxTips) {
+        if (allTips.size() <= maxTips) {
+            return allTips;
+        }
+        
+        List<String> diverseTips = new ArrayList<>();
+        List<String> urgentTips = new ArrayList<>();    // 🚨 Over-budget warnings
+        List<String> moderateTips = new ArrayList<>();  // ⚠️ Warnings, optimization
+        List<String> positiveTips = new ArrayList<>();  // 🌟 Achievements, under-budget
+        List<String> generalTips = new ArrayList<>();    // Other general advice
+        
+        // Categorize tips by urgency/content
+        for (String tip : allTips) {
+            String lowerTip = tip.toLowerCase();
+            if (lowerTip.contains("🚨") || lowerTip.contains("over budget")) {
+                urgentTips.add(tip);
+            } else if (lowerTip.contains("⚠️") || lowerTip.contains("focus") || lowerTip.contains("optimizing")) {
+                moderateTips.add(tip);
+            } else if (lowerTip.contains("🌟") || lowerTip.contains("excellent") || lowerTip.contains("saved")) {
+                positiveTips.add(tip);
+            } else {
+                generalTips.add(tip);
+            }
+        }
+        
+        // Select balanced mix (prioritize urgent but add variety)
+        // 1-2 urgent tips (most important)
+        diverseTips.addAll(urgentTips.stream().limit(2).collect(Collectors.toList()));
+        
+        // 1-2 moderate tips (actionable advice)  
+        diverseTips.addAll(moderateTips.stream().limit(2).collect(Collectors.toList()));
+        
+        // Fill remaining with positive/general tips
+        int remainingSlots = maxTips - diverseTips.size();
+        List<String> balanceTips = new ArrayList<>();
+        balanceTips.addAll(positiveTips);
+        balanceTips.addAll(generalTips);
+        diverseTips.addAll(balanceTips.stream().limit(remainingSlots).collect(Collectors.toList()));
+        
+        // If still less than maxTips, add any remaining tips
+        if (diverseTips.size() < maxTips) {
+            List<String> remainingTips = allTips.stream()
+                .filter(tip -> !diverseTips.contains(tip))
+                .limit(maxTips - diverseTips.size())
+                .collect(Collectors.toList());
+            diverseTips.addAll(remainingTips);
+        }
+        
+        return diverseTips.stream().limit(maxTips).collect(Collectors.toList());
     }
     
     private List<String> generateSpendingAnalysisTips(String firstName, String region, String currency, 
@@ -403,29 +455,54 @@ public class AITipsService {
             .map(Expense::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        // Find top spending category for targeted advice
-        Optional<Map.Entry<ExpenseCategory, BigDecimal>> topCategory = categorySpending.entrySet().stream()
-            .max(Map.Entry.comparingByValue());
+        // Sort categories by spending amount to provide variety across multiple categories
+        List<Map.Entry<ExpenseCategory, BigDecimal>> sortedCategories = categorySpending.entrySet().stream()
+                .sorted(Map.Entry.<ExpenseCategory, BigDecimal>comparingByValue().reversed())
+                .collect(Collectors.toList());
         
-        if (topCategory.isPresent()) {
-            ExpenseCategory category = topCategory.get().getKey();
-            BigDecimal amount = topCategory.get().getValue();
+        // Generate tips for top 2-3 categories to provide variety (not just highest)
+        int categoriesToAnalyze = Math.min(3, Math.max(2, sortedCategories.size()));
+        
+        for (int i = 0; i < categoriesToAnalyze; i++) {
+            Map.Entry<ExpenseCategory, BigDecimal> categoryEntry = sortedCategories.get(i);
+            ExpenseCategory category = categoryEntry.getKey();
+            BigDecimal amount = categoryEntry.getValue();
             double percentage = amount.divide(totalSpent, 4, BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
             
-            // Generate actionable saving tips based on highest spending category
-            if (percentage > 40) {
+            // Vary the tone and focus based on position and percentage to provide diversity
+            if (i == 0 && percentage > 40) {
+                // Highest spending category - urgent attention
                 tips.add(String.format("⚠️ %s, %s accounts for %.0f%% of your spending (%s %.2f). %s", 
                     firstName, category.getDisplayName(), percentage, currency, amount, 
                     getSavingsAdviceForCategory(category, region)));
-            } else if (percentage > 25) {
+            } else if (i == 0 && percentage > 25) {
+                // High spending but more manageable - focus advice
                 tips.add(String.format("💡 %s, focus on optimizing your %s spending (%s %.2f). %s", 
                     firstName, category.getDisplayName().toLowerCase(), currency, amount, 
                     getSavingsAdviceForCategory(category, region)));
-            } else {
-                tips.add(String.format("✅ %s, good balance! Your highest category (%s) is %.0f%% of spending. %s", 
+            } else if (i == 1 && percentage > 20) {
+                // Second highest - balanced perspective
+                tips.add(String.format("📊 %s, also consider reducing %s spending (%.0f%% of total). %s", 
+                    firstName, category.getDisplayName().toLowerCase(), percentage,
+                    getOptimizationAdviceForCategory(category, region)));
+            } else if (i == 2 && percentage > 15) {
+                // Third category - general guidance
+                tips.add(String.format("✅ %s, your %s spending (%.0f%% of total) offers savings potential. %s", 
                     firstName, category.getDisplayName().toLowerCase(), percentage,
                     getOptimizationAdviceForCategory(category, region)));
             }
+        }
+        
+        // If no categories provided tips (all too small), add general guidance
+        if (tips.isEmpty() && !sortedCategories.isEmpty()) {
+            Map.Entry<ExpenseCategory, BigDecimal> topCategory = sortedCategories.get(0);
+            ExpenseCategory category = topCategory.getKey();
+            BigDecimal amount = topCategory.getValue();
+            double percentage = amount.divide(totalSpent, 4, BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue();
+            
+            tips.add(String.format("💡 %s, good balance! Your highest category (%s) is %.0f%% of spending. %s", 
+                firstName, category.getDisplayName().toLowerCase(), percentage,
+                getOptimizationAdviceForCategory(category, region)));
         }
         
         // Frequency-based savings advice
@@ -476,7 +553,13 @@ public class AITipsService {
         int underBudget = 0;
         BigDecimal totalSavings = BigDecimal.ZERO;
         
-        // Analyze budget performance with focus on savings opportunities
+        // Collect ALL budget tips by category for variety
+        List<String> overBudgetTips = new ArrayList<>();
+        List<String> onTrackTips = new ArrayList<>();
+        List<String> underBudgetTips = new ArrayList<>();
+        List<String> otherCategoryTips = new ArrayList<>();
+        
+        // Analyze budget performance - collect all tips first
         for (Budget budget : budgets) {
             BigDecimal spent = categorySpending.getOrDefault(budget.getCategory(), BigDecimal.ZERO);
             BigDecimal remaining = budget.getMonthlyLimit().subtract(spent);
@@ -486,31 +569,88 @@ public class AITipsService {
             if (percentage.compareTo(BigDecimal.valueOf(100)) > 0) {
                 overBudget++;
                 // Over budget - urgent savings advice
-                tips.add(String.format("🚨 %s, you're %.0f%% over budget for %s! %s", 
+                overBudgetTips.add(String.format("🚨 %s, you're %.0f%% over budget for %s! %s", 
                     firstName, percentage, budget.getCategory().getDisplayName().toLowerCase(),
                     getOverBudgetSavingsAdvice(budget.getCategory(), region)));
             } else if (percentage.compareTo(BigDecimal.valueOf(90)) > 0) {
                 onTrack++;
                 // Close to budget limit - warning advice
-                tips.add(String.format("⚠️ %s, you're at %.0f%% of your %s budget (%s %.2f left). %s", 
+                onTrackTips.add(String.format("⚠️ %s, you're at %.0f%% of your %s budget (%s %.2f left). %s", 
                     firstName, percentage, budget.getCategory().getDisplayName().toLowerCase(),
                     currency, remaining, getBudgetWarningAdviceForRegion(budget.getCategory(), region)));
             } else if (percentage.compareTo(BigDecimal.valueOf(70)) < 0) {
                 underBudget++;
                 totalSavings = totalSavings.add(remaining);
                 // Well under budget - investment/savings advice
-                tips.add(String.format("🌟 Excellent %s! You saved %s %.2f in %s this month. %s", 
+                underBudgetTips.add(String.format("🌟 Excellent %s! You saved %s %.2f in %s this month. %s", 
                     firstName, currency, remaining, budget.getCategory().getDisplayName().toLowerCase(),
                     getSavingsInvestmentAdvice(budget.getCategory(), region, remaining, currency)));
+            } else {
+                // Categories that are between 70-90% of budget - add general optimization tips
+                otherCategoryTips.add(String.format("💡 %s, your %s budget is at %.0f%% - great balance! %s", 
+                    firstName, budget.getCategory().getDisplayName().toLowerCase(), percentage,
+                    getOptimizationAdviceForCategory(budget.getCategory(), region)));
             }
         }
         
-        // Add overall budget performance summary with actionable advice
-        if (overBudget > underBudget) {
-            tips.add(String.format("💪 %s, focus on the categories where you're overspending. Small changes can lead to big savings!", firstName));
-        } else if (underBudget > 0) {
-            tips.add(String.format("🎉 %s, you're saving %s %.2f across categories! Consider investing this for long-term wealth building.", 
-                firstName, currency, totalSavings));
+        // Select diverse budget tips across different categories (max 3 tips for variety):
+        // Priority: 1 over-budget (most urgent), then variety across other categories
+        int tipsAdded = 0;
+        int maxTips = 3;
+        
+        // Always include 1 over-budget tip if available (most urgent)
+        if (!overBudgetTips.isEmpty() && tipsAdded < maxTips) {
+            tips.add(overBudgetTips.get(0));
+            tipsAdded++;
+        }
+        
+        // Add 1 on-track tip if available
+        if (!onTrackTips.isEmpty() && tipsAdded < maxTips) {
+            tips.add(onTrackTips.get(0));
+            tipsAdded++;
+        }
+        
+        // Add 1 under-budget tip if available
+        if (!underBudgetTips.isEmpty() && tipsAdded < maxTips) {
+            tips.add(underBudgetTips.get(0));
+            tipsAdded++;
+        }
+        
+        // Add other category tips if we still need variety
+        if (tipsAdded < maxTips && !otherCategoryTips.isEmpty()) {
+            tips.add(otherCategoryTips.get(0));
+            tipsAdded++;
+        }
+        
+        // If we still need more tips and have multiple categories in any group, add more variety
+        if (tipsAdded < maxTips) {
+            // Add second over-budget tip if available and we only have 1 tip so far
+            if (overBudgetTips.size() > 1 && tipsAdded < maxTips) {
+                tips.add(overBudgetTips.get(1));
+                tipsAdded++;
+            }
+            
+            // Add second under-budget tip if available
+            if (underBudgetTips.size() > 1 && tipsAdded < maxTips) {
+                tips.add(underBudgetTips.get(1));
+                tipsAdded++;
+            }
+            
+            // Add second on-track tip if available
+            if (onTrackTips.size() > 1 && tipsAdded < maxTips) {
+                tips.add(onTrackTips.get(1));
+                tipsAdded++;
+            }
+        }
+        
+        // Add overall budget performance summary with actionable advice (only if we have space)
+        if (tipsAdded < maxTips) {
+            if (overBudget > underBudget) {
+                tips.add(String.format("💪 %s, focus on the categories where you're overspending. Small changes can lead to big savings!", firstName));
+            } else if (underBudget > 0) {
+                tips.add(String.format("🎉 %s, you're saving %s %.2f across categories! Consider investing this for long-term wealth building.", 
+                    firstName, currency, totalSavings));
+            }
         }
         
         return tips;

@@ -9,18 +9,27 @@ import {
   Avatar,
   Fab,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   Chat as ChatIcon,
   Send as SendIcon,
   Close as CloseIcon,
-  Psychology as PsychologyIcon
+  Psychology as PsychologyIcon,
+  Mic as MicIcon,
+  MicOff as MicOffIcon,
+  VolumeUp as VolumeUpIcon,
+  VolumeOff as VolumeOffIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useUser } from '../contexts/UserContext';
 import { sendChatMessage } from '../services/api';
+import { auth } from '../firebase';
 
 const Chatbot = () => {
   const [open, setOpen] = useState(false);
@@ -33,7 +42,14 @@ const Chatbot = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoiceName, setSelectedVoiceName] = useState('');
   const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const speechSynthesisRef = useRef(null);
   const { currentUser } = useAuth();
   const { userProfile } = useUser();
   const theme = useTheme();
@@ -45,11 +61,206 @@ const Chatbot = () => {
     }
   }, [messages, open]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  // Initialize speech recognition and load voices
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = 'en-US';
+
+        recognitionRef.current.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          setIsListening(false);
+          
+          // Automatically send the message after speech recognition
+          if (transcript.trim()) {
+            setTimeout(() => {
+              handleSendWithText(transcript);
+            }, 300); // Small delay to show the transcribed text briefly
+          }
+        };
+
+        recognitionRef.current.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+
+      // Load voices for speech synthesis
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        console.log('🔊 Voices loaded:', voices.length);
+        
+        // Store available voices
+        setAvailableVoices(voices);
+        
+        // Set default voice if none selected
+        if (!selectedVoiceName && voices.length > 0) {
+          const avoidVoices = ['Microsoft David', 'Microsoft Zira', 'Microsoft Mark'];
+          const preferredVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && 
+            !avoidVoices.some(avoid => voice.name.includes(avoid)) &&
+            (voice.name.includes('Google') || voice.name.includes('Natural'))
+          );
+          
+          if (preferredVoice) {
+            setSelectedVoiceName(preferredVoice.name);
+            console.log('🔊 Auto-selected voice:', preferredVoice.name);
+          }
+        }
+        
+        voices.forEach(voice => {
+          console.log(`🔊 Voice: ${voice.name} (${voice.lang}) - ${voice.default ? 'Default' : ''}`);
+        });
+      };
+
+      // Load voices immediately and on change
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (speechSynthesisRef.current) {
+        speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Speech synthesis function with better voice quality
+  const speakText = (text) => {
+    console.log('🔊 speakText called with:', text);
+    console.log('🔊 Speech enabled:', speechEnabled);
+    
+    if (!speechEnabled) {
+      console.log('🔊 Speech output is disabled');
+      return;
+    }
+    
+    if (!window.speechSynthesis) {
+      console.error('🔊 Speech synthesis not supported');
+      return;
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Use selected voice or find a good default
+    const voices = window.speechSynthesis.getVoices();
+    console.log('🔊 Available voices for speaking:', voices.length);
+    
+    let selectedVoice = null;
+    
+    if (selectedVoiceName) {
+      // Use the manually selected voice
+      selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
+      if (selectedVoice) {
+        console.log('🔊 Using manually selected voice:', selectedVoice.name);
+      } else {
+        console.log('🔊 Selected voice not found:', selectedVoiceName);
+      }
+    }
+    
+    if (!selectedVoice) {
+      // Simplified fallback - just avoid Microsoft David
+      const avoidVoices = ['Microsoft David'];
+      
+      // Try to find any English voice that's not David
+      const fallbackVoices = voices.filter(voice => 
+        voice.lang.startsWith('en') && 
+        !avoidVoices.some(avoid => voice.name.includes(avoid))
+      );
+      
+      if (fallbackVoices.length > 0) {
+        selectedVoice = fallbackVoices[0];
+        console.log('🔊 Using fallback voice:', selectedVoice.name);
+      } else {
+        // Use any voice if no English voices available
+        if (voices.length > 0) {
+          selectedVoice = voices[0];
+          console.log('🔊 Using first available voice:', selectedVoice.name);
+        }
+      }
+    }
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      console.log('🔊 Voice set to:', selectedVoice.name);
+    } else {
+      console.log('🔊 No voice found, using system default');
+    }
+    
+    // Optimized settings for natural speech
+    utterance.rate = 1.0;   // Normal speaking speed (faster than before)
+    utterance.pitch = 1.0;  // Normal pitch (more natural)
+    utterance.volume = 1.0; // Maximum volume
+
+    utterance.onstart = () => {
+      console.log('🔊 Speech started');
+      setIsSpeaking(true);
+    };
+    
+    utterance.onend = () => {
+      console.log('🔊 Speech ended');
+      setIsSpeaking(false);
+    };
+    
+    utterance.onerror = (event) => {
+      console.error('🔊 Speech error:', event.error);
+      setIsSpeaking(false);
+    };
+
+    try {
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('🔊 Error speaking text:', error);
+      setIsSpeaking(false);
+    }
+  };
+
+  // Voice control functions
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      setIsListening(true);
+      recognitionRef.current.start();
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      setSpeechEnabled(!speechEnabled);
+    }
+  };
+
+  const handleSendWithText = async (textToSend) => {
+    if (!textToSend.trim()) return;
 
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const userMessage = { sender: 'user', text: input, timestamp };
+    const userMessage = { sender: 'user', text: textToSend, timestamp };
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
 
@@ -61,8 +272,8 @@ const Chatbot = () => {
         region: getRegionFromCurrency(userProfile?.currency || 'ZAR')
       };
 
-      console.log('🤖 Sending chat message via API service:', input);
-      const data = await sendChatMessage(input, userContext);
+      console.log('🤖 Sending chat message via API service:', textToSend);
+      const data = await sendChatMessage(textToSend, userContext, auth);
 
       const botMessage = {
         sender: 'bot',
@@ -71,11 +282,26 @@ const Chatbot = () => {
       };
 
       setMessages(prev => [...prev, botMessage]);
+      
+      // Speak the response if speech is enabled
+      speakText(botMessage.text);
     } catch (error) {
       console.error('🚨 Chatbot error:', error);
+      
+      // Provide more specific error messages based on the error type
+      let errorText = 'I\'m currently experiencing technical difficulties. Please try again in a moment.';
+      
+      if (error.message && error.message.includes('token')) {
+        errorText = 'Your session has expired. Please refresh the page and try again.';
+      } else if (error.message && error.message.includes('network')) {
+        errorText = 'Network connection issue. Please check your internet connection and try again.';
+      } else if (error.message && error.message.includes('Authentication failed')) {
+        errorText = 'Authentication issue. Please refresh the page to re-authenticate.';
+      }
+      
       const errorMessage = {
         sender: 'bot',
-        text: 'I\'m currently experiencing technical difficulties. Please try again in a moment.',
+        text: errorText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -83,6 +309,11 @@ const Chatbot = () => {
       setInput('');
       setLoading(false);
     }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    await handleSendWithText(input);
   };
 
   const getRegionFromCurrency = (currency) => {
@@ -102,6 +333,15 @@ const Chatbot = () => {
 
   return (
     <>
+      <style>
+        {`
+          @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+          }
+        `}
+      </style>
       {/* Floating Chat Button */}
       <Fab
         sx={{
@@ -172,6 +412,28 @@ const Chatbot = () => {
                 <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
                   FinSight AI Assistant
                 </Typography>
+                {(isListening || speechEnabled || isSpeaking) && (
+                  <Box sx={{ display: 'flex', gap: 0.5, mr: 1 }}>
+                    {isListening && (
+                      <Box sx={{ 
+                        width: 8, 
+                        height: 8, 
+                        borderRadius: '50%', 
+                        backgroundColor: '#f44336',
+                        animation: 'pulse 1.5s infinite'
+                      }} />
+                    )}
+                    {(speechEnabled || isSpeaking) && (
+                      <Box sx={{ 
+                        width: 8, 
+                        height: 8, 
+                        borderRadius: '50%', 
+                        backgroundColor: isSpeaking ? '#ff9800' : '#4caf50',
+                        animation: 'pulse 1.5s infinite'
+                      }} />
+                    )}
+                  </Box>
+                )}
                 <IconButton 
                   size="small" 
                   onClick={() => setOpen(false)}
@@ -299,6 +561,39 @@ const Chatbot = () => {
                     </Box>
                   </Box>
                 )}
+                
+                {isSpeaking && !loading && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                        }}
+                      >
+                        <PsychologyIcon sx={{ fontSize: 18 }} />
+                      </Avatar>
+                      <Box
+                        sx={{
+                          backgroundColor: theme.palette.background.paper,
+                          px: 2,
+                          py: 1.5,
+                          borderRadius: 2,
+                          border: `1px solid ${theme.palette.divider}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1
+                        }}
+                      >
+                        <VolumeUpIcon sx={{ fontSize: 16, color: '#4caf50', animation: 'pulse 1.5s infinite' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Speaking...
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
                 <div ref={messagesEndRef} />
               </Box>
 
@@ -310,16 +605,103 @@ const Chatbot = () => {
                   borderTop: `1px solid ${theme.palette.divider}`,
                 }}
               >
+                {/* Voice Controls */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
+                  {/* Voice Selection */}
+                  {speechEnabled && availableVoices.length > 0 && (
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>Voice</InputLabel>
+                      <Select
+                        value={selectedVoiceName}
+                        onChange={(e) => setSelectedVoiceName(e.target.value)}
+                        label="Voice"
+                        sx={{
+                          '& .MuiSelect-select': {
+                            fontSize: '0.875rem'
+                          }
+                        }}
+                      >
+                        {availableVoices
+                          .filter(voice => voice.lang.startsWith('en'))
+                          .map((voice) => (
+                            <MenuItem key={voice.name} value={voice.name}>
+                              {voice.name} ({voice.lang})
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+                  )}
+                  
+                  {/* Voice Control Buttons */}
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <IconButton
+                      onClick={isListening ? stopListening : startListening}
+                      disabled={!recognitionRef.current}
+                      size="small"
+                      sx={{
+                        backgroundColor: isListening 
+                          ? '#f44336' 
+                          : theme.palette.mode === 'dark' 
+                            ? theme.palette.grey[700] 
+                            : theme.palette.grey[200],
+                        color: isListening 
+                          ? '#ffffff' 
+                          : theme.palette.mode === 'dark'
+                            ? theme.palette.grey[200]
+                            : theme.palette.text.primary,
+                        '&:hover': {
+                          backgroundColor: isListening 
+                            ? '#d32f2f' 
+                            : theme.palette.mode === 'dark'
+                              ? theme.palette.grey[600]
+                              : theme.palette.grey[300],
+                        },
+                        '&:disabled': {
+                          backgroundColor: theme.palette.action.disabled,
+                          color: theme.palette.action.disabled
+                        }
+                      }}
+                    >
+                      {isListening ? <MicOffIcon /> : <MicIcon />}
+                    </IconButton>
+                  <IconButton
+                    onClick={toggleSpeech}
+                    size="small"
+                    sx={{
+                      backgroundColor: speechEnabled 
+                        ? '#4caf50' 
+                        : theme.palette.mode === 'dark' 
+                          ? theme.palette.grey[700] 
+                          : theme.palette.grey[200],
+                      color: speechEnabled 
+                        ? '#ffffff' 
+                        : theme.palette.mode === 'dark'
+                          ? theme.palette.grey[200]
+                          : theme.palette.text.primary,
+                      '&:hover': {
+                        backgroundColor: speechEnabled 
+                          ? '#388e3c' 
+                          : theme.palette.mode === 'dark'
+                            ? theme.palette.grey[600]
+                            : theme.palette.grey[300],
+                      }
+                    }}
+                  >
+                    {isSpeaking ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                  </IconButton>
+                </Box>
+                </Box>
+
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
                   <TextField
                     fullWidth
                     multiline
                     maxRows={3}
-                    placeholder="Type your financial question here..."
+                    placeholder={isListening ? "Listening... speak now" : "Type your financial question here or use voice input"}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    disabled={loading}
+                    disabled={loading || isListening}
                     variant="outlined"
                     size="small"
                     sx={{
@@ -328,7 +710,7 @@ const Chatbot = () => {
                         backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#f8f9fa',
                         color: theme.palette.text.primary,
                         '& fieldset': {
-                          borderColor: theme.palette.divider,
+                          borderColor: isListening ? '#f44336' : theme.palette.divider,
                         },
                         '&:hover fieldset': {
                           borderColor: theme.palette.primary.main,
@@ -344,14 +726,14 @@ const Chatbot = () => {
                         }
                       },
                       '& .MuiInputBase-input::placeholder': {
-                        color: theme.palette.text.secondary,
+                        color: isListening ? '#f44336' : theme.palette.text.secondary,
                         opacity: 1,
                       }
                     }}
                   />
                   <IconButton
                     onClick={handleSend}
-                    disabled={loading || !input.trim()}
+                    disabled={loading || !input.trim() || isListening}
                     sx={{
                       background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
                       color: '#ffffff',

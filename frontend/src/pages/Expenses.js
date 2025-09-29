@@ -53,7 +53,8 @@ const Expenses = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterDate, setFilterDate] = useState(new Date());
   const [error, setError] = useState('');
-  const [dialogError, setDialogError] = useState(''); // Error specific to dialog operations
+  const [dialogError, setDialogError] = useState('');
+  const [receiptScanWarning, setReceiptScanWarning] = useState(''); // Error specific to dialog operations
   const [ocrProgress, setOcrProgress] = useState(0);
   const [isScanning, setIsScanning] = useState(false);
   const theme = useTheme();
@@ -224,6 +225,7 @@ const Expenses = () => {
     setOpenDialog(false);
     setEditingExpense(null);
     setDialogError(''); // Clear dialog-specific errors
+    setReceiptScanWarning(''); // Clear receipt scan warning
   };
 
   const handleMenu = (event, expense) => {
@@ -294,8 +296,9 @@ const Expenses = () => {
               notes: finalNotes
             }));
             
-            // Open the dialog so user can review and edit
-            setOpenDialog(true);
+            // Clear any previous errors and set receipt scan warning for dialog
+            setError('');
+            setDialogError('');
             
             // Show confidence information if available
             if (parsedData.confidence) {
@@ -305,13 +308,16 @@ const Expenses = () => {
                 .join(', ');
               
               if (confidenceMsg) {
-                setError(`✅ Receipt scanned successfully! Confidence levels: ${confidenceMsg}. Please review and edit the details before saving.`);
+                setReceiptScanWarning(`✅ Receipt scanned successfully! Confidence levels: ${confidenceMsg}. Please review and edit the details before saving.`);
               } else {
-                setError(`✅ Receipt scanned successfully! Please review and edit the details before saving.`);
+                setReceiptScanWarning(`✅ Receipt scanned successfully! Please review and edit the details before saving.`);
               }
             } else {
-              setError(`✅ Receipt scanned successfully! Please review and edit the details before saving.`);
+              setReceiptScanWarning(`✅ Receipt scanned successfully! Please review and edit the details before saving.`);
             }
+            
+            // Open the dialog so user can review and edit
+            setOpenDialog(true);
           } else {
             console.error('📸 OCR failed:', result.error);
             setError(`❌ ${result.error || 'Failed to process receipt. Please enter details manually.'}`);
@@ -514,7 +520,16 @@ const Expenses = () => {
         </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+        <Alert 
+          severity={error.startsWith('✅') ? 'success' : 'error'} 
+          sx={{ 
+            mb: 2, 
+            backgroundColor: error.startsWith('✅') ? '#ff9800' : undefined,
+            color: error.startsWith('✅') ? 'white' : undefined,
+            zIndex: 1300 // Ensure notification appears in front
+          }} 
+          onClose={() => setError('')}
+        >
           {error}
         </Alert>
       )}
@@ -661,6 +676,11 @@ const Expenses = () => {
           {editingExpense ? 'Edit Expense' : 'Add Expense'}
         </DialogTitle>
         <DialogContent>
+          {receiptScanWarning && (
+            <Alert severity="info" sx={{ mb: 2 }} onClose={() => setReceiptScanWarning('')}>
+              {receiptScanWarning}
+            </Alert>
+          )}
           {dialogError && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setDialogError('')}>
               {dialogError}
