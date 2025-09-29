@@ -88,21 +88,15 @@ const Sidebar = () => {
   };
 
   return (
-    <Drawer
-      variant="permanent"
+    <Box
       sx={{
         width: 280,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: 280,
-          boxSizing: 'border-box',
-          backgroundColor: 'background.paper',
-          borderRight: 1,
-          borderColor: 'divider',
-          top: '64px', // Match the navbar height exactly
-          height: 'calc(100vh - 64px)', // Adjust height accordingly
-          position: 'fixed',
-        },
+        backgroundColor: 'background.paper',
+        borderRight: 1,
+        borderColor: 'divider',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Box sx={{ px: 2, py: 1.5 }}>
@@ -176,7 +170,7 @@ const Sidebar = () => {
           </motion.div>
         ))}
       </List>
-    </Drawer>
+    </Box>
   );
 };
 

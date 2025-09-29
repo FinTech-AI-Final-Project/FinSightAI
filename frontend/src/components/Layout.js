@@ -13,32 +13,42 @@ const Layout = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Navbar />
-      <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+      <Box sx={{ 
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '280px 1fr' },
+        flexGrow: 1,
+        overflow: 'hidden',
+        height: 'calc(100vh - 64px)' // Full height minus navbar
+      }}>
         {!isMobile && <Sidebar />}
         <Box
           component="main"
           className="main-content-scrollable"
           sx={{
-            flexGrow: 1,
-            pt: { xs: 10, md: 12 }, // Increased padding for better spacing from navbar
-            pb: 0, // Remove all bottom padding to eliminate any bottom bar
+            pt: { xs: 10, md: 12 },
+            pb: 0,
             px: { xs: 1, sm: 2, md: 3 },
             backgroundColor: 'background.default',
-            ml: { md: '280px' }, // Account for sidebar width
-            overflow: 'auto', // Enable scrolling
-            height: '100vh', // Use full viewport height to eliminate any bottom spacing
-            maxHeight: '100vh', // Ensure it doesn't exceed viewport
-            position: 'relative', // Ensure proper stacking context
-            zIndex: 1, // Below navbar but above other elements
+            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
           }}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Outlet />
-          </motion.div>
+          <Box sx={{ 
+            width: '100%',
+            maxWidth: { xs: '100%', sm: '800px', md: '900px', lg: '1000px' },
+            mx: 'auto'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Outlet />
+            </motion.div>
+          </Box>
         </Box>
       </Box>
   {/* BottomNavigation removed for all devices */}

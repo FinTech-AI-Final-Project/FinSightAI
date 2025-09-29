@@ -131,7 +131,7 @@ const Home = () => {
       )}
       <Grid container spacing={2} justifyContent="center">
         {features.map((feature) => (
-          <Grid item xs={6} key={feature.label}>
+          <Grid item xs={6} sm={4} md={3} lg={2} key={feature.label}>
             <Card sx={{ backgroundColor: theme.palette.background.paper, borderRadius: 2, boxShadow: 3 }}>
               <CardActionArea onClick={() => navigate(feature.route)} sx={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CardContent style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 100, padding: 8 }}>
