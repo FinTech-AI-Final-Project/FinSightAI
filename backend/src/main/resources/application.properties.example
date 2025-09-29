@@ -1,30 +1,65 @@
+# ========================================
+# FinSight AI - Backend Configuration
+# ========================================
+# Copy this file to application.properties and update the values as needed
+# NEVER commit application.properties to version control!
+
+# ========================================
 # Database Configuration
+# ========================================
 spring.datasource.url=jdbc:postgresql://localhost:5432/finsight_ai
 spring.datasource.username=your_database_username
 spring.datasource.password=your_database_password
 spring.datasource.driver-class-name=org.postgresql.Driver
 
+# ========================================
 # JPA Configuration
+# ========================================
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.properties.hibernate.format_sql=true
 
+# ========================================
 # Server Configuration
+# ========================================
 server.port=8081
 server.address=0.0.0.0
 server.servlet.context-path=/api
 
+# ========================================
 # Firebase Configuration
+# ========================================
 firebase.service-account-key=classpath:firebase-service-account.json
 
+# ========================================
 # CORS Configuration
-app.cors.allowed-origins=http://localhost:3000,http://localhost:8100,capacitor://localhost,https://localhost,http://YOUR_IP:3000,http://YOUR_IP:8100
+# ========================================
+# Supports both current and previous IP addresses for mobile development
+app.cors.allowed-origins=http://localhost:3000,http://localhost:8100,capacitor://localhost,https://localhost,http://192.168.1.91:3000,http://192.168.1.91:8100,http://192.168.106.25:3000,http://192.168.106.25:8100
 
+# ========================================
 # AI Configuration - Gradient AI Agent
+# ========================================
 ai.agent.api.url=https://lxhcfhua6qcqp3wx7qf4jx4f.agents.do-ai.run
-ai.agent.api.key=YOUR_GRADIENT_AI_AGENT_API_KEY_HERE
+ai.agent.api.key=W3NMm2kJPbT406AkRBUyWYJ5YQwDzA7S
 
-# Logging
+# Chatbot Configuration - Gradient AI Agent (separate from tips)
+gradient.ai.agent.api.url=https://lxhcfhua6qcqp3wx7qf4jx4f.agents.do-ai.run
+gradient.ai.agent.api.key=W3NMm2kJPbT406AkRBUyWYJ5YQwDzA7S
+
+# ========================================
+# Logging Configuration
+# ========================================
 logging.level.com.finsight=DEBUG
 logging.level.org.springframework.web=DEBUG
+
+# ========================================
+# Security Notes
+# ========================================
+# 1. Never commit application.properties to version control
+# 2. Use different databases for development and production
+# 3. Rotate API keys regularly
+# 4. Use environment-specific configurations
+# 5. Monitor API usage and costs
+# 6. Keep Firebase service account key secure

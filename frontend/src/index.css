@@ -53,29 +53,59 @@ html, body, #root {
 
 /* Scrollbar styling - show on desktop, hide on mobile */
 @media (min-width: 769px) {
-  /* Show scrollbars on desktop with custom styling */
+  /* Show scrollbars on desktop with theme-aware styling */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
+  /* Light mode scrollbar styling (default) */
+  :root {
+    --scrollbar-track: #f5f5f5;
+    --scrollbar-thumb: #c1c1c1;
+    --scrollbar-thumb-hover: #a8a8a8;
+  }
+
+  /* Dark mode scrollbar styling - multiple selectors for better compatibility */
+  [data-mui-color-scheme="dark"],
+  [data-theme="dark"],
+  .dark,
+  body.dark {
+    --scrollbar-track: #2d2d2d;
+    --scrollbar-thumb: #555555;
+    --scrollbar-thumb-hover: #707070;
+  }
+
+  /* Fallback: If theme detection fails, use visible colors for light mode */
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1 !important;
+  }
+
+  [data-mui-color-scheme="dark"] ::-webkit-scrollbar-thumb,
+  [data-theme="dark"] ::-webkit-scrollbar-thumb,
+  .dark ::-webkit-scrollbar-thumb,
+  body.dark ::-webkit-scrollbar-thumb {
+    background: #555555 !important;
+  }
+
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--scrollbar-track, #f5f5f5);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--scrollbar-thumb, #c1c1c1);
     border-radius: 4px;
+    border: 1px solid var(--scrollbar-track, #f5f5f5);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--scrollbar-thumb-hover, #a8a8a8);
   }
 
   * {
     scrollbar-width: thin; /* Firefox */
-    scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
+    scrollbar-color: var(--scrollbar-thumb, #c1c1c1) var(--scrollbar-track, #f5f5f5);
   }
 
   /* Ensure scrollbar appears above navbar */
@@ -86,23 +116,70 @@ html, body, #root {
     overflow-x: hidden;
   }
   
-  /* Fix scrollbar positioning */
+  /* Fix scrollbar positioning with theme-aware colors */
   .main-content-scrollable::-webkit-scrollbar {
     width: 6px;
   }
   
   .main-content-scrollable::-webkit-scrollbar-track {
-  background: #e0e0e0;
+    background: var(--scrollbar-track, #f5f5f5);
   border-radius: 3px;
   }
   
   .main-content-scrollable::-webkit-scrollbar-thumb {
-  background: #bdbdbd;
+    background: var(--scrollbar-thumb, #c1c1c1);
   border-radius: 3px;
+    border: 1px solid var(--scrollbar-track, #f5f5f5);
   }
   
   .main-content-scrollable::-webkit-scrollbar-thumb:hover {
-  background: #757575;
+    background: var(--scrollbar-thumb-hover, #a8a8a8);
+  }
+
+  /* Chatbot scrollbar styling */
+  .chatbot-messages::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .chatbot-messages::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, #f5f5f5);
+    border-radius: 2px;
+  }
+  
+  .chatbot-messages::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, #c1c1c1);
+    border-radius: 2px;
+  }
+  
+  .chatbot-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, #a8a8a8);
+  }
+
+  /* Additional scrollbar styling for other components */
+  .MuiBox-root::-webkit-scrollbar,
+  .MuiPaper-root::-webkit-scrollbar,
+  .MuiList-root::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .MuiBox-root::-webkit-scrollbar-track,
+  .MuiPaper-root::-webkit-scrollbar-track,
+  .MuiList-root::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, #f5f5f5);
+    border-radius: 3px;
+  }
+  
+  .MuiBox-root::-webkit-scrollbar-thumb,
+  .MuiPaper-root::-webkit-scrollbar-thumb,
+  .MuiList-root::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, #c1c1c1);
+    border-radius: 3px;
+  }
+  
+  .MuiBox-root::-webkit-scrollbar-thumb:hover,
+  .MuiPaper-root::-webkit-scrollbar-thumb:hover,
+  .MuiList-root::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, #a8a8a8);
   }
 }
 

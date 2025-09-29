@@ -6,12 +6,14 @@
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">10.0.2.2</domain>
 
-        <!-- Your current IP -->
+        <!-- Your current IP addresses -->
         <domain includeSubdomains="false">192.168.1.91</domain>
+        <domain includeSubdomains="false">192.168.106.25</domain>
 
         <!-- Common private IP ranges for development -->
         <domain includeSubdomains="true">192.168.1.0</domain>
         <domain includeSubdomains="true">192.168.0.0</domain>
+        <domain includeSubdomains="true">192.168.106.0</domain>
         <domain includeSubdomains="true">10.0.0.0</domain>
         <domain includeSubdomains="true">172.16.0.0</domain>
     </domain-config>

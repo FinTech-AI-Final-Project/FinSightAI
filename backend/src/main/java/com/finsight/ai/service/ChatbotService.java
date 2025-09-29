@@ -668,8 +668,8 @@ public class ChatbotService {
             messages.add(message);
             
             requestBody.put("messages", messages);
-            requestBody.put("max_tokens", 100);
-            requestBody.put("temperature", 0.7);
+            requestBody.put("max_tokens", 600);
+            requestBody.put("temperature", 0.9);
             
             Mono<Map> response = webClient.post()
                 .uri(aiAgentApiUrl + "/api/v1/chat/completions")

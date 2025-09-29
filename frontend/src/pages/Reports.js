@@ -90,7 +90,7 @@ const Reports = () => {
   useEffect(() => {
     // Only fetch immediately for non-custom periods
     if (period !== 'custom') {
-      fetchReportData();
+    fetchReportData();
       return;
     }
     
@@ -588,12 +588,12 @@ const Reports = () => {
               </Box>
               {period === 'custom' && (
                 <Box>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2, 
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
                     flexDirection: { xs: 'column', sm: 'row' },
                     alignItems: { xs: 'stretch', sm: 'flex-end' }
-                  }}>
+                }}>
                   <DatePicker
                     label="Start Date"
                     value={customDate.startDate}

@@ -1054,9 +1054,9 @@ public class AITipsService {
             
             requestBody.put("messages", messages);
             requestBody.put("max_tokens", 600);  // Increased as requested
-            requestBody.put("temperature", 0.7);  // Slightly reduced for more focused responses
+            requestBody.put("temperature", 0.9);  // Increased creativity as requested
             
-            logger.debug("AI Tips request body: max_tokens=500, temperature=0.8, messages size={}", messages.size());
+            logger.debug("AI Tips request body: max_tokens=600, temperature=0.9, messages size={}", messages.size());
             
             Mono<Map> response = webClient.post()
                 .uri(aiAgentApiUrl + "/api/v1/chat/completions")
@@ -1928,6 +1928,18 @@ public class AITipsService {
             contextPrompt.append("CATEGORIES: ").append(Arrays.stream(ExpenseCategory.values())
                 .map(ExpenseCategory::getDisplayName)
                 .collect(Collectors.joining(", "))).append("\n\n");
+            
+            // Add app capabilities context so AI knows what features are available
+            contextPrompt.append("APP CAPABILITIES - FinSight AI includes these built-in features:\n");
+            contextPrompt.append("- Expense tracking with categories and receipt scanning\n");
+            contextPrompt.append("- Budget creation and monitoring with real-time progress\n");
+            contextPrompt.append("- Financial reports and analytics\n");
+            contextPrompt.append("- AI-powered financial tips and insights\n");
+            contextPrompt.append("- Interactive chatbot for financial advice\n");
+            contextPrompt.append("- Mobile app with offline capabilities\n");
+            contextPrompt.append("- Data export (PDF/CSV) for external analysis\n");
+            contextPrompt.append("- Multi-currency support and regional financial advice\n\n");
+            contextPrompt.append("IMPORTANT: Do NOT suggest using external apps, spreadsheets, or other tools for tracking expenses or budgets. This app already provides all these features.\n\n");
             
             // Add user financial context
             contextPrompt.append("User: ").append(firstName).append(" (").append(region).append(")\n");
