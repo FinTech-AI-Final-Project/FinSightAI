@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   IconButton,
@@ -9,11 +9,7 @@ import {
   Avatar,
   Fab,
   useTheme,
-  useMediaQuery,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
+  useMediaQuery
 } from '@mui/material';
 import {
   Chat as ChatIcon,
@@ -45,15 +41,13 @@ const Chatbot = () => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(false);
-  const [availableVoices, setAvailableVoices] = useState([]);
-  const [selectedVoiceName, setSelectedVoiceName] = useState('');
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
-  const speechSynthesisRef = useRef(null);
   const { currentUser } = useAuth();
   const { userProfile } = useUser();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (open && messagesEndRef.current) {
@@ -61,148 +55,69 @@ const Chatbot = () => {
     }
   }, [messages, open]);
 
-  // Initialize speech recognition and load voices
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.lang = 'en-US';
-
-        recognitionRef.current.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          setInput(transcript);
-          setIsListening(false);
-          
-          // Automatically send the message after speech recognition
-          if (transcript.trim()) {
-            setTimeout(() => {
-              handleSendWithText(transcript);
-            }, 300); // Small delay to show the transcribed text briefly
-          }
-        };
-
-        recognitionRef.current.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
-          setIsListening(false);
-        };
-
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
-      }
-
-      // Load voices for speech synthesis
-      const loadVoices = () => {
-        const voices = window.speechSynthesis.getVoices();
-        console.log('🔊 Voices loaded:', voices.length);
-        
-        // Store available voices
-        setAvailableVoices(voices);
-        
-        // Set default voice if none selected
-        if (!selectedVoiceName && voices.length > 0) {
-          const avoidVoices = ['Microsoft David', 'Microsoft Zira', 'Microsoft Mark'];
-          const preferredVoice = voices.find(voice => 
-            voice.lang.startsWith('en') && 
-            !avoidVoices.some(avoid => voice.name.includes(avoid)) &&
-            (voice.name.includes('Google') || voice.name.includes('Natural'))
-          );
-          
-          if (preferredVoice) {
-            setSelectedVoiceName(preferredVoice.name);
-            console.log('🔊 Auto-selected voice:', preferredVoice.name);
-          }
-        }
-        
-        voices.forEach(voice => {
-          console.log(`🔊 Voice: ${voice.name} (${voice.lang}) - ${voice.default ? 'Default' : ''}`);
-        });
-      };
-
-      // Load voices immediately and on change
-      loadVoices();
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-      }
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      if (speechSynthesisRef.current) {
-        speechSynthesis.cancel();
-      }
-    };
-  }, []);
 
   // Speech synthesis function with better voice quality
-  const speakText = (text) => {
+  const speakText = useCallback((text) => {
     console.log('🔊 speakText called with:', text);
     console.log('🔊 Speech enabled:', speechEnabled);
+    console.log('🔊 Is mobile device:', isMobileDevice);
     
     if (!speechEnabled) {
       console.log('🔊 Speech output is disabled');
       return;
     }
     
-    if (!window.speechSynthesis) {
-      console.error('🔊 Speech synthesis not supported');
-      return;
-    }
+    try {
+      if (!window.speechSynthesis || !window.speechSynthesis.getVoices) {
+        console.log('🔊 Speech synthesis not supported on this device');
+        return;
+      }
 
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Use selected voice or find a good default
-    const voices = window.speechSynthesis.getVoices();
-    console.log('🔊 Available voices for speaking:', voices.length);
-    
-    let selectedVoice = null;
-    
-    if (selectedVoiceName) {
-      // Use the manually selected voice
-      selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+             // Always use Google UK English Female voice
+             const voices = window.speechSynthesis.getVoices();
+             console.log('🔊 Available voices for speaking:', voices.length);
+
+             let selectedVoice = null;
+
+             // Look for Google UK English Female specifically
+             if (voices.length > 0) {
+               selectedVoice = voices.find(voice => 
+                 voice.name.includes('Google') && 
+                 voice.name.includes('English') && 
+                 (voice.name.includes('Female') || voice.name.includes('UK'))
+               );
+
+               if (selectedVoice) {
+                 console.log('🔊 Using Google UK English Female:', selectedVoice.name);
+               } else {
+                 // Fallback to any Google English voice
+                 selectedVoice = voices.find(voice => 
+                   voice.name.includes('Google') && voice.lang.startsWith('en')
+                 );
+
+                 if (selectedVoice) {
+                   console.log('🔊 Using Google English fallback:', selectedVoice.name);
+                 } else {
+                   // Final fallback to any English voice
+                   selectedVoice = voices.find(voice => voice.lang.startsWith('en'));
+                   if (selectedVoice) {
+                     console.log('🔊 Using English voice fallback:', selectedVoice.name);
+                   }
+                 }
+               }
+             }
+      
       if (selectedVoice) {
-        console.log('🔊 Using manually selected voice:', selectedVoice.name);
+        utterance.voice = selectedVoice;
+        console.log('🔊 Voice set to:', selectedVoice.name);
       } else {
-        console.log('🔊 Selected voice not found:', selectedVoiceName);
+        console.log('🔊 No voice found, using system default');
       }
-    }
-    
-    if (!selectedVoice) {
-      // Simplified fallback - just avoid Microsoft David
-      const avoidVoices = ['Microsoft David'];
-      
-      // Try to find any English voice that's not David
-      const fallbackVoices = voices.filter(voice => 
-        voice.lang.startsWith('en') && 
-        !avoidVoices.some(avoid => voice.name.includes(avoid))
-      );
-      
-      if (fallbackVoices.length > 0) {
-        selectedVoice = fallbackVoices[0];
-        console.log('🔊 Using fallback voice:', selectedVoice.name);
-      } else {
-        // Use any voice if no English voices available
-        if (voices.length > 0) {
-          selectedVoice = voices[0];
-          console.log('🔊 Using first available voice:', selectedVoice.name);
-        }
-      }
-    }
-    
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      console.log('🔊 Voice set to:', selectedVoice.name);
-    } else {
-      console.log('🔊 No voice found, using system default');
-    }
     
     // Optimized settings for natural speech
     utterance.rate = 1.0;   // Normal speaking speed (faster than before)
@@ -219,18 +134,21 @@ const Chatbot = () => {
       setIsSpeaking(false);
     };
     
-    utterance.onerror = (event) => {
-      console.error('🔊 Speech error:', event.error);
-      setIsSpeaking(false);
-    };
+      utterance.onerror = (event) => {
+        console.error('🔊 Speech error:', event.error);
+        setIsSpeaking(false);
+      };
 
-    try {
-      window.speechSynthesis.speak(utterance);
+      try {
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {
+        console.error('🔊 Error speaking text:', error);
+        setIsSpeaking(false);
+      }
     } catch (error) {
-      console.error('🔊 Error speaking text:', error);
-      setIsSpeaking(false);
+      console.error('🔊 Speech synthesis error:', error);
     }
-  };
+  }, [speechEnabled, isMobileDevice]);
 
   // Voice control functions
   const startListening = () => {
@@ -252,11 +170,22 @@ const Chatbot = () => {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      setSpeechEnabled(!speechEnabled);
+      const newSpeechState = !speechEnabled;
+      setSpeechEnabled(newSpeechState);
+      
+             // Test speech when enabling
+             if (newSpeechState) {
+               console.log('🔊 Speech enabled, testing...');
+               console.log('🔊 Device type:', isMobileDevice ? 'Mobile' : 'Desktop');
+               setTimeout(() => {
+                 speakText("Speech output is now enabled. I can speak to you!");
+               }, 100);
+             }
     }
   };
 
-  const handleSendWithText = async (textToSend) => {
+
+  const handleSendWithText = useCallback(async (textToSend) => {
     if (!textToSend.trim()) return;
 
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -283,15 +212,21 @@ const Chatbot = () => {
 
       setMessages(prev => [...prev, botMessage]);
       
-      // Speak the response if speech is enabled
-      speakText(botMessage.text);
+      // Speak the response if speech is enabled (only on desktop)
+      if (!isMobileDevice) {
+        speakText(botMessage.text);
+      }
     } catch (error) {
       console.error('🚨 Chatbot error:', error);
       
       // Provide more specific error messages based on the error type
       let errorText = 'I\'m currently experiencing technical difficulties. Please try again in a moment.';
       
-      if (error.message && error.message.includes('token')) {
+      if (error.message === 'Chatbot request timeout') {
+        errorText = 'The request is taking longer than expected. Please try again with a simpler question.';
+      } else if (error.message && error.message.includes('Failed to fetch')) {
+        errorText = 'Unable to connect to the server. Please check your internet connection.';
+      } else if (error.message && error.message.includes('token')) {
         errorText = 'Your session has expired. Please refresh the page and try again.';
       } else if (error.message && error.message.includes('network')) {
         errorText = 'Network connection issue. Please check your internet connection and try again.';
@@ -309,12 +244,89 @@ const Chatbot = () => {
       setInput('');
       setLoading(false);
     }
-  };
+  }, [isMobileDevice, userProfile, currentUser, speakText]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
     await handleSendWithText(input);
   };
+
+  // Initialize speech recognition and load voices
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Check if we're on mobile or if speech APIs are available
+      if (isMobileDevice) {
+        console.log('🔊 Mobile device detected - speech features disabled');
+        return;
+      }
+
+      // Check if speech APIs are available (not on mobile)
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = 'en-US';
+
+        recognitionRef.current.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          setIsListening(false);
+
+          // Automatically send the message after speech recognition
+          if (transcript.trim()) {
+            setTimeout(() => {
+              handleSendWithText(transcript);
+            }, 300); // Small delay to show the transcribed text briefly
+          }
+        };
+
+        recognitionRef.current.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      } else {
+        console.log('🔊 Speech recognition not supported on this device');
+      }
+
+      // Load voices for speech synthesis (only if available)
+      const loadVoices = () => {
+        try {
+          if (window.speechSynthesis && window.speechSynthesis.getVoices) {
+            const voices = window.speechSynthesis.getVoices();
+            console.log('🔊 Voices loaded:', voices.length);
+
+            voices.forEach(voice => {
+              console.log(`🔊 Voice: ${voice.name} (${voice.lang}) - ${voice.default ? 'Default' : ''}`);
+            });
+          } else {
+            console.log('🔊 Speech synthesis not supported on this device');
+          }
+        } catch (error) {
+          console.error('🔊 Error loading voices:', error);
+        }
+      };
+
+      // Load voices immediately and on change
+      loadVoices();
+      if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [isMobileDevice, handleSendWithText]);
 
   const getRegionFromCurrency = (currency) => {
     const currencyToRegion = {
@@ -445,6 +457,7 @@ const Chatbot = () => {
 
               {/* Messages */}
               <Box
+                className="chatbot-messages"
                 sx={{
                   flex: 1,
                   overflowY: 'auto',
@@ -605,53 +618,27 @@ const Chatbot = () => {
                   borderTop: `1px solid ${theme.palette.divider}`,
                 }}
               >
-                {/* Voice Controls */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
-                  {/* Voice Selection */}
-                  {speechEnabled && availableVoices.length > 0 && (
-                    <FormControl size="small" fullWidth>
-                      <InputLabel>Voice</InputLabel>
-                      <Select
-                        value={selectedVoiceName}
-                        onChange={(e) => setSelectedVoiceName(e.target.value)}
-                        label="Voice"
-                        sx={{
-                          '& .MuiSelect-select': {
-                            fontSize: '0.875rem'
-                          }
-                        }}
-                      >
-                        {availableVoices
-                          .filter(voice => voice.lang.startsWith('en'))
-                          .map((voice) => (
-                            <MenuItem key={voice.name} value={voice.name}>
-                              {voice.name} ({voice.lang})
-                            </MenuItem>
-                          ))}
-                      </Select>
-                    </FormControl>
-                  )}
-                  
-                  {/* Voice Control Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                {/* Voice Controls - Hidden on mobile */}
+                {!isMobileDevice && (
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 1 }}>
                     <IconButton
                       onClick={isListening ? stopListening : startListening}
                       disabled={!recognitionRef.current}
                       size="small"
                       sx={{
-                        backgroundColor: isListening 
-                          ? '#f44336' 
-                          : theme.palette.mode === 'dark' 
-                            ? theme.palette.grey[700] 
+                        backgroundColor: isListening
+                          ? '#f44336'
+                          : theme.palette.mode === 'dark'
+                            ? theme.palette.grey[700]
                             : theme.palette.grey[200],
-                        color: isListening 
-                          ? '#ffffff' 
+                        color: isListening
+                          ? '#ffffff'
                           : theme.palette.mode === 'dark'
                             ? theme.palette.grey[200]
                             : theme.palette.text.primary,
                         '&:hover': {
-                          backgroundColor: isListening 
-                            ? '#d32f2f' 
+                          backgroundColor: isListening
+                            ? '#d32f2f'
                             : theme.palette.mode === 'dark'
                               ? theme.palette.grey[600]
                               : theme.palette.grey[300],
@@ -664,40 +651,40 @@ const Chatbot = () => {
                     >
                       {isListening ? <MicOffIcon /> : <MicIcon />}
                     </IconButton>
-                  <IconButton
-                    onClick={toggleSpeech}
-                    size="small"
-                    sx={{
-                      backgroundColor: speechEnabled 
-                        ? '#4caf50' 
-                        : theme.palette.mode === 'dark' 
-                          ? theme.palette.grey[700] 
-                          : theme.palette.grey[200],
-                      color: speechEnabled 
-                        ? '#ffffff' 
-                        : theme.palette.mode === 'dark'
-                          ? theme.palette.grey[200]
-                          : theme.palette.text.primary,
-                      '&:hover': {
-                        backgroundColor: speechEnabled 
-                          ? '#388e3c' 
+                    <IconButton
+                      onClick={toggleSpeech}
+                      size="small"
+                      sx={{
+                        backgroundColor: speechEnabled
+                          ? '#4caf50'
                           : theme.palette.mode === 'dark'
-                            ? theme.palette.grey[600]
-                            : theme.palette.grey[300],
-                      }
-                    }}
-                  >
-                    {isSpeaking ? <VolumeOffIcon /> : <VolumeUpIcon />}
-                  </IconButton>
-                </Box>
-                </Box>
+                            ? theme.palette.grey[700]
+                            : theme.palette.grey[200],
+                        color: speechEnabled
+                          ? '#ffffff'
+                          : theme.palette.mode === 'dark'
+                            ? theme.palette.grey[200]
+                            : theme.palette.text.primary,
+                        '&:hover': {
+                          backgroundColor: speechEnabled
+                            ? '#388e3c'
+                            : theme.palette.mode === 'dark'
+                              ? theme.palette.grey[600]
+                              : theme.palette.grey[300],
+                        }
+                      }}
+                    >
+                      {isSpeaking ? <VolumeOffIcon /> : <VolumeUpIcon />}
+                    </IconButton>
+                  </Box>
+                )}
 
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
                   <TextField
                     fullWidth
                     multiline
                     maxRows={3}
-                    placeholder={isListening ? "Listening... speak now" : "Type your financial question here or use voice input"}
+                           placeholder={isMobileDevice ? "Type your financial question" : (isListening ? "Listening... speak now" : "Type your financial question here or use voice input")}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}

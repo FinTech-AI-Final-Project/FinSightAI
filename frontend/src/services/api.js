@@ -6,11 +6,15 @@ const getApiUrl = () => {
   console.log('📱 Platform check - isNative:', isNative);
 
   if (isNative) {
-    // For mobile, use environment variable or fallback to production URL
+    // For mobile, try multiple IP addresses for better connectivity
     const mobileUrl = process.env.REACT_APP_API_URL_MOBILE ||
+                     (process.env.REACT_APP_LOCAL_IP ? `http://${process.env.REACT_APP_LOCAL_IP}:8081/api` : null) ||
+                     (process.env.REACT_APP_API_URL_MOBILE_FALLBACK) ||
+                     (process.env.REACT_APP_LOCAL_IP_FALLBACK ? `http://${process.env.REACT_APP_LOCAL_IP_FALLBACK}:8081/api` : null) ||
                      process.env.REACT_APP_API_URL ||
                      'https://your-production-api.com/api';
     console.log('📱 Using mobile API URL:', mobileUrl);
+    console.log('📱 Fallback URL available:', !!process.env.REACT_APP_API_URL_MOBILE_FALLBACK);
     return mobileUrl;
   } else {
     const webUrl = process.env.REACT_APP_API_URL || 'https://your-production-api.com/api';
@@ -362,7 +366,13 @@ export const getMultipleTips = async () => {
 export const sendChatMessage = async (message, userContext = {}, authInstance = null) => {
   try {
     console.log('🤖 Sending chat message:', message);
-    const response = await apiRequest('/ai-chatbot', {
+    
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Chatbot request timeout')), 30000); // 30 second timeout
+    });
+    
+    const apiPromise = apiRequest('/ai-chatbot', {
       method: 'POST',
       body: JSON.stringify({
         message,
@@ -371,6 +381,8 @@ export const sendChatMessage = async (message, userContext = {}, authInstance = 
         userContext
       })
     }, authInstance);
+    
+    const response = await Promise.race([apiPromise, timeoutPromise]);
     
     if (response && response.reply) {
       console.log('✅ Got chatbot reply:', response.reply);

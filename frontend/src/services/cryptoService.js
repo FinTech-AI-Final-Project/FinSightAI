@@ -17,6 +17,12 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // Helper function to make Blockchair API requests
 const blockchairRequest = async (endpoint) => {
   try {
+    // Check if API key is configured
+    if (!BLOCKCHAIR_API_KEY || BLOCKCHAIR_API_KEY === 'your-blockchair-api-key') {
+      console.log('⚠️ Blockchair API key not configured, skipping request');
+      throw new Error('Blockchair API key not configured');
+    }
+
     const url = `${BLOCKCHAIR_BASE_URL}${endpoint}?key=${BLOCKCHAIR_API_KEY}`;
     console.log(`🔗 Making Blockchair API request to: ${url}`);
     
@@ -25,7 +31,7 @@ const blockchairRequest = async (endpoint) => {
     if (!response.ok) {
       throw new Error(`Blockchair API error: ${response.status} - ${response.statusText}`);
     }
-
+    
     const data = await response.json();
     console.log('📊 Blockchair response:', data);
     return data;
