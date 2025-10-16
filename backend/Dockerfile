@@ -1,6 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM maven:3.9-openjdk-17-slim AS build
-
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 # Set working directory
 WORKDIR /app
 

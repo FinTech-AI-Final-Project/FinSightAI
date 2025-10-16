@@ -1,38 +1,18 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: finsight-postgres
-    environment:
-      POSTGRES_DB: finsight_ai
-      POSTGRES_USER: finsight_user
-      POSTGRES_PASSWORD: finsight_password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d
-    networks:
-      - finsight-network
-    restart: unless-stopped
-
-  # Spring Boot Backend
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: finsight-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finsight_ai
-      SPRING_DATASOURCE_USERNAME: finsight_user
-      SPRING_DATASOURCE_PASSWORD: finsight_password
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_PROFILES_ACTIVE: production
     ports:
       - "8081:8081"
-    depends_on:
-      - postgres
     volumes:
       - ./backend/src/main/resources/firebase-service-account.json:/app/firebase-service-account.json:ro
     networks:
@@ -44,7 +24,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # React Frontend
   frontend:
     build:
       context: ./frontend
@@ -58,7 +37,6 @@ services:
       - finsight-network
     restart: unless-stopped
 
-  # Nginx Reverse Proxy (Optional)
   nginx:
     image: nginx:alpine
     container_name: finsight-nginx
@@ -74,10 +52,6 @@ services:
     networks:
       - finsight-network
     restart: unless-stopped
-
-volumes:
-  postgres_data:
-    driver: local
 
 networks:
   finsight-network:
