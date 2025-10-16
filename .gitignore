@@ -41,6 +41,7 @@ k8s-secrets.yml
 deploy-prod.*
 deploy-staging.*
 production.conf
+docker-compose.yml
 
 # =======================
 # FRONTEND (React/Node.js)
